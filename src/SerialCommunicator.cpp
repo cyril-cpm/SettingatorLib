@@ -1,4 +1,4 @@
-#include "../include/SerialCommunicator.h"
+#include "SerialCommunicator.h"
 
 SerialCTR::SerialCTR(int baudRate)
 {
@@ -18,10 +18,11 @@ bool SerialCTR::available()
     return fBuffer.getSize() > 0;
 }
 
-Buffer SerialCTR::read()
+Message SerialCTR::read()
 {
-    fSerial->read();
-    return Buffer(nullptr, 0);
+    if (available())
+        return fBuffer.getMessage();
+    return Message();
 }
 
 int SerialCTR::write(Buffer& buf)
@@ -36,5 +37,5 @@ void SerialCTR::update()
     int readedBytes = fSerial->readBytes(buffer, availableBytes);
 
     if (readedBytes > 0)
-        fBuffer = Buffer(buffer, readedBytes);
+        fBuffer = fBuffer + Buffer(buffer, readedBytes);
 }

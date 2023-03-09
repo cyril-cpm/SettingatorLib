@@ -4,6 +4,7 @@
 #include "Communicator.h"
 #include <HardwareSerial.h>
 #include "Buffer.h"
+#include "Message.h"
 
 class SerialCTR: public ICTR
 {
@@ -12,7 +13,7 @@ class SerialCTR: public ICTR
 
     virtual bool available() override;
     virtual int write(Buffer& buf) override;
-    virtual Buffer read() override;
+    virtual Message read() override;
     virtual void update() override;
 
     private:
