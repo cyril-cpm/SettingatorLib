@@ -9,6 +9,9 @@
 class SerialCTR: public ICTR
 {
     public:
+    /*
+    - create an instance of SerialCTR with baudRate
+    */
     static SerialCTR* CreateInstance(int baudRate);
 
     virtual bool available() override;
