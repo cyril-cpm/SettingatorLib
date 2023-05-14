@@ -10,19 +10,30 @@ SerialCTR* SerialCTR::CreateInstance(int baudRate)
     return new SerialCTR(baudRate);
 }
 
-bool SerialCTR::available()
+bool SerialCTR::Available()
 {
     if (fSerial->available())
-        update();
+        Update();
 
-    return fBuffer.getSize() > 0;
+    return fBufferContentSize > 0;
 }
 
-Message SerialCTR::read()
+Message SerialCTR::Read()
 {
-    if (available())
-        return fBuffer.getMessage();
+    if (Available())
+        return Message(fBuffer);
     return Message();
+}
+
+void SerialCTR::Flush(Message& message)
+{
+    uint8_t messageLength = message.GetLength();
+    uint8_t remainingByteInBuf = fBufferContentSize - messageLength;
+
+    memmove(fBuffer, fBuffer + messageLength, remainingByteInBuf);
+    memset(fBuffer + remainingByteInBuf, 0, SERIAL_RX_BUFFER_SIZE - remainingByteInBuf);
+
+    fBufferContentSize = remainingByteInBuf;
 }
 
 int SerialCTR::write(Buffer& buf)
@@ -30,12 +41,8 @@ int SerialCTR::write(Buffer& buf)
     return fSerial->write(buf.getPtr(), buf.getSize());
 }
 
-void SerialCTR::update()
+void SerialCTR::Update()
 {
-    int availableBytes = fSerial->available();
-    byte* buffer = (byte*)malloc(availableBytes * sizeof(byte));
-    int readedBytes = fSerial->readBytes(buffer, availableBytes);
-
-    if (readedBytes > 0)
-        fBuffer = fBuffer + Buffer(buffer, readedBytes);
+    int readedBytes = fSerial->readBytes(fBuffer + fBufferContentSize, SERIAL_RX_BUFFER_SIZE);
+    fBufferContentSize += readedBytes;
 }

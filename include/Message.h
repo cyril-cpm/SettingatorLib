@@ -21,11 +21,22 @@ public:
     };
 
     Message() {};
-    Message(Buffer&& buffer);
+    Message(byte* buffer);
+
+    /*
+    - Return length of buffer
+    */
+    uint8_t GetLength();
+
+    /*
+    - Return fBuffer ptr
+    */
+    byte*   GetBufPtr();
 
 private:
-    Buffer  fBuffer;
+    byte*   fBuffer;
     Type    fType = Uninitialised;
+    uint8_t fLength;
 };
 
 #endif

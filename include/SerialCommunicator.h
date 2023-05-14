@@ -14,16 +14,18 @@ class SerialCTR: public ICTR
     */
     static SerialCTR* CreateInstance(int baudRate);
 
-    virtual bool available() override;
-    virtual int write(Buffer& buf) override;
-    virtual Message read() override;
-    virtual void update() override;
+    virtual bool    Available() override;
+    virtual int     write(Buffer& buf) override;
+    virtual Message Read() override;
+    virtual void    Flush(Message& message);
+    virtual void    Update() override;
 
     private:
     SerialCTR(int baudRate);
 
     HardwareSerial* fSerial = &Serial;
-    Buffer          fBuffer;
+    byte            fBuffer[SERIAL_RX_BUFFER_SIZE];
+    uint8_t         fBufferContentSize = 0;
 };
 
 #endif

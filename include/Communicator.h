@@ -12,7 +12,7 @@ class ICTR
     /*
     - return true if there is bytes available to read
     */
-    virtual bool available() = 0;
+    virtual bool Available() = 0;
 
     /*
     - Write Buffer to communicator
@@ -22,12 +22,17 @@ class ICTR
     /*
     - Read a message if avaible or return empty Message
      */
-    virtual Message read() = 0;
+    virtual Message Read() = 0;
+
+    /*
+    - Flush message after having executed
+    */
+    virtual void    Flush(Message& message) = 0;
 
     /*
     - Update internal Buffer
     */
-    virtual void update() = 0;
+    virtual void Update() = 0;
 };
 
 #endif
