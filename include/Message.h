@@ -1,7 +1,7 @@
 #ifndef _MESSAGE_
 #define _MESSAGE_
 
-#include "Buffer.h"
+#include <Arduino.h>
 
 class Message
 {
@@ -21,7 +21,7 @@ public:
     };
 
     Message() {};
-    Message(byte* buffer);
+    Message(uint8_t* buffer, uint8_t len);
 
     /*
     - Return length of buffer

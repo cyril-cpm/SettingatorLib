@@ -2,14 +2,19 @@
 #define _SETTINGATOR_
 
 #include <Arduino.h>
-
-class ICTR;
+#include "Communicator.h"
 
 class STR
 {
     public:
 
     STR(ICTR* communicator);
+
+    void Update();
+
+    private:
+
+    ICTR* fCommunicator = nullptr;
 };
 
 #endif

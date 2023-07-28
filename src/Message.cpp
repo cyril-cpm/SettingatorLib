@@ -1,7 +1,6 @@
 #include "Message.h"
-#include "Buffer.h"
 
-Message::Message(byte* buffer) : fBuffer(buffer), fType((Message::Type)buffer[3]) {}
+Message::Message(uint8_t* buffer, uint8_t len) : fBuffer(buffer), fType((Message::Type)buffer[3]), fLength(len) {}
 
 uint8_t Message::GetLength()
 {

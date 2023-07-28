@@ -17,12 +17,12 @@ class ICTR
     /*
     - Write Buffer to communicator
     */
-    virtual int write(Buffer& buf) = 0;
+    virtual int Write(Message& buf) = 0;
 
     /*
     - Read a message if avaible or return empty Message
      */
-    virtual Message Read() = 0;
+    virtual Message* Read() = 0;
 
     /*
     - Flush message after having executed

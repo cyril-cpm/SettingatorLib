@@ -1,8 +1,8 @@
 #include <Arduino.h>
 #include "Settingator.h"
-#include "SerialCommunicator.h"
+#include "WebSocketCommunicator.h"
 
-ICTR* communicator = SerialCTR::CreateInstance(9600);
+ICTR* communicator = WebSocketCTR::CreateInstance();
 STR settingator = STR(communicator);
 
 void setup() {
