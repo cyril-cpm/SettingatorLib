@@ -16,12 +16,17 @@ void setup() {
 
     
     uint8_t value = 8;
-    Setting test(Setting::Type::Slider, &value, sizeof(value), "yolo", 4);
+    String str("Salut maglle");
+    Setting test(Setting::Type::Slider, str.begin(), str.length(), "yolo", 4);
+    value = 42;
 
     size_t size = 0;
     byte* buffer = nullptr;
 
-    test.getInitRequest(&buffer, size);
+    size = test.getInitRequestSize();
+
+    buffer = (byte*)malloc(size * sizeof(buffer));
+    test.getInitRequest(buffer);
 
     Serial.print("Returned size : ");
     Serial.println(size);
@@ -29,7 +34,7 @@ void setup() {
     if (buffer)
     {
         Serial.print("Buffer is : ");
-        printBuffer(buffer, size, DEC);
+        printBuffer(buffer, size, HEX);
     }
     else
         Serial.println("Buffer is nullptr");

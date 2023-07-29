@@ -2,8 +2,8 @@
 #include "MiscDef.h"
 #include <Arduino.h>
 
-Setting::Setting(Type type, byte* dataPtr, size_t dataSize, const char* name, setting_ref ref)
-: fType(type), fDataPtr(dataPtr), fDataSize(dataSize), fName(name), fRef(ref)
+Setting::Setting(Type type, void* dataPtr, size_t dataSize, const char* name, setting_ref ref)
+: fType(type), fDataPtr((byte*)dataPtr), fDataSize(dataSize), fName(name), fRef(ref)
 {
 #if SERIAL_DEBUG
     Serial.println("New Setting:");
@@ -12,7 +12,7 @@ Setting::Setting(Type type, byte* dataPtr, size_t dataSize, const char* name, se
     Serial.print("\tdataSize\t: ");
     Serial.println(dataSize, DEC);
     Serial.print("\tdata\t\t: ");
-    printBuffer(dataPtr, dataSize);
+    printBuffer(fDataPtr, dataSize);
     Serial.println("");
     Serial.print("\tref\t\t: ");
     Serial.println(ref);
@@ -30,15 +30,13 @@ bool Setting::update(byte* newValuePtr, size_t newValueSize)
     return true;
 }
 
-void Setting::getInitRequest(byte** initRequestBuffer, size_t& bufferSize)
+void Setting::getInitRequest(byte* buffer)
 {
-    bufferSize = 0;
+    size_t bufferSize = getInitRequestSize();
 
     bufferSize += 4;
     bufferSize += fName.length();
     bufferSize += fDataSize;
-
-    byte* buffer = (byte*)malloc(fDataSize);
 
     buffer[0] = fRef;
     buffer[1] = fType;
@@ -47,6 +45,15 @@ void Setting::getInitRequest(byte** initRequestBuffer, size_t& bufferSize)
     buffer[3 + fDataSize] = fName.length();
     byte nameIndex = 4 + fDataSize;
     fName.getBytes(buffer + 4 + fDataSize, bufferSize - nameIndex + 1, 0);
+}
 
-    *initRequestBuffer = buffer;
+size_t Setting::getInitRequestSize()
+{
+    size_t bufferSize = 0;
+
+    bufferSize += 4;
+    bufferSize += fName.length();
+    bufferSize += fDataSize;
+
+    return bufferSize;
 }

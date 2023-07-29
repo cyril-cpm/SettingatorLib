@@ -4,6 +4,7 @@
 #include <Arduino.h>
 #include "Communicator.h"
 #include "Setting.h"
+#include <vector>
 
 class STR
 {
@@ -16,8 +17,9 @@ class STR
 
     private:
 
-    ICTR*       fCommunicator = nullptr;
-    uint8_t    fInternalRefCount = 0;
+    ICTR*                   fCommunicator = nullptr;
+    uint8_t                 fInternalRefCount = 0;
+    std::vector<Setting>    fSettingVector;
     
     Message*    _buildSettingInitMessage();
     

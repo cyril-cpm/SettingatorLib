@@ -17,7 +17,7 @@ public:
         Switch = 0x03
     };
 
-    Setting(Type type, byte* dataPtr, size_t dataSize, const char* name, setting_ref ref);
+    Setting(Type type, void* dataPtr, size_t dataSize, const char* name, setting_ref ref);
 
     /*
     - Update the setting value
@@ -29,8 +29,9 @@ public:
     - in SETTING_INI message
     - initRequestBuffer is allocated and must be freed then.
     */
-    void getInitRequest(byte** initRequestBuffer, size_t& bufferSize);
+    void getInitRequest(byte* initRequestBuffer);
 
+    size_t getInitRequestSize();
 
 private:
     Type fType;
