@@ -1,7 +1,9 @@
 #ifndef _SETTING_
 #define _SETTING_
 
-#include "Settingator.h"
+#include "MiscDef.h"
+
+#include <Arduino.h>
 
 typedef byte setting_ref;
 
@@ -15,7 +17,7 @@ public:
         Switch = 0x03
     };
 
-    Setting(Type type, byte* dataPtr, size_t dataSize, String& name, setting_ref ref);
+    Setting(Type type, byte* dataPtr, size_t dataSize, const char* name, setting_ref ref);
 
     /*
     - Update the setting value
