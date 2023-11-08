@@ -1,9 +1,12 @@
 #include "WebSocketCommunicator.h"
+#include <WiFi.h>
+#include "MiscDef.h"
 
 WebSocketCTR::WebSocketCTR(int port)
-{
-    fWebSocketServer = new WebSocketsServer(port, "", "settingator");
+{   
+    fWebSocketServer = new WebSocketsServer(port, "/settingator", "settingator");
     fWebSocketServer->onEvent([this](uint8_t client, WStype_t type, uint8_t* payload, size_t len) {
+        Serial.println("WebSocketServerEvent");
         switch (type)
         {
             case (WStype_BIN):
@@ -13,7 +16,9 @@ WebSocketCTR::WebSocketCTR(int port)
             }
         }
     });
+    Serial.println("begin websocketserver");
     fWebSocketServer->begin();
+    Serial.println("finish");
 }
 
 WebSocketCTR* WebSocketCTR::CreateInstance(int port)
@@ -40,7 +45,7 @@ void WebSocketCTR::Flush(Message& message)
 
 int WebSocketCTR::Write(Message& msg)
 {
-    
+    return 0;
 }
 
 void WebSocketCTR::Update()
@@ -50,5 +55,8 @@ void WebSocketCTR::Update()
 
 void WebSocketCTR::_receive(Message* msg)
 {
+    Serial.println("WebSocketCTR _receive");
+    printBuffer(msg->GetBufPtr(), msg->GetLength());
+    Serial.println("");
     fReceivedMessage.push(msg);
 }

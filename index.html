@@ -1,0 +1,45 @@
+<textarea id="log" name="log" rows="20" cols="120"></textarea>
+<input type="range" min="1" max="100" value="50" class="slider" id="myRange">
+<script>
+
+    let log = document.getElementById("log");
+
+    function logText(text) {
+        log.textContent += text + "\n";
+    }
+
+    webSocket = new WebSocket("ws://192.168.0.1:8081/settingator", "settingator");
+
+    function sendInitRequest() {
+        initRequest = [ 0xFF, 0x00, 0x06, 0x12, 0x00, 0x00];
+        webSocket.send(initRequest);
+        logText("Init request sent...");
+    }
+
+    function treatMessage(message) {
+        logText("treating message");
+    }
+
+    webSocket.onopen = function (event) {
+        logText("onOpen");
+
+        sendInitRequest();
+    }
+
+    webSocket.onclose = function (event) {
+        logText("onClose " + event.code + " " + event.reason);
+    }
+
+    webSocket.onmessage = function (event) {
+        logText("onMessage");
+
+        treatMessage(event);
+    }
+
+    webSocket.onerror = function (event) {
+        logText("onError");
+    }
+    
+
+
+</script>

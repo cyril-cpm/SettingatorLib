@@ -4,19 +4,31 @@
 #include "Setting.h"
 #include "WebSocketCommunicator.h"
 #include <HardwareSerial.h>
+#include <FastLED.h>
+#include <ESPAsyncWebServer.h>
 
 //ICTR* communicator = WebSocketCTR::CreateInstance();
 //STR settingator = STR(communicator);
 
+#define DATA_PIN 2
+#define NUM_LEDS 5
 
+CRGB leds[NUM_LEDS];
+
+AsyncWebServer server(8080);
+WebSocketCTR* ctr;
+
+const char HTML[] PROGMEM = "<textarea id=\"log\" name=\"log\" rows=\"20\" cols=\"120\"></textarea>\n<input type=\"range\" min=\"1\" max=\"100\" value=\"50\" class=\"slider\" id=\"myRange\">\n<script>\n\n    let log = document.getElementById(\"log\");\n\n    function logText(text) {\n        log.textContent += text + \"\\n\";\n    }\n\n    webSocket = new WebSocket(\"ws://192.168.0.1:8081/settingator\", \"settingator\");\n\n    function sendInitRequest() {\n        initRequest = [ 0xFF, 0x00, 0x06, 0x12, 0x00, 0x00];\n        webSocket.send(initRequest);\n        logText(\"Init request sent...\");\n    }\n\n    function treatMessage(message) {\n        logText(\"treating message\");\n    }\n\n    webSocket.onopen = function (event) {\n        logText(\"onOpen\");\n\n        sendInitRequest();\n    }\n\n    webSocket.onclose = function (event) {\n        logText(\"onClose \" + event.code + \" \" + event.reason);\n    }\n\n    webSocket.onmessage = function (event) {\n        logText(\"onMessage\");\n\n        treatMessage(event);\n    }\n\n    webSocket.onerror = function (event) {\n        logText(\"onError\");\n    }\n    \n\n\n</script>";
 
 void setup() {
+    FastLED.addLeds<NEOPIXEL, DATA_PIN>(leds, NUM_LEDS);
+
     Serial.begin(9600);
     Serial.println("\nBegin test:");
 
     
     uint8_t value = 8;
-    String str("Salut maglle");
+    String str("Salut maggle");
     Setting test(Setting::Type::Slider, str.begin(), str.length(), "yolo", 4);
     value = 42;
 
@@ -40,9 +52,38 @@ void setup() {
         Serial.println("Buffer is nullptr");
 
     Serial.println("");
-   printBuffer((byte*)"yolo", 4, DEC);
+    printBuffer((byte*)"yolo", 4, HEX);
+    Serial.println("");
+
+    Serial.println("Begin WiFi");
+    WiFi.mode(WIFI_AP);
+
+    WiFi.softAPConfig(IPAddress(192,168,0,1), IPAddress(192,168,0,1), IPAddress(255,255,255,0));
+    WiFi.softAP("espTest", "123456788");
+    Serial.println(WiFi.softAPIP());
+
+    server.on("/*", HTTP_GET, [](AsyncWebServerRequest *request) {
+      Serial.println("http request received");
+      Serial.println(request->url());
+      Serial.println(request->host());
+      Serial.println(request->contentType());
+      request->send(200, "text/html", HTML);
+    });
+
+    Serial.println("Begin Web Server");
+    server.begin();
+    Serial.println("finish");
+
+    
+    ctr = WebSocketCTR::CreateInstance(8081);
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
+
+  ctr->Update();
+  for (int i = 0; i < NUM_LEDS; i++)
+    leds[i] = CRGB::Red;
+
+  FastLED.show();
 }
