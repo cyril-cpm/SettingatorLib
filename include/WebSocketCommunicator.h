@@ -17,7 +17,7 @@ class WebSocketCTR: public ICTR
     virtual bool    Available() override;
     virtual int     Write(Message& buf) override;
     virtual Message *Read() override;
-    virtual void    Flush(Message& message);
+    virtual void    Flush();
     virtual void    Update() override;
 
     private:

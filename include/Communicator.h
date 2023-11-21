@@ -26,7 +26,7 @@ class ICTR
     /*
     - Flush message after having executed
     */
-    virtual void    Flush(Message& message) = 0;
+    virtual void    Flush() = 0;
 
     /*
     - Update internal Buffer

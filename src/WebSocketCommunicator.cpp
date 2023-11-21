@@ -7,6 +7,9 @@ WebSocketCTR::WebSocketCTR(int port)
     fWebSocketServer = new WebSocketsServer(port, "/settingator", "settingator");
     fWebSocketServer->onEvent([this](uint8_t client, WStype_t type, uint8_t* payload, size_t len) {
         Serial.println("WebSocketServerEvent");
+        printBuffer(payload, len);
+        Serial.println("");
+        Serial.println(type);
         switch (type)
         {
             case (WStype_BIN):
@@ -37,7 +40,7 @@ Message* WebSocketCTR::Read()
    return fReceivedMessage.front();
 }
 
-void WebSocketCTR::Flush(Message& message)
+void WebSocketCTR::Flush()
 {
    delete fReceivedMessage.front();
    fReceivedMessage.pop();
@@ -45,6 +48,10 @@ void WebSocketCTR::Flush(Message& message)
 
 int WebSocketCTR::Write(Message& msg)
 {
+    Serial.println("broadcasting Buffer:");
+    printBuffer(msg.GetBufPtr(), msg.GetLength());
+    Serial.println("");
+    fWebSocketServer->broadcastBIN(msg.GetBufPtr(), msg.GetLength());
     return 0;
 }
 
@@ -56,7 +63,7 @@ void WebSocketCTR::Update()
 void WebSocketCTR::_receive(Message* msg)
 {
     Serial.println("WebSocketCTR _receive");
-    printBuffer(msg->GetBufPtr(), msg->GetLength());
+    printBuffer(msg->GetBufPtr(), msg->GetLength(), HEX);
     Serial.println("");
     fReceivedMessage.push(msg);
 }

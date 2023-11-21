@@ -13,6 +13,7 @@ class STR
     STR(ICTR* communicator);
 
     void Update();
+    void AddSetting(Setting& setting);
     void AddSetting(Setting::Type type, byte* data_ptr, size_t data_size, const char* name = "sans nom");
 
     private:

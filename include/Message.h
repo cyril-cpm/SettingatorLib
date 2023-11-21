@@ -33,6 +33,11 @@ public:
     */
     byte*   GetBufPtr();
 
+    /*
+    - Return message type
+    */
+   Type GetType() const { return fType; }
+
 private:
     byte*   fBuffer;
     Type    fType = Uninitialised;

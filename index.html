@@ -7,17 +7,30 @@
     function logText(text) {
         log.textContent += text + "\n";
     }
+    
+    function logHex(buff) {
+        for (i = 0; i < buff.length; i++) {
+            if (buff[i] < 16)
+                log.textContent += 0;
+            log.textContent += buff[i].toString(16);
+            log.textContent += " ";
+        }
+        log.textContent += "\n";
+    }
 
     webSocket = new WebSocket("ws://192.168.0.1:8081/settingator", "settingator");
+    webSocket.binaryType = "arraybuffer";
 
     function sendInitRequest() {
-        initRequest = [ 0xFF, 0x00, 0x06, 0x12, 0x00, 0x00];
+        let initRequest = new Uint8Array([ 0xFF, 0x00, 0x06, 0x12, 0x00, 0x00]);
         webSocket.send(initRequest);
         logText("Init request sent...");
+        logHex(initRequest);
     }
 
     function treatMessage(message) {
-        logText("treating message");
+        let view = new Uint8Array(message);
+        logHex(view);
     }
 
     webSocket.onopen = function (event) {
@@ -33,7 +46,7 @@
     webSocket.onmessage = function (event) {
         logText("onMessage");
 
-        treatMessage(event);
+        treatMessage(event.data);
     }
 
     webSocket.onerror = function (event) {
