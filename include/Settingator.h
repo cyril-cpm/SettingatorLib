@@ -10,6 +10,8 @@ class STR
 {
     public:
 
+    static void StartWiFi();
+
     STR(ICTR* communicator);
 
     void Update();
