@@ -19,6 +19,7 @@ String yolo("yolo");
 u8_t val = 31;
 char *test = "AAAAAAA";
 u8_t b = 0;
+u16_t big = 256;
 
 HTTPServer *server;
 
@@ -34,6 +35,7 @@ void setup() {
 
     settingator->AddSetting(Setting::Type::Slider, &val, sizeof(u8_t));
     settingator->AddSetting(Setting::Type::Switch, &b, sizeof(b), test);
+    settingator->AddSetting(Setting::Type::Slider, &big, sizeof(big));
 }
 
 void loop() {

@@ -44,7 +44,7 @@ void STR::AddSetting(Setting& setting)
     fSettingVector.push_back(setting);
 }
 
-void STR::AddSetting(Setting::Type type, byte* data_ptr, size_t data_size, const char* name)
+void STR::AddSetting(Setting::Type type, void* data_ptr, size_t data_size, const char* name)
 {
     fSettingVector.push_back(Setting(type, data_ptr, data_size, name, fInternalRefCount++));
 }

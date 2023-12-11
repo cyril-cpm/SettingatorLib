@@ -1,9 +1,15 @@
 <textarea id="log" name="log" rows="20" cols="120"></textarea>
 <input type="range" min="1" max="100" value="50" class="slider" id="myRange">
-<p>wazaaabi</p>
 <script>
 
     let log = document.getElementById("log");
+
+    SLIDER = 0x01;
+    TRIGGER = 0X02;
+    SWITCH = 0x03;
+
+    SETTING_UPDATE = 0x11;
+    SETTING_INIT = 0x13;
 
     function logText(text) {
         log.textContent += text + "\n";
@@ -29,9 +35,74 @@
         logHex(initRequest);
     }
 
+    function addSetting(setting) {
+            if (setting.type == SLIDER) {
+                let node = document.createElement("input");
+                node.type = "range";
+                node.min = 0;
+                node.max = Math.pow(256, setting.valueSize) - 1;
+                node.id = setting.ref;
+                node.value = 0;
+                for (let i = 0; i < setting.valueSize; i++) {
+                    node.value = node.value * 256;
+                    node.value += setting.value[i];
+                }
+                node.addEventListener("change", function() {
+                    
+                    let updateMsg = [ 0xFF];
+                    let messageSize = 7 + setting.valueSize;
+                    updateMsg[1] = Math.floor(messageSize / 256);
+                    updateMsg[2] = messageSize % 256;
+                    updateMsg[3] = SETTING_UPDATE;
+                    updateMsg[4] = setting.ref;
+                    updateMsg[5] = setting.valueSize;
+
+                    let newValue = document.getElementById(setting.ref).value;
+                        for (i = setting.valueSize - 1; i >= 0; i--) {
+                            updateMsg[6 + i] = newValue % 256;
+                            newValue = Math.floor(newValue / 256);
+                        }
+                    updateMsg[6 + setting.valueSize] = 0x00;
+
+                    webSocket.send(new Uint8Array(updateMsg));
+                });
+
+                document.body.appendChild(node);
+            }
+    }
+
     function treatMessage(message) {
         let view = new Uint8Array(message);
         logHex(view);
+
+        let msg = {};
+
+        msg.size = (view[1] << 8) + view[2];
+        msg.type = view[3];
+
+        if (msg.type == SETTING_INIT) {
+            msg.nbSettings = view[4];
+
+            let settingView = view.slice(5);
+
+            for (let i = 0; i < msg.nbSettings; i++) {
+                let setting = {};
+
+                setting.ref = settingView[0];
+                setting.type = settingView[1];
+                setting.valueSize = settingView[2];
+                setting.value = settingView.slice(3, 3 + setting.valueSize);
+                setting.nameLen = settingView[3 + setting.valueSize];
+                setting.name = new TextDecoder().decode(settingView.slice(3 + setting.valueSize + 1, 3 + setting.valueSize + 1 + setting.nameLen));
+
+                settingView = settingView.slice(3 + setting.valueSize + 1 + setting.nameLen);
+
+                addSetting(setting);
+                logText(setting.name);
+            }
+        }
+
+        return;
     }
 
     webSocket.onopen = function (event) {
