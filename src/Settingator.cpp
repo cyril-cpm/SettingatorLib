@@ -34,6 +34,24 @@ void STR::Update()
 
             delete initMessage;
         }
+        else if (msg->GetType() == Message::Type::SettingUpdate)
+        {
+            Serial.println("Setting update Message");
+            byte* value;
+            uint8_t ref;
+            uint8_t valueLen;
+
+            msg->ExtractSettingUpdate(ref, valueLen, &value);
+
+            Setting *setting = GetSettingByRef(ref);
+
+            if (setting  && (valueLen == setting->getDataSize()))
+            {
+                Serial.println("Attempt to memcpy");
+                memcpy((void*)setting->getDataPtr(), value, valueLen);
+                Serial.println("Done");
+            }
+        }
 
         fCommunicator->Flush();
     }
@@ -77,4 +95,14 @@ Message* STR::_buildSettingInitMessage()
     requestBuffer[initRequestSize - 1] = Message::Frame::End;
 
     return new Message(requestBuffer, initRequestSize);
+}
+
+Setting* STR::GetSettingByRef(uint8_t ref)
+{
+    for (auto it = fSettingVector.begin(); it != fSettingVector.end(); it++)
+    {
+        if (it->getRef() == ref)
+            return &(*it);
+    }
+    return nullptr;
 }

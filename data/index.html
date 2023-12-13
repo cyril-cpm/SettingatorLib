@@ -1,5 +1,4 @@
 <textarea id="log" name="log" rows="20" cols="120"></textarea>
-<input type="range" min="1" max="100" value="50" class="slider" id="myRange">
 <script>
 
     let log = document.getElementById("log");
@@ -47,27 +46,38 @@
                     node.value = node.value * 256;
                     node.value += setting.value[i];
                 }
-                node.addEventListener("change", function() {
-                    
-                    let updateMsg = [ 0xFF];
-                    let messageSize = 7 + setting.valueSize;
-                    updateMsg[1] = Math.floor(messageSize / 256);
-                    updateMsg[2] = messageSize % 256;
-                    updateMsg[3] = SETTING_UPDATE;
-                    updateMsg[4] = setting.ref;
-                    updateMsg[5] = setting.valueSize;
+                node.oldValue = node.value;
 
-                    let newValue = document.getElementById(setting.ref).value;
+                node.addEventListener("change", function() {
+                    let newValue = node.value;
+                    
+                    if (newValue != node.oldValue) {
+                        node.oldValue = node.value;
+                        logText(newValue);
+                        let updateMsg = [ 0xFF];
+                        let messageSize = 7 + setting.valueSize;
+                        updateMsg[1] = Math.floor(messageSize / 256);
+                        updateMsg[2] = messageSize % 256;
+                        updateMsg[3] = SETTING_UPDATE;
+                        updateMsg[4] = setting.ref;
+                        updateMsg[5] = setting.valueSize;
+                        
                         for (i = setting.valueSize - 1; i >= 0; i--) {
                             updateMsg[6 + i] = newValue % 256;
                             newValue = Math.floor(newValue / 256);
                         }
-                    updateMsg[6 + setting.valueSize] = 0x00;
 
-                    webSocket.send(new Uint8Array(updateMsg));
+                        updateMsg[6 + setting.valueSize] = 0x00;
+
+                        webSocket.send(new Uint8Array(updateMsg));
+                    }
                 });
 
                 document.body.appendChild(node);
+
+                let label = document.createElement("label");
+                label.innerText = setting.name;
+                document.body.appendChild(label);
             }
     }
 

@@ -18,6 +18,8 @@ class STR
     void AddSetting(Setting& setting);
     void AddSetting(Setting::Type type, void* data_ptr, size_t data_size, const char* name = "sans nom");
 
+    Setting* GetSettingByRef(uint8_t ref);
+
     private:
 
     ICTR*                   fCommunicator = nullptr;

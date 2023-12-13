@@ -38,6 +38,12 @@ public:
     */
    Type GetType() const { return fType; }
 
+    /*
+    - Get Setting Update Message
+    - Get 0 or null if wrong message type
+    */
+   void ExtractSettingUpdate(uint8_t &ref, uint8_t &newValueLen, byte **newValue);
+
 private:
     byte*   fBuffer;
     Type    fType = Uninitialised;

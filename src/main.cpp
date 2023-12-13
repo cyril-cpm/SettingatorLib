@@ -6,7 +6,7 @@
 #include "HTTPServer.h"
 #include <FastLED.h>
 
-#define DATA_PIN 2
+#define DATA_PIN 19
 #define NUM_LEDS 5
 
 CRGB leds[NUM_LEDS];
@@ -16,10 +16,10 @@ STR*          settingator;
 String str("Salut maggle");
 String yolo("yolo");
 
-u8_t val = 31;
-char *test = "AAAAAAA";
-u8_t b = 0;
-u16_t big = 256;
+
+uint8_t red = 127;
+uint8_t green = 50;
+uint8_t blue = 245;
 
 HTTPServer *server;
 
@@ -33,9 +33,9 @@ void setup() {
     server = new HTTPServer(8080);
     settingator = new STR(ctr);
 
-    settingator->AddSetting(Setting::Type::Slider, &val, sizeof(u8_t));
-    settingator->AddSetting(Setting::Type::Switch, &b, sizeof(b), test);
-    settingator->AddSetting(Setting::Type::Slider, &big, sizeof(big));
+    settingator->AddSetting(Setting::Type::Slider, &red, sizeof(red), "Rouge");
+    settingator->AddSetting(Setting::Type::Slider, &green, sizeof(green), "Vert");
+    settingator->AddSetting(Setting::Type::Slider, &blue, sizeof(blue), "Bleu");
 }
 
 void loop() {
@@ -43,7 +43,7 @@ void loop() {
 
   settingator->Update();
   for (int i = 0; i < NUM_LEDS; i++)
-    leds[i] = CRGB::Red;
+    leds[i] = CRGB(red, green, blue);
 
   FastLED.show();
 }

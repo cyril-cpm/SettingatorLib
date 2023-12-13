@@ -33,6 +33,10 @@ public:
 
     size_t getInitRequestSize();
 
+    uint8_t getRef() { return fRef; } const
+    size_t  getDataSize() { return fDataSize; } const
+    byte*   getDataPtr() { return fDataPtr; }
+
 private:
     Type fType;
     byte* fDataPtr = nullptr;
