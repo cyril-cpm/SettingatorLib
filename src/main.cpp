@@ -33,9 +33,9 @@ void setup() {
     server = new HTTPServer(8080);
     settingator = new STR(ctr);
 
-    settingator->AddSetting(Setting::Type::Slider, &red, sizeof(red), "Rouge");
-    settingator->AddSetting(Setting::Type::Slider, &green, sizeof(green), "Vert");
-    settingator->AddSetting(Setting::Type::Slider, &blue, sizeof(blue), "Bleu");
+    settingator->AddSetting(Setting::Type::Slider, &red, sizeof(red), "red");
+    settingator->AddSetting(Setting::Type::Slider, &green, sizeof(green), "lawngreen");
+    settingator->AddSetting(Setting::Type::Slider, &blue, sizeof(blue), "blue");
 }
 
 void loop() {

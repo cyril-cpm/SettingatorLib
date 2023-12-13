@@ -20,7 +20,7 @@ h1 {
   height: 15px;
   background: #000;
   outline: none;
-  border: 5px solid lawngreen;
+  border: 5px solid rgb(0, 255, 0);
   border-radius: 8px;
 }
 
@@ -87,13 +87,31 @@ textarea {
         logHex(initRequest);
     }
 
+    function setSliderColor(setting, newValue) {
+        switch (setting.name) {
+            case "red":
+                setting.node.style = "border-color: rgb(" + newValue +", 0, 0, 255);";
+                break;
+            case "lawngreen":
+                setting.node.style = "border-color: rgb(0, " + newValue +", 0, 255);";
+                break;
+            case "blue":
+                setting.node.style = "border-color: rgb(0, 0, " + newValue +", 255);";
+                break;
+            case "white":
+                setting.node.style = "border-color: rgb(255, 255, 255, " + newValue + ");";
+                break;
+        }
+    }
+
     function addSetting(setting) {
             if (setting.type == SLIDER) {
                 let node = document.createElement("input");
+                setting.node = node;
                 node.type = "range";
                 node.min = 0;
                 node.max = Math.pow(256, setting.valueSize) - 1;
-                node.id = setting.ref;
+                node.id = setting.refId;
                 node.className = "slider";
                 node.value = 0;
                 for (let i = 0; i < setting.valueSize; i++) {
@@ -127,11 +145,15 @@ textarea {
                     }
                 });
 
+                node.oninput = function() {
+                    setSliderColor(setting, node.value);                    
+                };
+
+                setSliderColor(setting, setting.value);
+                //node.getElementById("track").style = "border-color: " + setting.name + ";";
+                document.styleSheets.item(0).addRule("#" + setting.refId + "::-webkit-slider-thumb", "border-color: " + setting.name +";");
                 document.body.appendChild(node);
 
-                let label = document.createElement("label");
-                label.innerText = setting.name;
-                document.body.appendChild(label);
                 document.body.appendChild(document.createElement("br"));
                 document.body.appendChild(document.createElement("br"));
                 document.body.appendChild(document.createElement("br"));
@@ -158,6 +180,7 @@ textarea {
                 let setting = {};
 
                 setting.ref = settingView[0];
+                setting.refId = "ref" + setting.ref;
                 setting.type = settingView[1];
                 setting.valueSize = settingView[2];
                 setting.value = settingView.slice(3, 3 + setting.valueSize);
