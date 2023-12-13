@@ -1,3 +1,56 @@
+<style>
+body {
+  background: #000;
+  margin: 100px auto;
+  text-align: center;
+}
+
+h1 {
+  color: #fff;
+  margin-bottom: 60px;
+  font-family: helvetica;
+  font-size: 56px;
+  font-style: italic;
+  letter-spacing: 2px;
+}
+
+.slider {
+  -webkit-appearance: none;
+  width: 90%;
+  height: 15px;
+  background: #000;
+  outline: none;
+  border: 5px solid lawngreen;
+  border-radius: 8px;
+}
+
+
+/* for chrome/safari */
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 60px;
+  background: #000;
+  cursor: pointer;
+  border: 5px solid lawngreen;
+  border-radius: 4px;
+}
+
+/* for firefox */
+.slider::-moz-range-thumb {
+  width: 20px;
+  height: 60px;
+  background: #000;
+  cursor: pointer;
+  border: 5px solid lawngreen;
+  border-radius: 4px;
+}
+
+textarea {
+    visibility: hidden;
+}
+</style>
 <textarea id="log" name="log" rows="20" cols="120"></textarea>
 <script>
 
@@ -41,6 +94,7 @@
                 node.min = 0;
                 node.max = Math.pow(256, setting.valueSize) - 1;
                 node.id = setting.ref;
+                node.className = "slider";
                 node.value = 0;
                 for (let i = 0; i < setting.valueSize; i++) {
                     node.value = node.value * 256;
@@ -78,6 +132,11 @@
                 let label = document.createElement("label");
                 label.innerText = setting.name;
                 document.body.appendChild(label);
+                document.body.appendChild(document.createElement("br"));
+                document.body.appendChild(document.createElement("br"));
+                document.body.appendChild(document.createElement("br"));
+                document.body.appendChild(document.createElement("br"));
+                document.body.appendChild(document.createElement("br"));
             }
     }
 
