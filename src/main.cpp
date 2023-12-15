@@ -20,6 +20,7 @@ String yolo("yolo");
 uint8_t red = 127;
 uint8_t green = 50;
 uint8_t blue = 245;
+bool    trig = false;
 
 HTTPServer *server;
 
@@ -36,6 +37,7 @@ void setup() {
     settingator->AddSetting(Setting::Type::Slider, &red, sizeof(red), "red");
     settingator->AddSetting(Setting::Type::Slider, &green, sizeof(green), "lawngreen");
     settingator->AddSetting(Setting::Type::Slider, &blue, sizeof(blue), "blue");
+    settingator->AddSetting(Setting::Type::Switch, &trig, sizeof(trig), "Save");
 }
 
 void loop() {

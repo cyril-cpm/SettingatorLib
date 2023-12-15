@@ -1,6 +1,6 @@
 <style>
 body {
-  background: #000;
+  background-color: #000;
   margin: 100px auto;
   text-align: center;
 }
@@ -9,12 +9,15 @@ h1 {
   color: #fff;
   margin-bottom: 60px;
   font-family: helvetica;
-  font-size: 56px;
+  font-size: 190%;
   font-style: italic;
   letter-spacing: 2px;
+  position: absolute;
+  width: 100%;
+  pointer-events: none;
 }
 
-.slider {
+input[type=range] {
   -webkit-appearance: none;
   width: 90%;
   height: 15px;
@@ -22,23 +25,25 @@ h1 {
   outline: none;
   border: 5px solid rgb(0, 255, 0);
   border-radius: 8px;
+  margin-top: 30px;
+  margin-bottom: 30px;
 }
 
 
 /* for chrome/safari */
-.slider::-webkit-slider-thumb {
+input[type=range]::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
   width: 20px;
   height: 60px;
   background: #000;
   cursor: pointer;
-  border: 5px solid lawngreen;
+  border: 5px solid rgb(0, 255, 0);
   border-radius: 4px;
 }
 
 /* for firefox */
-.slider::-moz-range-thumb {
+input[type=range]::-moz-range-thumb {
   width: 20px;
   height: 60px;
   background: #000;
@@ -47,14 +52,28 @@ h1 {
   border-radius: 4px;
 }
 
-textarea {
-    visibility: hidden;
+input[type=checkbox] {
+    -webkit-appearance: none;
+    width: 90%;
+    height: 60px;
+    background-color: rgb(0, 255, 0);
+    align-self: center;
 }
+
+input[type=checkbox]:checked {
+    background-color: rgb(255, 0, 0);
+}
+
 </style>
+
+<h1>Debug</h1>
+<input type="checkbox" id="debugSwitch"/>
+
 <textarea id="log" name="log" rows="20" cols="120"></textarea>
 <script>
 
     let log = document.getElementById("log");
+    log.remove();
 
     SLIDER = 0x01;
     TRIGGER = 0X02;
@@ -80,11 +99,18 @@ textarea {
     webSocket = new WebSocket("ws://192.168.0.1:8081/settingator", "settingator");
     webSocket.binaryType = "arraybuffer";
 
+    
+    function sendMessage(message) {
+        logText("Sending Message:");
+        logHex(message);
+        webSocket.send(message);
+    }
+
+
     function sendInitRequest() {
         let initRequest = new Uint8Array([ 0xFF, 0x00, 0x06, 0x12, 0x00, 0x00]);
-        webSocket.send(initRequest);
+        sendMessage(initRequest);
         logText("Init request sent...");
-        logHex(initRequest);
     }
 
     function setSliderColor(setting, newValue) {
@@ -108,11 +134,12 @@ textarea {
             if (setting.type == SLIDER) {
                 let node = document.createElement("input");
                 setting.node = node;
+
                 node.type = "range";
                 node.min = 0;
                 node.max = Math.pow(256, setting.valueSize) - 1;
                 node.id = setting.refId;
-                node.className = "slider";
+
                 node.value = 0;
                 for (let i = 0; i < setting.valueSize; i++) {
                     node.value = node.value * 256;
@@ -126,8 +153,10 @@ textarea {
                     if (newValue != node.oldValue) {
                         node.oldValue = node.value;
                         logText(newValue);
+
                         let updateMsg = [ 0xFF];
                         let messageSize = 7 + setting.valueSize;
+
                         updateMsg[1] = Math.floor(messageSize / 256);
                         updateMsg[2] = messageSize % 256;
                         updateMsg[3] = SETTING_UPDATE;
@@ -141,26 +170,43 @@ textarea {
 
                         updateMsg[6 + setting.valueSize] = 0x00;
 
-                        webSocket.send(new Uint8Array(updateMsg));
+                        sendMessage(new Uint8Array(updateMsg));
                     }
                 });
 
                 node.oninput = function() {
-                    setSliderColor(setting, node.value);                    
+                    setSliderColor(setting, node.value);
                 };
 
                 setSliderColor(setting, setting.value);
                 //node.getElementById("track").style = "border-color: " + setting.name + ";";
                 document.styleSheets.item(0).addRule("#" + setting.refId + "::-webkit-slider-thumb", "border-color: " + setting.name +";");
                 document.body.appendChild(node);
-
-                document.body.appendChild(document.createElement("br"));
-                document.body.appendChild(document.createElement("br"));
-                document.body.appendChild(document.createElement("br"));
-                document.body.appendChild(document.createElement("br"));
-                document.body.appendChild(document.createElement("br"));
             }
-    }
+            else if (setting.type == SWITCH) {
+                let labelNode = document.createElement("h1");
+                labelNode.innerText = setting.name;
+                let inputNode = document.createElement("input");
+                inputNode.type = "checkbox";
+
+                inputNode.oninput = function() {
+                      
+                    let updateMsg = [0xFF,
+                                    0x00,
+                                    0x08,
+                                    SETTING_UPDATE,
+                                    setting.ref,
+                                    0x01,
+                                    inputNode.checked == true ? 0x01 : 0x00,
+                                    0x00];
+
+                    sendMessage(updateMsg);
+                };
+
+                document.body.appendChild(labelNode);
+                document.body.appendChild(inputNode);
+            }
+}
 
     function treatMessage(message) {
         let view = new Uint8Array(message);
@@ -217,6 +263,15 @@ textarea {
         logText("onError");
     }
     
+    let debugSwitch = document.getElementById("debugSwitch");
+    debugSwitch.onchange = function() {
+        if (debugSwitch.checked == true) {
+            debugSwitch.parentNode.insertBefore(log, debugSwitch.nextElementSibling);
+        }
+        else {
+            log.remove();
+        }
+    }
 
 
 </script>
