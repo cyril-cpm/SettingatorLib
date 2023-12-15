@@ -37,7 +37,7 @@ void setup() {
     settingator->AddSetting(Setting::Type::Slider, &red, sizeof(red), "red");
     settingator->AddSetting(Setting::Type::Slider, &green, sizeof(green), "lawngreen");
     settingator->AddSetting(Setting::Type::Slider, &blue, sizeof(blue), "blue");
-    settingator->AddSetting(Setting::Type::Switch, &trig, sizeof(trig), "Save");
+    settingator->AddSetting(Setting::Type::Trigger, nullptr, 0, "Save");
 }
 
 void loop() {

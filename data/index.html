@@ -5,13 +5,17 @@ body {
   text-align: center;
 }
 
+button,
 h1 {
   color: #fff;
-  margin-bottom: 60px;
   font-family: helvetica;
   font-size: 190%;
   font-style: italic;
   letter-spacing: 2px;
+}
+
+h1 {
+  margin-bottom: 60px;
   position: absolute;
   width: 100%;
   pointer-events: none;
@@ -64,12 +68,23 @@ input[type=checkbox]:checked {
     background-color: rgb(255, 0, 0);
 }
 
+button {
+    width: 90%;
+    height: 60px;
+    background-color: rgb(0, 255, 0);
+}
+
+button:active {
+    background-color: rgb(255, 0, 0);
+}
+
 </style>
 
 <h1>Debug</h1>
 <input type="checkbox" id="debugSwitch"/>
 
 <textarea id="log" name="log" rows="20" cols="120"></textarea>
+<button>Save</button>
 <script>
 
     let log = document.getElementById("log");
@@ -205,6 +220,24 @@ input[type=checkbox]:checked {
 
                 document.body.appendChild(labelNode);
                 document.body.appendChild(inputNode);
+            }
+            else if (setting.type == TRIGGER) {
+                let buttonNode = document.createElement("button");
+                buttonNode.innerText = setting.name;
+
+                buttonNode.onclick = function() {
+                    let updateMsg = [0xFF,
+                                    0x00,
+                                    0x00,
+                                    SETTING_UPDATE,
+                                    setting.ref,
+                                    0x00,
+                                    0x00];
+                        
+                    sendMessage(updateMsg);
+                }
+
+                document.body.appendChild(buttonNode);
             }
 }
 
