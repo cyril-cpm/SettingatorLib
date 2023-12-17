@@ -2,8 +2,8 @@
 #include "MiscDef.h"
 #include <Arduino.h>
 
-Setting::Setting(Type type, void* dataPtr, size_t dataSize, const char* name, setting_ref ref)
-: fType(type), fDataPtr((byte*)dataPtr), fDataSize(dataSize), fName(name), fRef(ref)
+Setting::Setting(Type type, void* dataPtr, size_t dataSize, const char* name, void (*callback)(), setting_ref ref)
+: fType(type), fDataPtr((byte*)dataPtr), fDataSize(dataSize), fName(name), fCallback(callback), fRef(ref)
 {
 #if SERIAL_DEBUG
     Serial.println("New Setting:");

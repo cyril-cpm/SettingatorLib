@@ -51,6 +51,9 @@ void STR::Update()
                 memcpy((void*)setting->getDataPtr(), value, valueLen);
                 Serial.println("Done");
             }
+
+            if (setting)
+                setting->callback();
         }
 
         fCommunicator->Flush();
@@ -62,9 +65,9 @@ void STR::AddSetting(Setting& setting)
     fSettingVector.push_back(setting);
 }
 
-void STR::AddSetting(Setting::Type type, void* data_ptr, size_t data_size, const char* name)
+void STR::AddSetting(Setting::Type type, void* data_ptr, size_t data_size, const char* name, void (*callback)())
 {
-    fSettingVector.push_back(Setting(type, data_ptr, data_size, name, fInternalRefCount++));
+    fSettingVector.push_back(Setting(type, data_ptr, data_size, name, callback, fInternalRefCount++));
 }
 
 Message* STR::_buildSettingInitMessage()

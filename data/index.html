@@ -84,11 +84,11 @@ button:active {
 <input type="checkbox" id="debugSwitch"/>
 
 <textarea id="log" name="log" rows="20" cols="120"></textarea>
-<button>Save</button>
 <script>
 
     let log = document.getElementById("log");
     log.remove();
+    log.scrollTop = log.scrollHeight;
 
     SLIDER = 0x01;
     TRIGGER = 0X02;
@@ -215,7 +215,7 @@ button:active {
                                     inputNode.checked == true ? 0x01 : 0x00,
                                     0x00];
 
-                    sendMessage(updateMsg);
+                    sendMessage(new Uint8Array(updateMsg));
                 };
 
                 document.body.appendChild(labelNode);
@@ -234,7 +234,7 @@ button:active {
                                     0x00,
                                     0x00];
                         
-                    sendMessage(updateMsg);
+                    sendMessage(new Uint8Array(updateMsg));
                 }
 
                 document.body.appendChild(buttonNode);

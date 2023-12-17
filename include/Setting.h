@@ -17,7 +17,7 @@ public:
         Switch = 0x03
     };
 
-    Setting(Type type, void* dataPtr, size_t dataSize, const char* name, setting_ref ref);
+    Setting(Type type, void* dataPtr, size_t dataSize, const char* name, void (*callback)(), setting_ref ref);
 
     /*
     - Update the setting value
@@ -37,12 +37,15 @@ public:
     size_t  getDataSize() { return fDataSize; } const
     byte*   getDataPtr() { return fDataPtr; }
 
+    void    callback() { if (fCallback) fCallback(); }
+
 private:
     Type fType;
     byte* fDataPtr = nullptr;
     size_t fDataSize = 0;
     String fName;
     setting_ref fRef = 0;
+    void    (*fCallback)();
 };
 
 #endif
