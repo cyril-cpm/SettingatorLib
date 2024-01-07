@@ -20,6 +20,8 @@ String yolo("yolo");
 uint8_t red = 127;
 uint8_t green = 50;
 uint8_t blue = 245;
+uint8_t white = 128;
+
 bool    trig = false;
 
 HTTPServer *server;
@@ -35,9 +37,13 @@ void setup() {
     settingator = new STR(ctr);
 
     settingator->AddSetting(Setting::Type::Slider, &red, sizeof(red), "red");
-    settingator->AddSetting(Setting::Type::Slider, &green, sizeof(green), "lawngreen");
+    settingator->AddSetting(Setting::Type::Slider, &green, sizeof(green), "green");
     settingator->AddSetting(Setting::Type::Slider, &blue, sizeof(blue), "blue");
-    settingator->AddSetting(Setting::Type::Trigger, nullptr, 0, "Save", []() { Serial.println("Save Callback"); });
+    settingator->AddSetting(Setting::Type::Slider, &white, sizeof(white), "white", []() { 
+        DEBUG_PRINT_VALUE("setting brightness", white);
+        FastLED.setBrightness(white); });
+    settingator->AddSetting(Setting::Type::Trigger, nullptr, 0, "Save", []() {
+        Serial.println("Save Callback"); });
 }
 
 void loop() {

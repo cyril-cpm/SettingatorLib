@@ -131,16 +131,16 @@ button:active {
     function setSliderColor(setting, newValue) {
         switch (setting.name) {
             case "red":
-                setting.node.style = "border-color: rgb(" + newValue +", 0, 0, 255);";
+                setting.node.style = "border-color: rgb( 100%, 0%, 0%, " + newValue/255 + ");";
                 break;
-            case "lawngreen":
-                setting.node.style = "border-color: rgb(0, " + newValue +", 0, 255);";
+            case "green":
+                setting.node.style = "border-color: rgb(0%, 100%, 0%, " + newValue/255 + ");";
                 break;
             case "blue":
-                setting.node.style = "border-color: rgb(0, 0, " + newValue +", 255);";
+                setting.node.style = "border-color: rgb(0%, 0%, 100%, " + newValue/255 + ");";
                 break;
             case "white":
-                setting.node.style = "border-color: rgb(255, 255, 255, " + newValue + ");";
+                setting.node.style = "border-color: rgb(100%, 100%, 100%, " + newValue/255 + ");";
                 break;
         }
     }

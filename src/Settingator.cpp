@@ -104,10 +104,15 @@ Message* STR::_buildSettingInitMessage()
 
 Setting* STR::GetSettingByRef(uint8_t ref)
 {
+    DEBUG_PRINT_VALUE("Searching setting ref", ref);
     for (auto it = fSettingVector.begin(); it != fSettingVector.end(); it++)
     {
         if (it->getRef() == ref)
+        {
+            DEBUG_PRINT_LN("FOUND");
             return &(*it);
+        }
     }
+    DEBUG_PRINT("NOT found");
     return nullptr;
 }

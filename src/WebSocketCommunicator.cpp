@@ -5,7 +5,7 @@
 WebSocketCTR::WebSocketCTR(int port)
 {   
     fWebSocketServer = new WebSocketsServer(port, "/settingator", "settingator");
-{
+
 #if SERIAL_DEBUG
     Serial.println("initializing WebSocketCTR");
 #endif
