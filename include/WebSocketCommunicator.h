@@ -19,6 +19,7 @@ class WebSocketCTR: public ICTR
     virtual Message *Read() override;
     virtual void    Flush();
     virtual void    Update() override;
+    virtual uint8_t GetBoxSize() const override;
 
     private:
     WebSocketCTR(int port);

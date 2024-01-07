@@ -32,6 +32,8 @@ class ICTR
     - Update internal Buffer
     */
     virtual void Update() = 0;
+
+    virtual uint8_t GetBoxSize() const = 0;
 };
 
 #endif

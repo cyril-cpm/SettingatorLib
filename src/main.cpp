@@ -41,7 +41,6 @@ void setup() {
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
 
   settingator->Update();
   for (int i = 0; i < NUM_LEDS; i++)

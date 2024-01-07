@@ -26,9 +26,11 @@ void STR::Update()
         printBuffer(msg->GetBufPtr(), msg->GetLength(), HEX);
         Serial.println("");
 
+    
         if (msg->GetType() == Message::Type::InitRequest)
         {
             Message* initMessage = _buildSettingInitMessage();
+    //DEBUG_PRINT_LN("STR::Update");
 
             fCommunicator->Write(*initMessage);
 
