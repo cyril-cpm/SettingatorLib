@@ -5,6 +5,7 @@
 #include "Communicator.h"
 #include "Setting.h"
 #include <vector>
+#include <Preferences.h>
 
 class STR
 {
@@ -18,7 +19,10 @@ class STR
     void AddSetting(Setting& setting);
     void AddSetting(Setting::Type type, void* data_ptr, size_t data_size, const char* name = "sans nom", void (*callback)() = nullptr);
 
-    Setting* GetSettingByRef(uint8_t ref);
+    Setting*    GetSettingByRef(uint8_t ref);
+
+    void        SavePreferences();
+    void        begin();
 
     private:
 
@@ -28,6 +32,7 @@ class STR
     
     Message*    _buildSettingInitMessage();
     
+    Preferences             fPreferences;
 };
 
 #endif

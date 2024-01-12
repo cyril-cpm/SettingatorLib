@@ -36,8 +36,11 @@ public:
     uint8_t getRef() { return fRef; } const
     size_t  getDataSize() { return fDataSize; } const
     byte*   getDataPtr() { return fDataPtr; }
+    Type    getType() { return fType; } const
 
     void    callback() { if (fCallback) fCallback(); }
+
+    String  getName() { return fName; }
 
 private:
     Type fType;

@@ -1,6 +1,7 @@
 #include "Settingator.h"
 #include <Arduino.h>
 #include <ESPAsyncWebServer.h>
+#include <Preferences.h>
 
 void STR::StartWiFi()
 {
@@ -8,13 +9,16 @@ void STR::StartWiFi()
     WiFi.mode(WIFI_AP);
 
     WiFi.softAPConfig(IPAddress(192,168,0,1), IPAddress(192,168,0,1), IPAddress(255,255,255,0));
-    WiFi.softAP("espTest", "123456788");
+    WiFi.softAP("espTest", "123456789");
     Serial.println(WiFi.softAPIP());
 }
 
 STR::STR(ICTR* communicator) : fCommunicator(communicator)
 {
-    
+    fPreferences.begin("settingator", false);
+    //byte red = 255;
+    //fPreferences.remove("red");
+    //fPreferences.putBytes("red", &red, 1);
 }
 
 void STR::Update()
@@ -65,11 +69,38 @@ void STR::Update()
 void STR::AddSetting(Setting& setting)
 {
     fSettingVector.push_back(setting);
+
+    if (setting.getType() != Setting::Type::Trigger)
+    {
+        const char * settingName = setting.getName().c_str();
+        void* buf = malloc(setting.getDataSize() * sizeof(byte));
+
+        size_t len = fPreferences.getBytes(settingName, buf, setting.getDataSize());
+
+        if (len)
+            setting.update((byte*)buf, len);
+    }
 }
 
 void STR::AddSetting(Setting::Type type, void* data_ptr, size_t data_size, const char* name, void (*callback)())
 {
     fSettingVector.push_back(Setting(type, data_ptr, data_size, name, callback, fInternalRefCount++));
+
+    if (type != Setting::Type::Trigger)
+    {
+        void* buf = malloc(data_size * sizeof(byte));
+        DEBUG_PRINT_LN(name)
+        size_t len = fPreferences.getBytes(name, buf, data_size);
+
+        Setting* setting = GetSettingByRef(fInternalRefCount-1);
+
+        if (setting && len)
+        {
+            DEBUG_PRINT_LN("Update Setting With preferences")
+            setting->update((byte*)buf, len);
+            DEBUG_PRINT_VALUE_BUF_LN(name, (byte*)buf, len)
+        }
+    }
 }
 
 Message* STR::_buildSettingInitMessage()
@@ -115,4 +146,22 @@ Setting* STR::GetSettingByRef(uint8_t ref)
     }
     DEBUG_PRINT("NOT found");
     return nullptr;
+}
+
+void STR::SavePreferences()
+{
+    DEBUG_PRINT_LN("Saving Preferences");
+    for (auto i = fSettingVector.begin(); i != fSettingVector.end(); i++)
+    {
+        if (i->getType() != Setting::Type::Trigger)
+        {
+            fPreferences.putBytes(i->getName().c_str(), i->getDataPtr(), i->getDataSize());
+            DEBUG_PRINT_VALUE_BUF_LN(i->getName().c_str(), (byte*)i->getDataPtr(), i->getDataSize())
+        }
+    }
+}
+
+void STR::begin()
+{
+    fPreferences.end();
 }

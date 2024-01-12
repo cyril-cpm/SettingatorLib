@@ -20,5 +20,8 @@ void printBuffer(byte* ptr, size_t size, uint8_t base = HEX);
 #define DEBUG_PRINT_LN(X) DEBUG(Serial.println(X);)
 #define DEBUG_PRINT(X) DEBUG(Serial.print(X);)
 #define DEBUG_PRINT_VALUE(X, Y) DEBUG(Serial.print(X);Serial.print(" : ");Serial.println(Y);)
+#define DEBUG_PRINT_BUF(PTR, SIZE) DEBUG(printBuffer(PTR, SIZE);)
+#define DEBUG_PRINT_VALUE_BUF(NAME, PTR, SIZE) DEBUG_PRINT(NAME) DEBUG_PRINT(" : ") DEBUG_PRINT_BUF(PTR, SIZE)
+#define DEBUG_PRINT_VALUE_BUF_LN(NAME, PTR, SIZE) DEBUG_PRINT_VALUE_BUF(NAME, PTR, SIZE) DEBUG_PRINT_LN("")
 
 #endif

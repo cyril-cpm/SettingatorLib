@@ -13,7 +13,7 @@ WebSocketCTR::WebSocketCTR(int port)
     fWebSocketServer->onEvent([this](uint8_t client, WStype_t type, uint8_t* payload, size_t len) {
 
 #if SERIAL_DEBUG
-	
+        Serial.println("//////////////////////////////////////////////////////////////////////////");
         Serial.println("WebSocketServerEvent");
         printBuffer(payload, len);
         Serial.println("");

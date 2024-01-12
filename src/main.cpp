@@ -42,8 +42,11 @@ void setup() {
     settingator->AddSetting(Setting::Type::Slider, &white, sizeof(white), "white", []() { 
         DEBUG_PRINT_VALUE("setting brightness", white);
         FastLED.setBrightness(white); });
+    FastLED.setBrightness(white);
     settingator->AddSetting(Setting::Type::Trigger, nullptr, 0, "Save", []() {
-        Serial.println("Save Callback"); });
+        Serial.println("Save Callback");
+        settingator->SavePreferences(); });
+
 }
 
 void loop() {

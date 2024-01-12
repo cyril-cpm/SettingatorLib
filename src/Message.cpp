@@ -1,7 +1,12 @@
 #include "Message.h"
 #include <Arduino.h>
+#include "MiscDef.h"
 
-Message::Message(uint8_t* buffer, uint8_t len) : fBuffer(buffer), fType((Message::Type)buffer[3]), fLength(len) {}
+Message::Message(uint8_t* buffer, uint8_t len) : fType((Message::Type)buffer[3]), fLength(len)
+{
+    fBuffer = (byte*)malloc(len * sizeof(byte));
+    memcpy(fBuffer, buffer, len);
+}
 
 uint8_t Message::GetLength()
 {
@@ -20,14 +25,19 @@ void Message::ExtractSettingUpdate(uint8_t &ref, uint8_t &newValueLen, byte **ne
     newValueLen = 0;
     *newValue = nullptr;
 
-    if (fBuffer[3] == Message::Type::SettingUpdate)
+    if (fType == Message::Type::SettingUpdate)
     {
-        Serial.println("ref");
+        DEBUG_PRINT_VALUE("SUCCESS: buffer type", fBuffer[3])
         ref = fBuffer[4];
-        Serial.println("value Len");
+        DEBUG_PRINT_VALUE("ref", ref)
         newValueLen = fBuffer[5];
-        Serial.println("value");
+        DEBUG_PRINT_VALUE("value len", newValueLen)
        *newValue = &fBuffer[6];
+        DEBUG_PRINT_VALUE_BUF_LN("value", *newValue, newValueLen)
+    }
+    else
+    {
+        DEBUG_PRINT_VALUE("FAIL: buffer type", fBuffer[3])
     }
     Serial.println("Done");
 }
