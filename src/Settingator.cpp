@@ -16,9 +16,6 @@ void STR::StartWiFi()
 STR::STR(ICTR* communicator) : fCommunicator(communicator)
 {
     fPreferences.begin("settingator", false);
-    //byte red = 255;
-    //fPreferences.remove("red");
-    //fPreferences.putBytes("red", &red, 1);
 }
 
 void STR::Update()

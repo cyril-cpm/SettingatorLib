@@ -13,16 +13,12 @@ CRGB leds[NUM_LEDS];
 
 WebSocketCTR* ctr;
 STR*          settingator;
-String str("Salut maggle");
-String yolo("yolo");
 
 
 uint8_t red = 127;
 uint8_t green = 50;
 uint8_t blue = 245;
 uint8_t white = 128;
-
-bool    trig = false;
 
 HTTPServer *server;
 
