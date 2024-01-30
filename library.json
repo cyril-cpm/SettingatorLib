@@ -1,6 +1,6 @@
 {
     "name": "Settingator",
-    "version": "0.1.6",
+    "version": "0.1.7",
     "author": "Nit",
     "repository": {
         "type": "git",
@@ -12,6 +12,6 @@
         "esphome/AsyncTCP-esphome": "^2.0.0",
         "ottowinter/ESPAsyncWebServer-esphome": "^3.1.0"
     },
-    "frameworks": ["arduino"],
-    "platforms": ["espressif32"]
+    "frameworks": "*",
+    "platforms": "*"
 }
