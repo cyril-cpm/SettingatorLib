@@ -2,6 +2,7 @@
 #define _SETTINGATOR_
 
 #include <Arduino.h>
+#include <WiFi.h>
 #include "Communicator.h"
 #include "Setting.h"
 #include <vector>
