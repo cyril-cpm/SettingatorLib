@@ -21,7 +21,8 @@ class STR
 
     void Update();
     void AddSetting(Setting& setting);
-    void AddSetting(Setting::Type type, void* data_ptr, size_t data_size, const char* name = "sans nom", void (*callback)() = nullptr);
+    uint8_t AddSetting(Setting::Type type, void* data_ptr, size_t data_size, const char* name = "sans nom", void (*callback)() = nullptr);
+    void UpdateSetting(uint8_t ref, byte* newValuePtr, size_t newValueSize);
 
     Setting*    GetSettingByRef(uint8_t ref);
 

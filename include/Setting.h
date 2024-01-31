@@ -14,7 +14,8 @@ public:
     {
         Slider = 0x01,
         Trigger = 0x02,
-        Switch = 0x03
+        Switch = 0x03,
+        Label = 0x04
     };
 
     Setting(Type type, void* dataPtr, size_t dataSize, const char* name, void (*callback)(), setting_ref ref);
@@ -23,6 +24,7 @@ public:
     - Update the setting value
     */
     bool update(byte* newValuePtr, size_t newValueSize);
+    bool updateLabel(byte* newValuePtr, size_t newValueSize);
 
     /*
     - Build the init buffer describing the setting to be sent to the remote controller

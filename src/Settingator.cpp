@@ -79,7 +79,7 @@ void STR::AddSetting(Setting& setting)
     }
 }
 
-void STR::AddSetting(Setting::Type type, void* data_ptr, size_t data_size, const char* name, void (*callback)())
+uint8_t STR::AddSetting(Setting::Type type, void* data_ptr, size_t data_size, const char* name, void (*callback)())
 {
     fSettingVector.push_back(Setting(type, data_ptr, data_size, name, callback, fInternalRefCount++));
 
@@ -97,6 +97,18 @@ void STR::AddSetting(Setting::Type type, void* data_ptr, size_t data_size, const
             setting->update((byte*)buf, len);
             DEBUG_PRINT_VALUE_BUF_LN(name, (byte*)buf, len)
         }
+    }
+
+    return(fInternalRefCount-1);
+}
+
+void STR::UpdateSetting(uint8_t ref, byte* newValuePtr, size_t newValueSize)
+{
+    Setting* setting = GetSettingByRef(ref);
+
+    if (setting)
+    {
+        
     }
 }
 
