@@ -30,6 +30,16 @@ bool Setting::update(byte* newValuePtr, size_t newValueSize)
     return true;
 }
 
+bool Setting::updateLabel(byte* newValuePtr, size_t newValueSize)
+{
+    if (update(newValuePtr, newValueSize))
+    {
+        
+        return true;
+    }
+    return false;
+}
+
 void Setting::getInitRequest(byte* buffer)
 {
     size_t bufferSize = getInitRequestSize();
