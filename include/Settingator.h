@@ -3,6 +3,8 @@
 
 #include <Arduino.h>
 #include <WiFi.h>
+#include <WiFiClientSecure.h>
+#include <FS.h>
 #include "Communicator.h"
 #include "Setting.h"
 #include <vector>
