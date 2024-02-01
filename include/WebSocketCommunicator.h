@@ -12,7 +12,7 @@ class WebSocketCTR: public ICTR
     /*
     - create an instance of SerialCTR with baudRate
     */
-    static WebSocketCTR* CreateInstance(int port = 80);
+    static WebSocketCTR* CreateInstance(int port = 8081);
 
     virtual bool    Available() override;
     virtual int     Write(Message& buf) override;

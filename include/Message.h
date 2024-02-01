@@ -22,6 +22,7 @@ public:
 
     Message() {};
     Message(uint8_t* buffer, uint8_t len);
+    Message(uint8_t** buffer, uint8_t len);
 
     /*
     - Return length of buffer

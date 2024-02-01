@@ -5,6 +5,8 @@
 
 #include <Arduino.h>
 
+class Message;
+
 typedef byte setting_ref;
 
 class Setting
@@ -24,7 +26,6 @@ public:
     - Update the setting value
     */
     bool update(byte* newValuePtr, size_t newValueSize);
-    bool updateLabel(byte* newValuePtr, size_t newValueSize);
 
     /*
     - Build the init buffer describing the setting to be sent to the remote controller
@@ -32,6 +33,7 @@ public:
     - initRequestBuffer is allocated and must be freed then.
     */
     void getInitRequest(byte* initRequestBuffer);
+    Message* buildUpdateMessage();
 
     size_t getInitRequestSize();
 

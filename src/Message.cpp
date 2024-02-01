@@ -8,6 +8,11 @@ Message::Message(uint8_t* buffer, uint8_t len) : fType((Message::Type)buffer[3])
     memcpy(fBuffer, buffer, len);
 }
 
+Message::Message(uint8_t** buffer, uint8_t len) : fType((Message::Type)(*buffer)[3]), fLength(len)
+{
+    fBuffer = *buffer;
+}
+
 uint8_t Message::GetLength()
 {
     return fLength;

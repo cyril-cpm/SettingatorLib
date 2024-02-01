@@ -93,6 +93,7 @@ button:active {
     SLIDER = 0x01;
     TRIGGER = 0X02;
     SWITCH = 0x03;
+    LABEL = 0x04;
 
     SETTING_UPDATE = 0x11;
     SETTING_INIT = 0x13;
@@ -239,6 +240,13 @@ button:active {
 
                 document.body.appendChild(buttonNode);
             }
+            else if (setting.type = LABEL) {
+                let labelNode = document.createElement("h1");
+                labelNode.id = setting.refId
+                labelNode.innerText = new TextDecoder().decode(setting.value);
+
+                document.body.appendChild(labelNode);
+            }
 }
 
     function treatMessage(message) {
@@ -271,6 +279,15 @@ button:active {
                 addSetting(setting);
                 logText(setting.name);
             }
+        }
+        else if (msg.type == SETTING_UPDATE) {
+            let ref = view[4];
+            let len = view[5];
+            let val = view.slice(6, 6 + len);
+
+            let node = document.getElementById("ref" + ref);
+
+            node.innerText = new TextDecoder().decode(val);
         }
 
         return;

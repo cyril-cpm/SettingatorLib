@@ -1,5 +1,6 @@
 #include "Setting.h"
 #include "MiscDef.h"
+#include "Message.h"
 #include <Arduino.h>
 
 Setting::Setting(Type type, void* dataPtr, size_t dataSize, const char* name, void (*callback)(), setting_ref ref)
@@ -30,16 +31,6 @@ bool Setting::update(byte* newValuePtr, size_t newValueSize)
     return true;
 }
 
-bool Setting::updateLabel(byte* newValuePtr, size_t newValueSize)
-{
-    if (update(newValuePtr, newValueSize))
-    {
-        
-        return true;
-    }
-    return false;
-}
-
 void Setting::getInitRequest(byte* buffer)
 {
     size_t bufferSize = getInitRequestSize();
@@ -66,4 +57,25 @@ size_t Setting::getInitRequestSize()
     bufferSize += fDataSize;
 
     return bufferSize;
+}
+
+Message* Setting::buildUpdateMessage()
+{
+    size_t messageLength = 7 + fDataSize;
+
+    byte* buffer = (byte*)malloc(messageLength * sizeof(byte));
+
+    buffer[0] = Message::Frame::Start;
+
+    buffer[1] = messageLength >> 8;
+    buffer[2] = messageLength;
+
+    buffer[3] = Message::Type::SettingUpdate;
+
+    buffer[4] = fRef;
+    buffer[5] = fDataSize;
+    memcpy(&(buffer[6]), fDataPtr, fDataSize);
+    buffer[messageLength - 1] = Message::Frame::End;
+
+    return new Message(&buffer, messageLength);
 }

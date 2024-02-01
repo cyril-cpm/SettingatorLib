@@ -108,8 +108,28 @@ void STR::UpdateSetting(uint8_t ref, byte* newValuePtr, size_t newValueSize)
 
     if (setting)
     {
-        
+        setting->update(newValuePtr, newValueSize);
+        SendUpdateMessage(setting);
     }
+}
+
+void STR::SendUpdateMessage(Setting* setting)
+{
+    if (setting)
+    {
+        Message* message = setting->buildUpdateMessage();
+        if (message)
+            fCommunicator->Write(*message);
+        delete message;
+    }
+}
+
+void STR::SendUpdateMessage(uint8_t ref)
+{
+    Setting* setting = GetSettingByRef(ref);
+
+    if (setting)
+        SendUpdateMessage(setting);
 }
 
 Message* STR::_buildSettingInitMessage()
