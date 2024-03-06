@@ -246,8 +246,8 @@ button:active {
             }
             else if (setting.type = LABEL) {
                 let labelNode = document.createElement("h1");
-                labelNode.id = setting.refId
-                label.class = "label"
+                labelNode.id = setting.refId;
+                labelNode.classList.add("label");
                 labelNode.innerText = new TextDecoder().decode(setting.value);
 
                 document.body.appendChild(labelNode);
