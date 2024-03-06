@@ -21,6 +21,10 @@ h1 {
   pointer-events: none;
 }
 
+.label {
+    position: relative;
+}
+
 input[type=range] {
   -webkit-appearance: none;
   width: 90%;
@@ -91,7 +95,7 @@ button:active {
     log.scrollTop = log.scrollHeight;
 
     SLIDER = 0x01;
-    TRIGGER = 0X02;
+    TRIGGER = 0x02;
     SWITCH = 0x03;
     LABEL = 0x04;
 
@@ -243,6 +247,7 @@ button:active {
             else if (setting.type = LABEL) {
                 let labelNode = document.createElement("h1");
                 labelNode.id = setting.refId
+                label.class = "label"
                 labelNode.innerText = new TextDecoder().decode(setting.value);
 
                 document.body.appendChild(labelNode);
