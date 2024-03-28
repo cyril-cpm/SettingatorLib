@@ -42,4 +42,16 @@ class STR
     Preferences             fPreferences;
 };
 
+/**************** HELPER ********************/
+
+#define INIT_WS_WITH_HTTP_SERVER_STR    \#include<HTTPServer.h>\
+                                        #include<WebSocketCommunicator.h>\
+                                        \
+                                        STR::StartWiFi();\
+                                        \
+                                        HTTPServer *HTTPSERVER = new HTTPServer(8080);\
+                                        STR* SETTINGATOR = new STR(WebSocketCommunicator::CreateInstance());
+
+#define INIT_DEFAULT_SETTINGATOR          INIT_WS_WITH_HTTP_SERVER_STR
+
 #endif

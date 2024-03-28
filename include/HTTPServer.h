@@ -1,3 +1,6 @@
+#ifndef _HTTPSERVER_
+#define _HTTPSERVER_
+
 #include <Arduino.h>
 
 class AsyncWebServer;
@@ -11,3 +14,5 @@ public:
 private:
     AsyncWebServer *fServer;
 };
+
+#endif
