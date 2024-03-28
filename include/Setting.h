@@ -1,8 +1,6 @@
 #ifndef _SETTING_
 #define _SETTING_
 
-#include "MiscDef.h"
-
 #include <Arduino.h>
 
 class Message;

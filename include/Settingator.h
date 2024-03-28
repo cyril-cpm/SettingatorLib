@@ -1,23 +1,26 @@
 #ifndef _SETTINGATOR_
 #define _SETTINGATOR_
 
-#include <Arduino.h>
-#include <WiFi.h>
-#include <WiFiClientSecure.h>
-#include <FS.h>
-#include <SPIFFS.h>
-#include "Communicator.h"
-#include "Setting.h"
 #include <vector>
-#include <Preferences.h>
+#include <Arduino.h>
 
-class STR
+#include "Setting.h"
+
+class Preferences;
+
+class ICTR;
+class Message;
+
+class Settingator
 {
     public:
 
     static void StartWiFi();
 
-    STR(ICTR* communicator);
+    //static Settingator* CreateWSComWithHTTPServerWiFiSettingator();
+
+    Settingator(ICTR* communicator);
+    ~Settingator();
 
     void Update();
     void AddSetting(Setting& setting);
@@ -25,6 +28,7 @@ class STR
     void UpdateSetting(uint8_t ref, byte* newValuePtr, size_t newValueSize);
     void SendUpdateMessage(Setting* setting);
     void SendUpdateMessage(uint8_t ref);
+    void SetCommunicator(ICTR* communicator);
     
     Setting*    GetSettingByRef(uint8_t ref);
 
@@ -39,19 +43,9 @@ class STR
     
     Message*    _buildSettingInitMessage();
     
-    Preferences             fPreferences;
+    Preferences*             fPreferences;
 };
 
-/**************** HELPER ********************/
-
-#define INIT_WS_WITH_HTTP_SERVER_STR    \#include<HTTPServer.h>\
-                                        #include<WebSocketCommunicator.h>\
-                                        \
-                                        STR::StartWiFi();\
-                                        \
-                                        HTTPServer *HTTPSERVER = new HTTPServer(8080);\
-                                        STR* SETTINGATOR = new STR(WebSocketCommunicator::CreateInstance());
-
-#define INIT_DEFAULT_SETTINGATOR          INIT_WS_WITH_HTTP_SERVER_STR
+extern Settingator STR;
 
 #endif

@@ -2,7 +2,8 @@
 #define _COMMUNICATOR_
 
 #include <Arduino.h>
-#include "Message.h"
+
+class Message;
 
 class ICTR
 {

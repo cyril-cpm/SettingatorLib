@@ -1,6 +1,9 @@
 #include "WebSocketCommunicator.h"
-#include <WiFi.h>
+
 #include "MiscDef.h"
+#include "Message.h"
+
+#include <WebSocketsServer.h>
 
 WebSocketCTR::WebSocketCTR(int port)
 {   

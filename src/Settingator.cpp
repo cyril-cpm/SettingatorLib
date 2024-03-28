@@ -1,9 +1,15 @@
 #include "Settingator.h"
-#include <Arduino.h>
-#include <ESPAsyncWebServer.h>
+
+#include "Communicator.h"
+#include "Setting.h"
+#include "Message.h"
+#include "MiscDef.h"
+
+#include <WiFi.h>
 #include <Preferences.h>
 
-void STR::StartWiFi()
+
+void Settingator::StartWiFi()
 {
     Serial.println("Begin WiFi");
     WiFi.mode(WIFI_AP);
@@ -13,12 +19,23 @@ void STR::StartWiFi()
     Serial.println(WiFi.softAPIP());
 }
 
-STR::STR(ICTR* communicator) : fCommunicator(communicator)
+Settingator::Settingator(ICTR* communicator) : fCommunicator(communicator)
 {
-    fPreferences.begin("settingator", false);
+    fPreferences = new Preferences();
+    fPreferences->begin("settingator", false);
 }
 
-void STR::Update()
+Settingator::~Settingator()
+{
+    delete fPreferences;
+}
+
+void Settingator::SetCommunicator(ICTR* communicator)
+{
+    fCommunicator = communicator;
+}
+
+void Settingator::Update()
 {
     if (fCommunicator->Available())
     {
@@ -31,7 +48,7 @@ void STR::Update()
         if (msg->GetType() == Message::Type::InitRequest)
         {
             Message* initMessage = _buildSettingInitMessage();
-    //DEBUG_PRINT_LN("STR::Update");
+    //DEBUG_PRINT_LN("Settingator::Update");
 
             fCommunicator->Write(*initMessage);
 
@@ -63,7 +80,7 @@ void STR::Update()
     }
 }
 
-void STR::AddSetting(Setting& setting)
+void Settingator::AddSetting(Setting& setting)
 {
     fSettingVector.push_back(setting);
 
@@ -72,14 +89,14 @@ void STR::AddSetting(Setting& setting)
         const char * settingName = setting.getName().c_str();
         void* buf = malloc(setting.getDataSize() * sizeof(byte));
 
-        size_t len = fPreferences.getBytes(settingName, buf, setting.getDataSize());
+        size_t len = fPreferences->getBytes(settingName, buf, setting.getDataSize());
 
         if (len)
             setting.update((byte*)buf, len);
     }
 }
 
-uint8_t STR::AddSetting(Setting::Type type, void* data_ptr, size_t data_size, const char* name, void (*callback)())
+uint8_t Settingator::AddSetting(Setting::Type type, void* data_ptr, size_t data_size, const char* name, void (*callback)())
 {
     fSettingVector.push_back(Setting(type, data_ptr, data_size, name, callback, fInternalRefCount++));
 
@@ -87,7 +104,7 @@ uint8_t STR::AddSetting(Setting::Type type, void* data_ptr, size_t data_size, co
     {
         void* buf = malloc(data_size * sizeof(byte));
         DEBUG_PRINT_LN(name)
-        size_t len = fPreferences.getBytes(name, buf, data_size);
+        size_t len = fPreferences->getBytes(name, buf, data_size);
 
         Setting* setting = GetSettingByRef(fInternalRefCount-1);
 
@@ -102,7 +119,7 @@ uint8_t STR::AddSetting(Setting::Type type, void* data_ptr, size_t data_size, co
     return(fInternalRefCount-1);
 }
 
-void STR::UpdateSetting(uint8_t ref, byte* newValuePtr, size_t newValueSize)
+void Settingator::UpdateSetting(uint8_t ref, byte* newValuePtr, size_t newValueSize)
 {
     Setting* setting = GetSettingByRef(ref);
 
@@ -113,7 +130,7 @@ void STR::UpdateSetting(uint8_t ref, byte* newValuePtr, size_t newValueSize)
     }
 }
 
-void STR::SendUpdateMessage(Setting* setting)
+void Settingator::SendUpdateMessage(Setting* setting)
 {
     if (setting)
     {
@@ -124,7 +141,7 @@ void STR::SendUpdateMessage(Setting* setting)
     }
 }
 
-void STR::SendUpdateMessage(uint8_t ref)
+void Settingator::SendUpdateMessage(uint8_t ref)
 {
     Setting* setting = GetSettingByRef(ref);
 
@@ -132,7 +149,7 @@ void STR::SendUpdateMessage(uint8_t ref)
         SendUpdateMessage(setting);
 }
 
-Message* STR::_buildSettingInitMessage()
+Message* Settingator::_buildSettingInitMessage()
 {
     size_t initRequestSize = 6;
 
@@ -162,7 +179,7 @@ Message* STR::_buildSettingInitMessage()
     return new Message(requestBuffer, initRequestSize);
 }
 
-Setting* STR::GetSettingByRef(uint8_t ref)
+Setting* Settingator::GetSettingByRef(uint8_t ref)
 {
     DEBUG_PRINT_VALUE("Searching setting ref", ref);
     for (auto it = fSettingVector.begin(); it != fSettingVector.end(); it++)
@@ -177,20 +194,22 @@ Setting* STR::GetSettingByRef(uint8_t ref)
     return nullptr;
 }
 
-void STR::SavePreferences()
+void Settingator::SavePreferences()
 {
     DEBUG_PRINT_LN("Saving Preferences");
     for (auto i = fSettingVector.begin(); i != fSettingVector.end(); i++)
     {
         if (i->getType() != Setting::Type::Trigger)
         {
-            fPreferences.putBytes(i->getName().c_str(), i->getDataPtr(), i->getDataSize());
+            fPreferences->putBytes(i->getName().c_str(), i->getDataPtr(), i->getDataSize());
             DEBUG_PRINT_VALUE_BUF_LN(i->getName().c_str(), (byte*)i->getDataPtr(), i->getDataSize())
         }
     }
 }
 
-void STR::begin()
+void Settingator::begin()
 {
-    fPreferences.end();
+    fPreferences->end();
 }
+
+Settingator STR(nullptr);

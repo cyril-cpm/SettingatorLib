@@ -2,9 +2,10 @@
 #define _WS_COMMUNICATOR_
 
 #include "Communicator.h"
-#include "Message.h"
-#include "WebSocketsServer.h"
 #include <queue>
+
+class Message;
+class WebSocketsServer;
 
 class WebSocketCTR: public ICTR
 {
