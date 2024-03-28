@@ -1,0 +1,10 @@
+Setting Type:
+    Slider = 0x01
+    Trigger = 0x02
+    Switch = 0x03
+    Label = 0x04
+
+Message Type
+    SettingUpdate = 0x11
+    InitRequest = 0x12
+    SettingInit = 0x13

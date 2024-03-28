@@ -1,0 +1,332 @@
+<style>
+body {
+  background-color: #000;
+  margin: 100px auto;
+  text-align: center;
+}
+
+button,
+h1 {
+  color: #fff;
+  font-family: helvetica;
+  font-size: 190%;
+  font-style: italic;
+  letter-spacing: 2px;
+}
+
+h1 {
+  margin-bottom: 60px;
+  position: absolute;
+  width: 100%;
+  pointer-events: none;
+}
+
+.label {
+    position: relative;
+}
+
+input[type=range] {
+  -webkit-appearance: none;
+  width: 90%;
+  height: 15px;
+  background: #000;
+  outline: none;
+  border: 5px solid rgb(0, 255, 0);
+  border-radius: 8px;
+  margin-top: 30px;
+  margin-bottom: 30px;
+}
+
+
+/* for chrome/safari */
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 60px;
+  background: #000;
+  cursor: pointer;
+  border: 5px solid rgb(0, 255, 0);
+  border-radius: 4px;
+}
+
+/* for firefox */
+input[type=range]::-moz-range-thumb {
+  width: 20px;
+  height: 60px;
+  background: #000;
+  cursor: pointer;
+  border: 5px solid lawngreen;
+  border-radius: 4px;
+}
+
+input[type=checkbox] {
+    -webkit-appearance: none;
+    width: 90%;
+    height: 60px;
+    background-color: rgb(0, 255, 0);
+    align-self: center;
+}
+
+input[type=checkbox]:checked {
+    background-color: rgb(255, 0, 0);
+}
+
+button {
+    width: 90%;
+    height: 60px;
+    background-color: rgb(0, 255, 0);
+}
+
+button:active {
+    background-color: rgb(255, 0, 0);
+}
+
+</style>
+
+<h1>Debug</h1>
+<input type="checkbox" id="debugSwitch"/>
+
+<textarea id="log" name="log" rows="20" cols="120"></textarea>
+<script>
+
+    let log = document.getElementById("log");
+    log.remove();
+    log.scrollTop = log.scrollHeight;
+
+    SLIDER = 0x01;
+    TRIGGER = 0x02;
+    SWITCH = 0x03;
+    LABEL = 0x04;
+
+    SETTING_UPDATE = 0x11;
+    SETTING_INIT = 0x13;
+
+    function logText(text) {
+        log.textContent += text + "\n";
+    }
+    
+    function logHex(buff) {
+        for (i = 0; i < buff.length; i++) {
+            if (buff[i] < 16)
+                log.textContent += 0;
+            log.textContent += buff[i].toString(16);
+            log.textContent += " ";
+        }
+        log.textContent += "\n";
+    }
+
+    webSocket = new WebSocket("ws://192.168.0.1:8081/settingator", "settingator");
+    webSocket.binaryType = "arraybuffer";
+
+    
+    function sendMessage(message) {
+        logText("Sending Message:");
+        logHex(message);
+        webSocket.send(message);
+    }
+
+
+    function sendInitRequest() {
+        let initRequest = new Uint8Array([ 0xFF, 0x00, 0x06, 0x12, 0x00, 0x00]);
+        sendMessage(initRequest);
+        logText("Init request sent...");
+    }
+
+    function setSliderColor(setting, newValue) {
+        switch (setting.name) {
+            case "red":
+                setting.node.style = "border-color: rgb( 100%, 0%, 0%, " + newValue/255 + ");";
+                break;
+            case "green":
+                setting.node.style = "border-color: rgb(0%, 100%, 0%, " + newValue/255 + ");";
+                break;
+            case "blue":
+                setting.node.style = "border-color: rgb(0%, 0%, 100%, " + newValue/255 + ");";
+                break;
+            case "white":
+                setting.node.style = "border-color: rgb(100%, 100%, 100%, " + newValue/255 + ");";
+                break;
+        }
+    }
+
+    function addSetting(setting) {
+            if (setting.type == SLIDER) {
+                let node = document.createElement("input");
+                setting.node = node;
+
+                node.type = "range";
+                node.min = 0;
+                node.max = Math.pow(256, setting.valueSize) - 1;
+                node.id = setting.refId;
+
+                node.value = 0;
+                for (let i = 0; i < setting.valueSize; i++) {
+                    node.value = node.value * 256;
+                    node.value += setting.value[i];
+                }
+                node.oldValue = node.value;
+
+                node.addEventListener("change", function() {
+                    let newValue = node.value;
+                    
+                    if (newValue != node.oldValue) {
+                        node.oldValue = node.value;
+                        logText(newValue);
+
+                        let updateMsg = [ 0xFF];
+                        let messageSize = 7 + setting.valueSize;
+
+                        updateMsg[1] = Math.floor(messageSize / 256);
+                        updateMsg[2] = messageSize % 256;
+                        updateMsg[3] = SETTING_UPDATE;
+                        updateMsg[4] = setting.ref;
+                        updateMsg[5] = setting.valueSize;
+                        
+                        for (i = setting.valueSize - 1; i >= 0; i--) {
+                            updateMsg[6 + i] = newValue % 256;
+                            newValue = Math.floor(newValue / 256);
+                        }
+
+                        updateMsg[6 + setting.valueSize] = 0x00;
+
+                        sendMessage(new Uint8Array(updateMsg));
+                    }
+                });
+
+                node.oninput = function() {
+                    setSliderColor(setting, node.value);
+                };
+
+                setSliderColor(setting, setting.value);
+                //node.getElementById("track").style = "border-color: " + setting.name + ";";
+                document.styleSheets.item(0).addRule("#" + setting.refId + "::-webkit-slider-thumb", "border-color: " + setting.name +";");
+                document.body.appendChild(node);
+            }
+            else if (setting.type == SWITCH) {
+                let labelNode = document.createElement("h1");
+                labelNode.innerText = setting.name;
+                let inputNode = document.createElement("input");
+                inputNode.type = "checkbox";
+
+                inputNode.oninput = function() {
+                      
+                    let updateMsg = [0xFF,
+                                    0x00,
+                                    0x08,
+                                    SETTING_UPDATE,
+                                    setting.ref,
+                                    0x01,
+                                    inputNode.checked == true ? 0x01 : 0x00,
+                                    0x00];
+
+                    sendMessage(new Uint8Array(updateMsg));
+                };
+
+                document.body.appendChild(labelNode);
+                document.body.appendChild(inputNode);
+            }
+            else if (setting.type == TRIGGER) {
+                let buttonNode = document.createElement("button");
+                buttonNode.innerText = setting.name;
+
+                buttonNode.onclick = function() {
+                    let updateMsg = [0xFF,
+                                    0x00,
+                                    0x00,
+                                    SETTING_UPDATE,
+                                    setting.ref,
+                                    0x00,
+                                    0x00];
+                        
+                    sendMessage(new Uint8Array(updateMsg));
+                }
+
+                document.body.appendChild(buttonNode);
+            }
+            else if (setting.type = LABEL) {
+                let labelNode = document.createElement("h1");
+                labelNode.id = setting.refId;
+                labelNode.classList.add("label");
+                labelNode.innerText = new TextDecoder().decode(setting.value);
+
+                document.body.appendChild(labelNode);
+            }
+}
+
+    function treatMessage(message) {
+        let view = new Uint8Array(message);
+        logHex(view);
+
+        let msg = {};
+
+        msg.size = (view[1] << 8) + view[2];
+        msg.type = view[3];
+
+        if (msg.type == SETTING_INIT) {
+            msg.nbSettings = view[4];
+
+            let settingView = view.slice(5);
+
+            for (let i = 0; i < msg.nbSettings; i++) {
+                let setting = {};
+
+                setting.ref = settingView[0];
+                setting.refId = "ref" + setting.ref;
+                setting.type = settingView[1];
+                setting.valueSize = settingView[2];
+                setting.value = settingView.slice(3, 3 + setting.valueSize);
+                setting.nameLen = settingView[3 + setting.valueSize];
+                setting.name = new TextDecoder().decode(settingView.slice(3 + setting.valueSize + 1, 3 + setting.valueSize + 1 + setting.nameLen));
+
+                settingView = settingView.slice(3 + setting.valueSize + 1 + setting.nameLen);
+
+                addSetting(setting);
+                logText(setting.name);
+            }
+        }
+        else if (msg.type == SETTING_UPDATE) {
+            let ref = view[4];
+            let len = view[5];
+            let val = view.slice(6, 6 + len);
+
+            let node = document.getElementById("ref" + ref);
+
+            node.innerText = new TextDecoder().decode(val);
+        }
+
+        return;
+    }
+
+    webSocket.onopen = function (event) {
+        logText("onOpen");
+
+        sendInitRequest();
+    }
+
+    webSocket.onclose = function (event) {
+        logText("onClose " + event.code + " " + event.reason);
+    }
+
+    webSocket.onmessage = function (event) {
+        logText("onMessage");
+
+        treatMessage(event.data);
+    }
+
+    webSocket.onerror = function (event) {
+        logText("onError");
+    }
+    
+    let debugSwitch = document.getElementById("debugSwitch");
+    debugSwitch.onchange = function() {
+        if (debugSwitch.checked == true) {
+            debugSwitch.parentNode.insertBefore(log, debugSwitch.nextElementSibling);
+        }
+        else {
+            log.remove();
+        }
+    }
+
+
+</script>

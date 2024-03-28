@@ -2,8 +2,8 @@
 #define _COMMUNICATOR_
 
 #include <Arduino.h>
-#include "Buffer.h"
-#include "Message.h"
+
+class Message;
 
 class ICTR
 {
@@ -17,22 +17,24 @@ class ICTR
     /*
     - Write Buffer to communicator
     */
-    virtual int write(Buffer& buf) = 0;
+    virtual int Write(Message& buf) = 0;
 
     /*
     - Read a message if avaible or return empty Message
      */
-    virtual Message Read() = 0;
+    virtual Message* Read() = 0;
 
     /*
     - Flush message after having executed
     */
-    virtual void    Flush(Message& message) = 0;
+    virtual void    Flush() = 0;
 
     /*
     - Update internal Buffer
     */
     virtual void Update() = 0;
+
+    virtual uint8_t GetBoxSize() const = 0;
 };
 
 #endif

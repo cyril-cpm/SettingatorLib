@@ -1,7 +1,9 @@
 #ifndef _SETTING_
 #define _SETTING_
 
-#include "Settingator.h"
+#include <Arduino.h>
+
+class Message;
 
 typedef byte setting_ref;
 
@@ -12,10 +14,11 @@ public:
     {
         Slider = 0x01,
         Trigger = 0x02,
-        Switch = 0x03
+        Switch = 0x03,
+        Label = 0x04
     };
 
-    Setting(Type type, byte* dataPtr, size_t dataSize, String& name, setting_ref ref);
+    Setting(Type type, void* dataPtr, size_t dataSize, const char* name, void (*callback)(), setting_ref ref);
 
     /*
     - Update the setting value
@@ -27,8 +30,19 @@ public:
     - in SETTING_INI message
     - initRequestBuffer is allocated and must be freed then.
     */
-    void getInitRequest(byte** initRequestBuffer, size_t& bufferSize);
+    void getInitRequest(byte* initRequestBuffer);
+    Message* buildUpdateMessage();
 
+    size_t getInitRequestSize();
+
+    uint8_t getRef() { return fRef; } const
+    size_t  getDataSize() { return fDataSize; } const
+    byte*   getDataPtr() { return fDataPtr; }
+    Type    getType() { return fType; } const
+
+    void    callback() { if (fCallback) fCallback(); }
+
+    String  getName() { return fName; }
 
 private:
     Type fType;
@@ -36,6 +50,7 @@ private:
     size_t fDataSize = 0;
     String fName;
     setting_ref fRef = 0;
+    void    (*fCallback)();
 };
 
 #endif

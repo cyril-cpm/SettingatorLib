@@ -1,8 +1,26 @@
 #include "Setting.h"
+#include "MiscDef.h"
+#include "Message.h"
+#include <Arduino.h>
 
-Setting::Setting(Type type, byte* dataPtr, size_t dataSize, String& name, setting_ref ref)
-: fType(type), fDataPtr(dataPtr), fDataSize(dataSize), fName(name), fRef(ref)
-{}
+Setting::Setting(Type type, void* dataPtr, size_t dataSize, const char* name, void (*callback)(), setting_ref ref)
+: fType(type), fDataPtr((byte*)dataPtr), fDataSize(dataSize), fName(name), fCallback(callback), fRef(ref)
+{
+#if SERIAL_DEBUG
+    Serial.println("New Setting:");
+    Serial.print("\ttype\t\t: ");
+    Serial.println(type, DEC);
+    Serial.print("\tdataSize\t: ");
+    Serial.println(dataSize, DEC);
+    Serial.print("\tdata\t\t: ");
+    printBuffer(fDataPtr, dataSize);
+    Serial.println("");
+    Serial.print("\tref\t\t: ");
+    Serial.println(ref);
+    Serial.print("\tname\t\t: ");
+    Serial.println(name);
+#endif
+}
 
 bool Setting::update(byte* newValuePtr, size_t newValueSize)
 {
@@ -13,22 +31,51 @@ bool Setting::update(byte* newValuePtr, size_t newValueSize)
     return true;
 }
 
-void Setting::getInitRequest(byte** initRequestBuffer, size_t& bufferSize)
+void Setting::getInitRequest(byte* buffer)
 {
-    bufferSize = 0;
+    size_t bufferSize = getInitRequestSize();
 
     bufferSize += 4;
     bufferSize += fName.length();
     bufferSize += fDataSize;
-
-    byte* buffer = (byte*)malloc(fDataSize);
 
     buffer[0] = fRef;
     buffer[1] = fType;
     buffer[2] = fDataSize;
     memcpy(&(buffer[3]), fDataPtr, fDataSize);
     buffer[3 + fDataSize] = fName.length();
-    fName.getBytes(buffer, bufferSize, 4 + fDataSize);
+    byte nameIndex = 4 + fDataSize;
+    fName.getBytes(buffer + 4 + fDataSize, bufferSize - nameIndex + 1, 0);
+}
 
-    *initRequestBuffer = buffer;
+size_t Setting::getInitRequestSize()
+{
+    size_t bufferSize = 0;
+
+    bufferSize += 4;
+    bufferSize += fName.length();
+    bufferSize += fDataSize;
+
+    return bufferSize;
+}
+
+Message* Setting::buildUpdateMessage()
+{
+    size_t messageLength = 7 + fDataSize;
+
+    byte* buffer = (byte*)malloc(messageLength * sizeof(byte));
+
+    buffer[0] = Message::Frame::Start;
+
+    buffer[1] = messageLength >> 8;
+    buffer[2] = messageLength;
+
+    buffer[3] = Message::Type::SettingUpdate;
+
+    buffer[4] = fRef;
+    buffer[5] = fDataSize;
+    memcpy(&(buffer[6]), fDataPtr, fDataSize);
+    buffer[messageLength - 1] = Message::Frame::End;
+
+    return new Message(&buffer, messageLength);
 }

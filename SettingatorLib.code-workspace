@@ -1,0 +1,13 @@
+{
+	"folders": [
+		{
+			"name": "SettingatorLib",
+			"path": "."
+		}
+	],
+    "settings": {
+        "files.associations": {
+            "arduino.h": "c"
+        }
+    }
+}
