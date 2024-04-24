@@ -1,7 +1,7 @@
 #ifndef _COMMUNICATOR_
 #define _COMMUNICATOR_
 
-#include <Arduino.h>
+#include <sys/_stdint.h>
 
 class Message;
 

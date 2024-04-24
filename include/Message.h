@@ -1,7 +1,7 @@
 #ifndef _MESSAGE_
 #define _MESSAGE_
 
-#include <Arduino.h>
+#include <sys/_stdint.h>
 
 class Message
 {
@@ -32,7 +32,7 @@ public:
     /*
     - Return fBuffer ptr
     */
-    byte*   GetBufPtr();
+    uint8_t*   GetBufPtr();
 
     /*
     - Return message type
@@ -43,10 +43,10 @@ public:
     - Get Setting Update Message
     - Get 0 or null if wrong message type
     */
-   void ExtractSettingUpdate(uint8_t &ref, uint8_t &newValueLen, byte **newValue);
+   void ExtractSettingUpdate(uint8_t &ref, uint8_t &newValueLen, uint8_t **newValue);
 
 private:
-    byte*   fBuffer;
+    uint8_t*   fBuffer;
     Type    fType = Uninitialised;
     uint8_t fLength;
 };

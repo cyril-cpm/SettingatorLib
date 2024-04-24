@@ -3,19 +3,19 @@
 
 #include <Arduino.h>
 
-#define SERIAL_DEBUG 1
+#define SERIAL_DEBUG 0
 
 #if SERIAL_DEBUG
 
 #define DEBUG(X) X
-
-void printBuffer(byte* ptr, size_t size, uint8_t base = HEX);
 
 #else
 
 #define DEBUG(X)
 
 #endif
+
+void printBuffer(byte* ptr, size_t size, uint8_t base = HEX);
 
 #define DEBUG_PRINT_LN(X) DEBUG(Serial.println(X);)
 #define DEBUG_PRINT(X) DEBUG(Serial.print(X);)

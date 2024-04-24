@@ -22,7 +22,7 @@ void Settingator::StartWiFi()
 Settingator::Settingator(ICTR* communicator) : fCommunicator(communicator)
 {
     fPreferences = new Preferences();
-    fPreferences->begin("settingator", false);
+    //fPreferences->begin("settingator", false);
 }
 
 Settingator::~Settingator()
@@ -40,9 +40,9 @@ void Settingator::Update()
     if (fCommunicator->Available())
     {
         Message* msg = fCommunicator->Read();
-        Serial.println("Message available");
-        printBuffer(msg->GetBufPtr(), msg->GetLength(), HEX);
-        Serial.println("");
+        //Serial.println("Message available");
+        //printBuffer(msg->GetBufPtr(), msg->GetLength(), HEX);
+        //Serial.println("");
 
     
         if (msg->GetType() == Message::Type::InitRequest)
@@ -56,7 +56,9 @@ void Settingator::Update()
         }
         else if (msg->GetType() == Message::Type::SettingUpdate)
         {
-            Serial.println("Setting update Message");
+            //Serial.println("Setting update Message");
+            //Serial.write(msg->GetBufPtr(), msg->GetLength());
+            //Serial.println();
             byte* value;
             uint8_t ref;
             uint8_t valueLen;
@@ -64,14 +66,22 @@ void Settingator::Update()
             msg->ExtractSettingUpdate(ref, valueLen, &value);
 
             Setting *setting = GetSettingByRef(ref);
+            
+            if (!setting)
+            {
+                //Serial.println("Setting Not found");
+                //Serial.println(ref);
+            }
 
             if (setting  && (valueLen == setting->getDataSize()))
             {
-                Serial.println("Attempt to memcpy");
+                //Serial.println("Attempt to memcpy");
                 memcpy((void*)setting->getDataPtr(), value, valueLen);
-                Serial.println("Done");
+                //Serial.println("Done");
             }
-
+            else
+                //Serial.println("Value Len is 0")
+;
             if (setting)
                 setting->callback();
         }

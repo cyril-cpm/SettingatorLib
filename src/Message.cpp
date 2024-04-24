@@ -18,14 +18,14 @@ uint8_t Message::GetLength()
     return fLength;
 }
 
-byte* Message::GetBufPtr()
+uint8_t* Message::GetBufPtr()
 {
     return fBuffer;
 }
 
 void Message::ExtractSettingUpdate(uint8_t &ref, uint8_t &newValueLen, byte **newValue)
 {
-    Serial.println("Extracting Setting Update message");
+    //Serial.println("Extracting Setting Update message");
     ref = 0;
     newValueLen = 0;
     *newValue = nullptr;
@@ -44,5 +44,5 @@ void Message::ExtractSettingUpdate(uint8_t &ref, uint8_t &newValueLen, byte **ne
     {
         DEBUG_PRINT_VALUE("FAIL: buffer type", fBuffer[3])
     }
-    Serial.println("Done");
+    //Serial.println("Done");
 }
