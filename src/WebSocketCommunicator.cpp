@@ -65,24 +65,6 @@ WebSocketCTR* WebSocketCTR::CreateInstance(int port)
     return new WebSocketCTR(port);
 }
 
-bool WebSocketCTR::Available()
-{
-    Update();
-    return fReceivedMessage.size();
-}
-
-Message* WebSocketCTR::Read()
-{
-    if (GetBoxSize())
-        return fReceivedMessage.front();
-    return nullptr;
-}
-
-void WebSocketCTR::Flush()
-{
-   delete fReceivedMessage.front();
-   fReceivedMessage.pop();
-}
 
 int WebSocketCTR::Write(Message& msg)
 {
@@ -96,17 +78,4 @@ int WebSocketCTR::Write(Message& msg)
 void WebSocketCTR::Update()
 {
    fWebSocketServer->loop();
-}
-
-void WebSocketCTR::_receive(Message* msg)
-{
-    Serial.println("WebSocketCTR _receive");
-    printBuffer(msg->GetBufPtr(), msg->GetLength(), HEX);
-    Serial.println("");
-    fReceivedMessage.push(msg);
-}
-
-uint8_t WebSocketCTR::GetBoxSize() const
-{
-    return fReceivedMessage.size();
 }

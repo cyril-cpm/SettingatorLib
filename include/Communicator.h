@@ -2,6 +2,7 @@
 #define _COMMUNICATOR_
 
 #include <sys/_stdint.h>
+#include <queue>
 
 class Message;
 
@@ -12,7 +13,7 @@ class ICTR
     /*
     - return true if there is bytes available to read
     */
-    virtual bool Available() = 0;
+    virtual bool Available();
 
     /*
     - Write Buffer to communicator
@@ -22,19 +23,26 @@ class ICTR
     /*
     - Read a message if avaible or return empty Message
      */
-    virtual Message* Read() = 0;
+    virtual Message* Read();
 
     /*
     - Flush message after having executed
     */
-    virtual void    Flush() = 0;
+    virtual void    Flush();
 
     /*
     - Update internal Buffer
     */
     virtual void Update() = 0;
 
-    virtual uint8_t GetBoxSize() const = 0;
+    virtual uint8_t GetBoxSize() const;
+
+    protected:
+
+    void _receive(Message* msg);
+
+    std::queue<Message*> fReceivedMessage;
+
 };
 
 #endif

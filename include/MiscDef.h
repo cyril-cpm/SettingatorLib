@@ -3,7 +3,7 @@
 
 #include <Arduino.h>
 
-#define SERIAL_DEBUG 0
+#define SERIAL_DEBUG 1
 
 #if SERIAL_DEBUG
 

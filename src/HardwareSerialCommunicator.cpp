@@ -26,24 +26,6 @@ HardwareSerialCTR* HardwareSerialCTR::CreateInstance(int baudrate)
     return new HardwareSerialCTR(baudrate);
 }
 
-bool HardwareSerialCTR::Available()
-{
-    Update();
-    return fReceivedMessage.size();
-}
-
-Message* HardwareSerialCTR::Read()
-{
-    if (GetBoxSize())
-        return fReceivedMessage.front();
-    return nullptr;
-}
-
-void HardwareSerialCTR::Flush()
-{
-   delete fReceivedMessage.front();
-   fReceivedMessage.pop();
-}
 
 int HardwareSerialCTR::Write(Message& msg)
 {
@@ -104,12 +86,6 @@ void HardwareSerialCTR::Update()
     return;
 }
 
-void HardwareSerialCTR::_receive(Message* msg)
-{
-    //Serial.println("_receive");
-    fReceivedMessage.push(msg);
-}
-
 void HardwareSerialCTR::_removeBufferBeginBytes(size_t numberBytes)
 {
    // Serial.print("LOG _removeBeginBytes numberBytes:");
@@ -124,9 +100,4 @@ void HardwareSerialCTR::_removeBufferBeginBytes(size_t numberBytes)
     fSerialBuffer = newBuffer;
 
     fSerialBufferSize = fSerialBufferSize - numberBytes;
-}
-
-uint8_t HardwareSerialCTR::GetBoxSize() const
-{
-    return fReceivedMessage.size();
 }
