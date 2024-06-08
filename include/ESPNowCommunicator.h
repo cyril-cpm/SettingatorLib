@@ -10,11 +10,11 @@ struct espNowMsg {
     int         len = 0;
 };
 
+extern std::queue<espNowMsg>    espNowMsgList;
+    
 class ESPNowCTR: public ICTR
 {
     public:
-
-    static std::queue<espNowMsg>    espNowMsgList;
 
     static ESPNowCTR*   CreateInstance(uint8_t* mac = nullptr);
 
