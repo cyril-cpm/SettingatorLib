@@ -59,9 +59,9 @@ size_t Setting::getInitRequestSize()
     return bufferSize;
 }
 
-Message* Setting::buildUpdateMessage()
+Message* Setting::buildUpdateMessage(uint8_t* slaveID)
 {
-    size_t messageLength = 7 + fDataSize;
+    size_t messageLength = 8 + fDataSize;
 
     byte* buffer = (byte*)malloc(messageLength * sizeof(byte));
 
@@ -70,11 +70,16 @@ Message* Setting::buildUpdateMessage()
     buffer[1] = messageLength >> 8;
     buffer[2] = messageLength;
 
-    buffer[3] = Message::Type::SettingUpdate;
+    if (slaveID)
+        buffer[3] = *slaveID;
+    else
+        buffer[3] = 0;
 
-    buffer[4] = fRef;
-    buffer[5] = fDataSize;
-    memcpy(&(buffer[6]), fDataPtr, fDataSize);
+    buffer[4] = Message::Type::SettingUpdate;
+
+    buffer[5] = fRef;
+    buffer[6] = fDataSize;
+    memcpy(&(buffer[7]), fDataPtr, fDataSize);
     buffer[messageLength - 1] = Message::Frame::End;
 
     return new Message(&buffer, messageLength);

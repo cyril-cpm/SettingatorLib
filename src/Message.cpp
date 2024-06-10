@@ -2,13 +2,13 @@
 #include <Arduino.h>
 #include "MiscDef.h"
 
-Message::Message(uint8_t* buffer, uint8_t len) : fType((Message::Type)buffer[3]), fLength(len)
+Message::Message(uint8_t* buffer, uint8_t len) : fSlaveID(buffer[3]), fType((Message::Type)buffer[4]), fLength(len)
 {
     fBuffer = (byte*)malloc(len * sizeof(byte));
     memcpy(fBuffer, buffer, len);
 }
 
-Message::Message(uint8_t** buffer, uint8_t len) : fType((Message::Type)(*buffer)[3]), fLength(len)
+Message::Message(uint8_t** buffer, uint8_t len) : fSlaveID(*buffer[3]), fType((Message::Type)(*buffer)[4]), fLength(len)
 {
     fBuffer = *buffer;
 }
@@ -32,17 +32,17 @@ void Message::ExtractSettingUpdate(uint8_t &ref, uint8_t &newValueLen, byte **ne
 
     if (fType == Message::Type::SettingUpdate)
     {
-        DEBUG_PRINT_VALUE("SUCCESS: buffer type", fBuffer[3])
-        ref = fBuffer[4];
+        DEBUG_PRINT_VALUE("SUCCESS: buffer type", fBuffer[4])
+        ref = fBuffer[5];
         DEBUG_PRINT_VALUE("ref", ref)
-        newValueLen = fBuffer[5];
+        newValueLen = fBuffer[6];
         DEBUG_PRINT_VALUE("value len", newValueLen)
-       *newValue = &fBuffer[6];
+       *newValue = &fBuffer[7];
         DEBUG_PRINT_VALUE_BUF_LN("value", *newValue, newValueLen)
     }
     else
     {
-        DEBUG_PRINT_VALUE("FAIL: buffer type", fBuffer[3])
+        DEBUG_PRINT_VALUE("FAIL: buffer type", fBuffer[4])
     }
     //Serial.println("Done");
 }

@@ -39,6 +39,8 @@ public:
     */
    Type GetType() const { return fType; }
 
+   uint8_t GetSlaveID() const { return fSlaveID; }
+
     /*
     - Get Setting Update Message
     - Get 0 or null if wrong message type
@@ -48,6 +50,7 @@ public:
 private:
     uint8_t*   fBuffer;
     Type    fType = Uninitialised;
+    uint8_t fSlaveID = 0;
     uint8_t fLength;
 };
 

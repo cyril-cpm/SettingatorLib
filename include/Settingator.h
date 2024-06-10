@@ -1,6 +1,8 @@
 #ifndef _SETTINGATOR_
 #define _SETTINGATOR_
 
+#define STR_VERSION 0x022
+
 #include <vector>
 #include <Arduino.h>
 
@@ -43,7 +45,11 @@ class Settingator
     
     Message*    _buildSettingInitMessage();
     
-    Preferences*             fPreferences;
+    Preferences*            fPreferences;
+
+    uint8_t*                fSlaveID = nullptr;
+
+    void        _createSlaveID(uint8_t slaveID);
 };
 
 extern Settingator STR;

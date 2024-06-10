@@ -44,46 +44,51 @@ void Settingator::Update()
         //printBuffer(msg->GetBufPtr(), msg->GetLength(), HEX);
         //Serial.println("");
 
-    
-        if (msg->GetType() == Message::Type::InitRequest)
+        if (!fSlaveID && msg->GetType() == Message::Type::InitRequest)
+            _createSlaveID(msg->GetSlaveID());
+
+        if (fSlaveID && *fSlaveID == msg->GetSlaveID())
         {
-            Message* initMessage = _buildSettingInitMessage();
-    //DEBUG_PRINT_LN("Settingator::Update");
-
-            fCommunicator->Write(*initMessage);
-
-            delete initMessage;
-        }
-        else if (msg->GetType() == Message::Type::SettingUpdate)
-        {
-            //Serial.println("Setting update Message");
-            //Serial.write(msg->GetBufPtr(), msg->GetLength());
-            //Serial.println();
-            byte* value;
-            uint8_t ref;
-            uint8_t valueLen;
-
-            msg->ExtractSettingUpdate(ref, valueLen, &value);
-
-            Setting *setting = GetSettingByRef(ref);
-            
-            if (!setting)
+            if (msg->GetType() == Message::Type::InitRequest)
             {
-                //Serial.println("Setting Not found");
-                //Serial.println(ref);
-            }
+                Message* initMessage = _buildSettingInitMessage();
+                //DEBUG_PRINT_LN("Settingator::Update");
 
-            if (setting  && (valueLen == setting->getDataSize()))
-            {
-                //Serial.println("Attempt to memcpy");
-                memcpy((void*)setting->getDataPtr(), value, valueLen);
-                //Serial.println("Done");
+                fCommunicator->Write(*initMessage);
+
+                delete initMessage;
             }
-            else
-                //Serial.println("Value Len is 0")
-;
-            if (setting)
-                setting->callback();
+            else if (msg->GetType() == Message::Type::SettingUpdate)
+            {
+                //Serial.println("Setting update Message");
+                //Serial.write(msg->GetBufPtr(), msg->GetLength());
+                //Serial.println();
+                byte* value;
+                uint8_t ref;
+                uint8_t valueLen;
+
+                msg->ExtractSettingUpdate(ref, valueLen, &value);
+
+                Setting *setting = GetSettingByRef(ref);
+                
+                if (!setting)
+                {
+                    //Serial.println("Setting Not found");
+                    //Serial.println(ref);
+                }
+
+                if (setting  && (valueLen == setting->getDataSize()))
+                {
+                    //Serial.println("Attempt to memcpy");
+                    memcpy((void*)setting->getDataPtr(), value, valueLen);
+                    //Serial.println("Done");
+                }
+                else
+                    //Serial.println("Value Len is 0")
+    ;
+                if (setting)
+                    setting->callback();
+            }
         }
 
         fCommunicator->Flush();
@@ -144,7 +149,7 @@ void Settingator::SendUpdateMessage(Setting* setting)
 {
     if (setting)
     {
-        Message* message = setting->buildUpdateMessage();
+        Message* message = setting->buildUpdateMessage(fSlaveID);
         if (message)
             fCommunicator->Write(*message);
         delete message;
@@ -161,7 +166,7 @@ void Settingator::SendUpdateMessage(uint8_t ref)
 
 Message* Settingator::_buildSettingInitMessage()
 {
-    size_t initRequestSize = 6;
+    size_t initRequestSize = 7;
 
     for (auto i = fSettingVector.begin(); i != fSettingVector.end(); i++)
     {
@@ -173,10 +178,11 @@ Message* Settingator::_buildSettingInitMessage()
     requestBuffer[0] = Message::Frame::Start;
     requestBuffer[1] = initRequestSize >> 8;
     requestBuffer[2] = initRequestSize;
-    requestBuffer[3] = Message::Type::SettingInit;
-    requestBuffer[4] = fSettingVector.size();
+    requestBuffer[3] = *fSlaveID;
+    requestBuffer[4] = Message::Type::SettingInit;
+    requestBuffer[5] = fSettingVector.size();
 
-    byte* msgIndex = requestBuffer + 5;
+    byte* msgIndex = requestBuffer + 6;
 
     for (auto i = fSettingVector.begin(); i != fSettingVector.end(); i++)
     {
@@ -220,6 +226,13 @@ void Settingator::SavePreferences()
 void Settingator::begin()
 {
     fPreferences->end();
+}
+
+void Settingator::_createSlaveID(uint8_t slaveID)
+{
+    fSlaveID = new uint8_t;
+    if (fSlaveID)
+        *fSlaveID = slaveID;
 }
 
 Settingator STR(nullptr);
