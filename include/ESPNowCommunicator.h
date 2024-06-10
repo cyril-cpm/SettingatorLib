@@ -16,7 +16,8 @@ class ESPNowCTR: public ICTR
 {
     public:
 
-    static ESPNowCTR*   CreateInstance(uint8_t* mac = nullptr);
+    static ESPNowCTR*   CreateInstanceDiscoverableWithSSID(const char* deviceName);
+    static ESPNowCTR*   CreateInstanceWithMac(uint8_t* mac);
 
     virtual int         Write(Message& buf) override;
     virtual void        Update() override;
@@ -25,5 +26,5 @@ class ESPNowCTR: public ICTR
     ESPNowCTR(uint8_t* mac = nullptr);
     ~ESPNowCTR();
 
-    uint8_t* fMac = nullptr;
+    uint8_t*    fMac = nullptr;
 };

@@ -10,7 +10,16 @@ espNowMsg::espNowMsg(const uint8_t* inData, int inLen) : len(inLen)
     memcpy(data, inData, len * sizeof(uint8_t));
 }
 
-ESPNowCTR*  ESPNowCTR::CreateInstance(uint8_t* mac)
+ESPNowCTR*  ESPNowCTR::CreateInstanceDiscoverableWithSSID(const char* deviceName)
+{
+    WiFi.mode(WIFI_AP);
+    WiFi.softAP(deviceName);
+    DEBUG_PRINT(WiFi.macAddress());
+
+    return new ESPNowCTR();
+}
+
+ESPNowCTR* ESPNowCTR::CreateInstanceWithMac(uint8_t* mac)
 {
     WiFi.mode(WIFI_STA);
     DEBUG_PRINT(WiFi.macAddress());
@@ -20,27 +29,29 @@ ESPNowCTR*  ESPNowCTR::CreateInstance(uint8_t* mac)
 
 static void receiveCallback(const uint8_t* mac, const uint8_t* inData, int len)
 {
-    if (!esp_now_is_peer_exist(mac))
-    {
-        esp_now_peer_info peerInfo = {};
+    esp_now_peer_info peerInfo = {};
 
-        memcpy(peerInfo.peer_addr, mac, 6);
-        peerInfo.channel = 0;
-        peerInfo.encrypt = false;
+    memcpy(peerInfo.peer_addr, mac, 6);
+    peerInfo.channel = 0;
+    peerInfo.encrypt = false;
 
-        esp_now_add_peer(&peerInfo);
-    }
+    esp_now_add_peer(&peerInfo);
 
     espNowMsgList.push(espNowMsg(inData, len));
+
+    WiFi.softAPdisconnect();
 }
 
-ESPNowCTR::ESPNowCTR(uint8_t* mac) : fMac(mac)
+ESPNowCTR::ESPNowCTR(uint8_t* mac)
 {
     esp_now_init();
     esp_now_register_recv_cb(receiveCallback);
 
     if (mac != nullptr)
     {
+        fMac = (uint8_t*)malloc(6 * sizeof(uint8_t));
+        memcpy(fMac, mac, 6 * sizeof(uint8_t));
+        
         esp_now_peer_info peerInfo = {};
 
         memcpy(peerInfo.peer_addr, fMac, 6);
@@ -70,7 +81,7 @@ void ESPNowCTR::Update()
 
 int ESPNowCTR::Write(Message& buf)
 {
-    esp_now_send(nullptr, buf.GetBufPtr(), buf.GetLength());
+    esp_now_send(fMac, buf.GetBufPtr(), buf.GetLength());
     return 0;
 }
 
