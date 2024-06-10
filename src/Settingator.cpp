@@ -192,7 +192,7 @@ Message* Settingator::_buildSettingInitMessage()
 
     requestBuffer[initRequestSize - 1] = Message::Frame::End;
 
-    return new Message(requestBuffer, initRequestSize);
+    return new Message(&requestBuffer, initRequestSize);
 }
 
 Setting* Settingator::GetSettingByRef(uint8_t ref)

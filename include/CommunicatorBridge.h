@@ -30,6 +30,8 @@ class CTRBridge
     void    _addEspNowSlaveWithSSD(char* SSD, uint8_t slaveID);
     void    _addEspNowSlaveWithMac(uint8_t* Mac, uint8_t slaveID);
 
+    ICTR*   _getSlaveCTR(uint8_t slaveID);
+
     ICTR*               fMaster = nullptr;
     std::vector<slave>  fSlaves;
 };
