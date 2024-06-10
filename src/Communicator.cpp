@@ -5,9 +5,6 @@
 
 void ICTR::_receive(Message* msg)
 {
-    Serial.println("WebSocketCTR _receive");
-    printBuffer(msg->GetBufPtr(), msg->GetLength(), HEX);
-    Serial.println("");
     fReceivedMessage.push(msg);
 }
 
