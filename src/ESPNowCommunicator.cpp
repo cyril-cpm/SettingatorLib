@@ -49,7 +49,7 @@ static void receiveCallback(const uint8_t* mac, const uint8_t* inData, int len)
         peerInfo.channel = 0;
         peerInfo.encrypt = false;
 
-        esp_now_add_peer(&peerInfo)
+        esp_now_add_peer(&peerInfo);
     }
 
     espNowMsgListMutex.lock();
@@ -104,5 +104,3 @@ int ESPNowCTR::Write(Message& buf)
     esp_now_send(fMac, buf.GetBufPtr(), buf.GetLength());
     return 0;
 }
-
-std::queue<espNowMsg> espNowMsgList;
