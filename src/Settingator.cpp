@@ -44,10 +44,10 @@ void Settingator::Update()
         //printBuffer(msg->GetBufPtr(), msg->GetLength(), HEX);
         //Serial.println("");
 
-        if (!fSlaveID && msg->GetType() == Message::Type::InitRequest)
+        if (!fSlaveID && msg && msg->GetType() == Message::Type::InitRequest)
             _createSlaveID(msg->GetSlaveID());
 
-        if (fSlaveID && *fSlaveID == msg->GetSlaveID())
+        if (fSlaveID && msg && *fSlaveID == msg->GetSlaveID())
         {
             if (msg->GetType() == Message::Type::InitRequest)
             {
@@ -192,7 +192,7 @@ Message* Settingator::_buildSettingInitMessage()
 
     requestBuffer[initRequestSize - 1] = Message::Frame::End;
 
-    return new Message(&requestBuffer, initRequestSize);
+    return new Message(requestBuffer, initRequestSize);
 }
 
 Setting* Settingator::GetSettingByRef(uint8_t ref)

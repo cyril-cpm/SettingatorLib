@@ -6,11 +6,11 @@ class Message;
 
 struct espNowMsg {
     espNowMsg(const uint8_t* inData, int inLen);
+    ~espNowMsg();
+
     uint8_t*    data = nullptr;
     int         len = 0;
 };
-
-extern std::queue<espNowMsg>    espNowMsgList;
     
 class ESPNowCTR: public ICTR
 {

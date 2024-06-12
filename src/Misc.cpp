@@ -1,7 +1,7 @@
 #include "MiscDef.h"
 
 
-void printBuffer(byte* ptr, size_t size, uint8_t base)
+void printBuffer(const byte* ptr, size_t size, uint8_t base)
 {
 
 #if SERIAL_DEBUG

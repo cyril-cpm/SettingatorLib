@@ -3,16 +3,27 @@
 #include "Message.h"
 #include <esp_now.h>
 #include <WiFi.h>
+#include <mutex>
+
+std::mutex espNowMsgListMutex;
+
+std::queue<espNowMsg*> espNowMsgList;
 
 espNowMsg::espNowMsg(const uint8_t* inData, int inLen) : len(inLen)
 {
     data = (uint8_t*)malloc(sizeof(uint8_t) * len);
-    memcpy(data, inData, len * sizeof(uint8_t));
+    if (data)
+        memcpy(data, inData, len * sizeof(uint8_t));
+}
+
+espNowMsg::~espNowMsg()
+{
+    delete data;
 }
 
 ESPNowCTR*  ESPNowCTR::CreateInstanceDiscoverableWithSSID(const char* deviceName)
 {
-    WiFi.mode(WIFI_AP);
+    WiFi.mode(WIFI_MODE_APSTA);
     WiFi.softAP(deviceName);
     DEBUG_PRINT(WiFi.macAddress());
 
@@ -29,17 +40,21 @@ ESPNowCTR* ESPNowCTR::CreateInstanceWithMac(uint8_t* mac)
 
 static void receiveCallback(const uint8_t* mac, const uint8_t* inData, int len)
 {
-    esp_now_peer_info peerInfo = {};
+    esp_now_peer_info peerInfo;
 
-    memcpy(peerInfo.peer_addr, mac, 6);
-    peerInfo.channel = 0;
-    peerInfo.encrypt = false;
+    if (esp_now_get_peer(mac, &peerInfo) == ESP_ERR_ESPNOW_NOT_FOUND)
+    {
+        peerInfo = {};
+        memcpy(peerInfo.peer_addr, mac, 6);
+        peerInfo.channel = 0;
+        peerInfo.encrypt = false;
 
-    esp_now_add_peer(&peerInfo);
+        esp_now_add_peer(&peerInfo)
+    }
 
-    espNowMsgList.push(espNowMsg(inData, len));
-
-    WiFi.softAPdisconnect();
+    espNowMsgListMutex.lock();
+    espNowMsgList.push(new espNowMsg(inData, len));
+    espNowMsgListMutex.unlock();
 }
 
 ESPNowCTR::ESPNowCTR(uint8_t* mac)
@@ -69,13 +84,18 @@ ESPNowCTR::~ESPNowCTR()
 
 void ESPNowCTR::Update()
 {
-    while (espNowMsgList.size())
+    if (espNowMsgListMutex.try_lock())
     {
-        auto msg = espNowMsgList.front();
+        while (espNowMsgList.size())
+        {
+            auto msg = espNowMsgList.front();
 
-        _receive(new Message(msg.data, msg.len));
+            _receive(new Message(msg->data, msg->len));
 
-        espNowMsgList.pop();
+            delete msg;
+            espNowMsgList.pop();
+        }
+        espNowMsgListMutex.unlock();
     }
 }
 
