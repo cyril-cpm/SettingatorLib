@@ -74,7 +74,7 @@ void HardwareSerialCTR::Update()
             if (fSerialBuffer[msgSize - 1] == Message::Frame::End)
             {
                 //Serial.println("LOG Valid message");
-                _receive(new Message(fSerialBuffer, msgSize));
+                _receive(Message::CreateMessageCopyBuffer(fSerialBuffer, msgSize));
                 _removeBufferBeginBytes(msgSize);
 
             }

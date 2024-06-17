@@ -82,5 +82,5 @@ Message* Setting::buildUpdateMessage(uint8_t* slaveID)
     memcpy(&(buffer[7]), fDataPtr, fDataSize);
     buffer[messageLength - 1] = Message::Frame::End;
 
-    return new Message(buffer, messageLength);
+    return Message::CreateMessageAdoptBuffer(buffer, messageLength);
 }

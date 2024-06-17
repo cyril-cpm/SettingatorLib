@@ -178,9 +178,11 @@ void Settingator::SendNotif(uint8_t notifByte)
     notifBuffer[5] = notifByte;
     notifBuffer[6] = Message::Frame::End;
 
-    Message message(notifBuffer, notifMsgSize);
+    Message *message = Message::CreateMessageAdoptBuffer(notifBuffer, notifMsgSize);
 
-    fCommunicator->Write(message);
+    fCommunicator->Write(*message);
+
+    delete message;
 }
 
 Message* Settingator::_buildSettingInitMessage()
@@ -211,7 +213,7 @@ Message* Settingator::_buildSettingInitMessage()
 
     requestBuffer[initRequestSize - 1] = Message::Frame::End;
 
-    return new Message(requestBuffer, initRequestSize);
+    return Message::CreateMessageAdoptBuffer(requestBuffer, initRequestSize);
 }
 
 Setting* Settingator::GetSettingByRef(uint8_t ref)
