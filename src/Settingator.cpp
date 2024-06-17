@@ -164,6 +164,25 @@ void Settingator::SendUpdateMessage(uint8_t ref)
         SendUpdateMessage(setting);
 }
 
+void Settingator::SendNotif(uint8_t notifByte)
+{
+    size_t notifMsgSize = 7;
+
+    uint8_t* notifBuffer = (uint8_t*)malloc(notifMsgSize * sizeof(uint8_t));
+
+    notifBuffer[0] = Message::Frame::Start;
+    notifBuffer[1] = 0;
+    notifBuffer[2] = notifMsgSize;
+    notifBuffer[3] = *fSlaveID;
+    notifBuffer[4] = Message::Type::Notif;
+    notifBuffer[5] = notifByte;
+    notifBuffer[6] = Message::Frame::End;
+
+    Message message(notifBuffer, notifMsgSize);
+
+    fCommunicator->Write(message);
+}
+
 Message* Settingator::_buildSettingInitMessage()
 {
     size_t initRequestSize = 7;

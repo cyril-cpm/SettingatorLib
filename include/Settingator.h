@@ -1,7 +1,7 @@
 #ifndef _SETTINGATOR_
 #define _SETTINGATOR_
 
-#define STR_VERSION 0x025
+#define STR_VERSION 0x026
 
 #include <vector>
 #include <Arduino.h>
@@ -30,6 +30,7 @@ class Settingator
     void UpdateSetting(uint8_t ref, byte* newValuePtr, size_t newValueSize);
     void SendUpdateMessage(Setting* setting);
     void SendUpdateMessage(uint8_t ref);
+    void SendNotif(uint8_t notifByte);
     void SetCommunicator(ICTR* communicator);
     
     Setting*    GetSettingByRef(uint8_t ref);

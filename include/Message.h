@@ -14,6 +14,7 @@ public:
         InitRequest = 0x12,
         SettingUpdate = 0x11,
         SettingInit = 0x13,
+        Notif = 0x14,
 
         /// Bridge
         BridgeBase = 0x50,
