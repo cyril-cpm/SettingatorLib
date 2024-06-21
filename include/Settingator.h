@@ -1,7 +1,7 @@
 #ifndef _SETTINGATOR_
 #define _SETTINGATOR_
 
-#define STR_VERSION 0x026
+#define STR_VERSION 0x027
 
 #include <vector>
 #include <Arduino.h>
@@ -12,6 +12,14 @@ class Preferences;
 
 class ICTR;
 class Message;
+
+struct notifCallback
+{
+    notifCallback(void(*inCallback)(), uint8_t inNotifByte);
+    
+    void(*callback)() = nullptr;
+    uint8_t notifByte = 0;
+};
 
 class Settingator
 {
@@ -31,6 +39,9 @@ class Settingator
     void SendUpdateMessage(Setting* setting);
     void SendUpdateMessage(uint8_t ref);
     void SendNotif(uint8_t notifByte);
+    void SendDirectNotif(uint8_t notifByte);
+    void SendDirectSettingUpdate(uint8_t settingRef, uint8_t* value = nullptr, uint8_t valueLen = 0);
+    void AddNotifCallback(void(*callback)(), uint8_t notifByte);
     void SetCommunicator(ICTR* communicator);
     
     Setting*    GetSettingByRef(uint8_t ref);
@@ -51,6 +62,8 @@ class Settingator
     uint8_t*                fSlaveID = nullptr;
 
     void        _createSlaveID(uint8_t slaveID);
+
+    std::vector<notifCallback*> fNotifCallback;
 };
 
 extern Settingator STR;

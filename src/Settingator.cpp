@@ -49,7 +49,9 @@ void Settingator::Update()
 
         if (fSlaveID && msg && *fSlaveID == msg->GetSlaveID())
         {
-            if (msg->GetType() == Message::Type::InitRequest)
+            auto msgType = msg->GetType();
+
+            if (msgType == Message::Type::InitRequest)
             {
                 Message* initMessage = _buildSettingInitMessage();
                 //DEBUG_PRINT_LN("Settingator::Update");
@@ -58,10 +60,8 @@ void Settingator::Update()
 
                 delete initMessage;
             }
-            else if (msg->GetType() == Message::Type::SettingUpdate)
+            else if (msgType == Message::Type::SettingUpdate)
             {
-                //Serial.println("Setting update Message");
-                //Serial.write(msg->GetBufPtr(), msg->GetLength());
                 //Serial.println();
                 byte* value;
                 uint8_t ref;
@@ -88,6 +88,29 @@ void Settingator::Update()
     ;
                 if (setting)
                     setting->callback();
+            }
+            else if (msgType == Message::Type::ConfigEspNowDirectNotif)
+            {
+                auto buffer = msg->GetBufPtr();
+                fCommunicator->ConfigEspNowDirectNotif(&buffer[6], buffer[16], buffer[5]);
+            }
+            else if (msgType == Message::Type::ConfigEspNowDirectSettingUpdate)
+            {
+                DEBUG_PRINT_LN("Config")
+                auto buffer = msg->GetBufPtr();
+                fCommunicator->ConfigEspNowDirectSettingUpdate(&buffer[6], buffer[12], buffer[13], buffer[5]);
+            }
+            else if (msgType == Message::Type::Notif)
+            {
+                auto buffer = msg->GetBufPtr();
+                auto notifByte = buffer[5];
+
+                for (auto i = fNotifCallback.begin(); i != fNotifCallback.end(); i++)
+                {
+                    if ((*i)->notifByte = notifByte)
+                        (*i)->callback();
+                }
+
             }
         }
 
@@ -183,9 +206,26 @@ void Settingator::SendNotif(uint8_t notifByte)
     fCommunicator->Write(message);
 }
 
+void Settingator::SendDirectNotif(uint8_t notifByte)
+{
+    fCommunicator->SendDirectNotif(notifByte);
+}
+
+void Settingator::SendDirectSettingUpdate(uint8_t settingRef, uint8_t* value, uint8_t valueLen)
+{
+    fCommunicator->SendDirectSettingUpdate(settingRef, value, valueLen);
+}
+
+void Settingator::AddNotifCallback(void(*callback)(), uint8_t notifByte)
+{
+    fNotifCallback.push_back(new notifCallback(callback, notifByte));
+}
+
 Message* Settingator::_buildSettingInitMessage()
 {
     size_t initRequestSize = 7;
+
+    DEBUG_PRINT_LN("build setting init message")
 
     for (auto i = fSettingVector.begin(); i != fSettingVector.end(); i++)
     {
@@ -210,6 +250,8 @@ Message* Settingator::_buildSettingInitMessage()
     }
 
     requestBuffer[initRequestSize - 1] = Message::Frame::End;
+
+    DEBUG_PRINT_VALUE("initRequestSize", initRequestSize)
 
     return new Message(requestBuffer, initRequestSize);
 }

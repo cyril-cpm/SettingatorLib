@@ -15,10 +15,14 @@ public:
         SettingUpdate = 0x11,
         SettingInit = 0x13,
         Notif = 0x14,
+        ConfigEspNowDirectNotif = 0x15,
+        ConfigEspNowDirectSettingUpdate = 0x16,
 
         /// Bridge
         BridgeBase = 0x50,
-        EspNowInitWithSSD = 0x54
+        EspNowInitWithSSD = 0x54,
+        EspNowConfigDirectNotif = 0x55,
+        EspNowConfigDirectSettingUpdate = 0x56
     };
 
     enum Frame

@@ -37,6 +37,14 @@ class ICTR
 
     virtual uint8_t GetBoxSize() const;
 
+    virtual void ConfigEspNowDirectNotif(uint8_t* mac, uint8_t notifByte, uint8_t dstSlaveID);
+
+    virtual void ConfigEspNowDirectSettingUpdate(uint8_t* mac, uint8_t settingRef, uint8_t settingValueLen, uint8_t dstSlaveID);
+
+    virtual void SendDirectNotif(uint8_t notifByte);
+    
+    virtual void SendDirectSettingUpdate(uint8_t settingRef, uint8_t* value, uint8_t valueLen);
+
     protected:
 
     void _receive(Message* msg);
