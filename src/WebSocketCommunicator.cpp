@@ -28,7 +28,7 @@ WebSocketCTR::WebSocketCTR(int port)
         {
             case (WStype_BIN):
             {
-                _receive(Message::CreateMessageCopyBuffer(payload, len));
+                _receive(new Message(payload, len));
                 break;
             }
         }

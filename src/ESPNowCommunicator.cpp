@@ -90,7 +90,7 @@ void ESPNowCTR::Update()
         {
             auto msg = espNowMsgList.front();
 
-            _receive(Message::CreateMessageAdoptBuffer(msg->data, msg->len));
+            _receive(new Message(msg->data, msg->len));
 
             delete msg;
             espNowMsgList.pop();

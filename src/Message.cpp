@@ -2,19 +2,6 @@
 #include <Arduino.h>
 #include "MiscDef.h"
 
-Message* Message::CreateMessageAdoptBuffer(uint8_t* buffer, uint8_t len)
-{
-    return new Message(buffer, len);
-}
-
-Message* Message::CreateMessageCopyBuffer(uint8_t* buffer, uint8_t len)
-{
-    uint8_t* copyBuffer = (byte*)malloc(len * sizeof(byte));
-    memcpy(copyBuffer, buffer, len);
-
-    return new Message(copyBuffer, len);
-}
-
 Message* Message::BuildInitRequestMessage(uint8_t slaveID)
 {
     uint8_t buffer[] = {Message::Frame::Start,
@@ -27,9 +14,16 @@ Message* Message::BuildInitRequestMessage(uint8_t slaveID)
     return new Message(buffer, 7);
 }
 
-Message::Message(uint8_t* buffer, uint8_t len) : fBuffer(buffer), fSlaveID(buffer[3]),
-                                                    fType((Message::Type)buffer[4]), fLength(len)
-{}
+Message::Message(uint8_t* buffer, uint8_t len) : fSlaveID(buffer[3]), fType((Message::Type)buffer[4]), fLength(len)
+{
+    fBuffer = (byte*)malloc(len * sizeof(byte));
+    memcpy(fBuffer, buffer, len);
+}
+
+Message::Message(uint8_t** buffer, uint8_t len) : fSlaveID(*buffer[3]), fType((Message::Type)(*buffer)[4]), fLength(len)
+{
+    fBuffer = *buffer;
+}
 
 Message::~Message()
 {

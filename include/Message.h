@@ -27,11 +27,11 @@ public:
         End = 0x00
     };
 
-    static Message* CreateMessageAdoptBuffer(uint8_t* buffer, uint8_t len);
-    static Message* CreateMessageCopyBuffer(uint8_t* buffer, uint8_t len);
-
     static Message* BuildInitRequestMessage(uint8_t slaveID);
 
+    Message() {};
+    Message(uint8_t* buffer, uint8_t len);
+    Message(uint8_t** buffer, uint8_t len);
     ~Message();
 
     /*
@@ -60,9 +60,6 @@ public:
    char*    ExtractSSD();
 
 private:
-    Message() {};
-    Message(uint8_t* buffer, uint8_t len);
-
     uint8_t*   fBuffer;
     Type    fType = Uninitialised;
     uint8_t fSlaveID = 0;
