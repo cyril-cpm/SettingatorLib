@@ -169,6 +169,30 @@ void ESPNowCTR::ConfigEspNowDirectSettingUpdate(uint8_t* mac, uint8_t settingRef
     fDirectSettingUpdate.push_back(new espNowDirectSettingUpdate(mac, settingRef, dstSlaveID, settingValueLen));
 }
 
+void ESPNowCTR::RemoveDirectNotifConfig(uint8_t dstSlaveID, uint8_t notifByte)
+{
+    for (auto i = fDirectNotif.begin(); i != fDirectNotif.end(); i++)
+    {
+        if ((*i)->dstSlaveID == dstSlaveID && (*i)->notifByte == notifByte)
+        {
+            fDirectNotif.erase(i);
+            break;
+        }
+    }
+}
+
+void ESPNowCTR::RemoveDirectSettingUpdateConfig(uint8_t dstSlaveID, uint8_t settingRef)
+{
+    for (auto i = fDirectSettingUpdate.begin(); i != fDirectSettingUpdate.end(); i++)
+    {
+        if ((*i)->dstSlaveID == dstSlaveID && (*i)->settingRef == settingRef)
+        {
+            fDirectSettingUpdate.erase(i);
+            break;
+        }
+    }
+}
+
 void ESPNowCTR::SendDirectNotif(uint8_t notifByte)
 {
     for (auto i = fDirectNotif.begin(); i != fDirectNotif.end(); i++)

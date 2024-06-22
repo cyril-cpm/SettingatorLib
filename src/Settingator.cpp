@@ -51,66 +51,38 @@ void Settingator::Update()
         {
             auto msgType = msg->GetType();
 
-            if (msgType == Message::Type::InitRequest)
+            switch (msg->GetType())
             {
-                Message* initMessage = _buildSettingInitMessage();
-                //DEBUG_PRINT_LN("Settingator::Update");
+            case Message::Type::InitRequest:
+                _sendInitMessage();
+                break;
+            
+            case Message::Type::SettingUpdate:
+                _treatSettingUpdateMessage(msg);
+                break;
 
-                fCommunicator->Write(*initMessage);
+            case Message::Type::ConfigEspNowDirectNotif:
+                _configEspNowDirectNotif(msg);
+                break;
 
-                delete initMessage;
-            }
-            else if (msgType == Message::Type::SettingUpdate)
-            {
-                //Serial.println();
-                byte* value;
-                uint8_t ref;
-                uint8_t valueLen;
+            case Message::Type::ConfigEspNowDirectSettingUpdate:
+                _configEspNowDirectSettingUpdate(msg);
+                break;
 
-                msg->ExtractSettingUpdate(ref, valueLen, &value);
+            case Message::Type::Notif:
+                _treatNotifMessage(msg);
+                break;
 
-                Setting *setting = GetSettingByRef(ref);
-                
-                if (!setting)
-                {
-                    //Serial.println("Setting Not found");
-                    //Serial.println(ref);
-                }
+            case Message::Type::RemoveDirectNotifConfig:
+                _removeDirectNotifConfig(msg);
+                break;
 
-                if (setting  && (valueLen == setting->getDataSize()))
-                {
-                    //Serial.println("Attempt to memcpy");
-                    memcpy((void*)setting->getDataPtr(), value, valueLen);
-                    //Serial.println("Done");
-                }
-                else
-                    //Serial.println("Value Len is 0")
-    ;
-                if (setting)
-                    setting->callback();
-            }
-            else if (msgType == Message::Type::ConfigEspNowDirectNotif)
-            {
-                auto buffer = msg->GetBufPtr();
-                fCommunicator->ConfigEspNowDirectNotif(&buffer[6], buffer[16], buffer[5]);
-            }
-            else if (msgType == Message::Type::ConfigEspNowDirectSettingUpdate)
-            {
-                DEBUG_PRINT_LN("Config")
-                auto buffer = msg->GetBufPtr();
-                fCommunicator->ConfigEspNowDirectSettingUpdate(&buffer[6], buffer[12], buffer[13], buffer[5]);
-            }
-            else if (msgType == Message::Type::Notif)
-            {
-                auto buffer = msg->GetBufPtr();
-                auto notifByte = buffer[5];
-
-                for (auto i = fNotifCallback.begin(); i != fNotifCallback.end(); i++)
-                {
-                    if ((*i)->notifByte = notifByte)
-                        (*i)->callback();
-                }
-
+            case Message::Type::RemoveDirectSettingUpdateConfig:
+                _removeDirectSettingUpdateConfig(msg);
+                break;
+            default:
+                DEBUG_PRINT_VALUE_BUF_LN("UNTREATED MESSAGE", msg->GetBufPtr(), msg->GetLength())
+                break;
             }
         }
 
@@ -294,6 +266,82 @@ void Settingator::_createSlaveID(uint8_t slaveID)
     fSlaveID = new uint8_t;
     if (fSlaveID)
         *fSlaveID = slaveID;
+}
+
+void Settingator::_sendInitMessage()
+{
+    Message* initMessage = _buildSettingInitMessage();
+    //DEBUG_PRINT_LN("Settingator::Update");
+
+    fCommunicator->Write(*initMessage);
+
+    delete initMessage;
+}
+
+void Settingator::_treatSettingUpdateMessage(Message* msg)
+{
+    byte* value;
+    uint8_t ref;
+    uint8_t valueLen;
+
+    msg->ExtractSettingUpdate(ref, valueLen, &value);
+
+    Setting *setting = GetSettingByRef(ref);
+    
+    if (!setting)
+    {
+        //Serial.println("Setting Not found");
+        //Serial.println(ref);
+    }
+
+    if (setting  && (valueLen == setting->getDataSize()))
+    {
+        //Serial.println("Attempt to memcpy");
+        memcpy((void*)setting->getDataPtr(), value, valueLen);
+        //Serial.println("Done");
+    }
+    else
+        //Serial.println("Value Len is 0")
+;
+    if (setting)
+        setting->callback();
+}
+
+void Settingator::_configEspNowDirectNotif(Message* msg)
+{
+    auto buffer = msg->GetBufPtr();
+    fCommunicator->ConfigEspNowDirectNotif(&buffer[6], buffer[16], buffer[5]);
+}
+
+void Settingator::_configEspNowDirectSettingUpdate(Message* msg)
+{
+    DEBUG_PRINT_LN("Config")
+    auto buffer = msg->GetBufPtr();
+    fCommunicator->ConfigEspNowDirectSettingUpdate(&buffer[6], buffer[12], buffer[13], buffer[5]);
+}
+
+void Settingator::_treatNotifMessage(Message* msg)
+{
+    auto buffer = msg->GetBufPtr();
+    auto notifByte = buffer[5];
+
+    for (auto i = fNotifCallback.begin(); i != fNotifCallback.end(); i++)
+    {
+        if ((*i)->notifByte = notifByte)
+            (*i)->callback();
+    }
+}
+
+void Settingator::_removeDirectNotifConfig(Message* msg)
+{
+    auto buffer = msg->GetBufPtr();
+    fCommunicator->RemoveDirectNotifConfig(buffer[5], buffer[6]);
+}
+
+void Settingator::_removeDirectSettingUpdateConfig(Message* msg)
+{
+    auto buffer = msg->GetBufPtr();
+    fCommunicator->RemoveDirectSettingUpdateConfig(buffer[5], buffer[6]);
 }
 
 Settingator STR(nullptr);

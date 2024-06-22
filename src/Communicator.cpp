@@ -28,6 +28,16 @@ void ICTR::SendDirectSettingUpdate(uint8_t settingRef, uint8_t* value, uint8_t v
     DEBUG_PRINT_LN("SendDirectSettingUpdate not implemented in CTR")
 }
 
+void ICTR::RemoveDirectNotifConfig(uint8_t dstSlaveID, uint8_t notifByte)
+{
+    DEBUG_PRINT_LN("RemoveDirectNotifConfig not implemented in CTR")
+}
+
+void ICTR::RemoveDirectSettingUpdateConfig(uint8_t dstSlaveID, uint8_t settingRef)
+{
+    DEBUG_PRINT_LN("RemoveDirectSettingUpdateConfig not implemented in CTR")
+}
+
 uint8_t ICTR::GetBoxSize() const
 {
     return fReceivedMessage.size();

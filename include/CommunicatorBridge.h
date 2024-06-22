@@ -31,6 +31,7 @@ class CTRBridge
     void    _addEspNowSlaveWithMac(uint8_t* Mac, uint8_t slaveID);
     void    _configDirectNotif(Message* msg);
     void    _configDirectSettingUpdate(Message* msg);
+    void    _removeDirectMessageConfig(Message* msg, uint8_t messageType);
 
     ICTR*   _getSlaveCTR(uint8_t slaveID);
     uint8_t*   _getSlaveMac(uint8_t slaveID);

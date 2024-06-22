@@ -45,6 +45,10 @@ class ICTR
     
     virtual void SendDirectSettingUpdate(uint8_t settingRef, uint8_t* value, uint8_t valueLen);
 
+    virtual void RemoveDirectNotifConfig(uint8_t dstSlaveID, uint8_t notifByte);
+
+    virtual void RemoveDirectSettingUpdateConfig(uint8_t dstSlaveID, uint8_t settingRef);
+
     protected:
 
     void _receive(Message* msg);

@@ -45,10 +45,13 @@ class ESPNowCTR: public ICTR
 
     virtual void ConfigEspNowDirectSettingUpdate(uint8_t* mac, uint8_t settingRef, uint8_t settingValueLen, uint8_t dstSlaveID) override;
  
+    virtual void RemoveDirectNotifConfig(uint8_t dstSlaveID, uint8_t notifByte) override;
+
+    virtual void RemoveDirectSettingUpdateConfig(uint8_t dstSlaveID, uint8_t settingRef) override;
 
     virtual void SendDirectNotif(uint8_t notifByte) override;
 
-    virtual void SendDirectSettingUpdate(uint8_t settingRef, uint8_t* value, uint8_t valueLen);
+    virtual void SendDirectSettingUpdate(uint8_t settingRef, uint8_t* value, uint8_t valueLen) override;
     
     private:
     ESPNowCTR(uint8_t* mac = nullptr);
