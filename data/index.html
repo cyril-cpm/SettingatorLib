@@ -100,7 +100,9 @@ button:active {
     LABEL = 0x04;
 
     SETTING_UPDATE = 0x11;
+    INIT_REQUEST = 0x02;
     SETTING_INIT = 0x13;
+    NOTIF = 0x14;
 
     function logText(text) {
         log.textContent += text + "\n";
@@ -116,7 +118,7 @@ button:active {
         log.textContent += "\n";
     }
 
-    webSocket = new WebSocket("ws://192.168.0.1:8081/settingator", "settingator");
+    webSocket = new WebSocket("ws://192.168.1.110:8081/settingator", "settingator");
     webSocket.binaryType = "arraybuffer";
 
     
@@ -128,7 +130,7 @@ button:active {
 
 
     function sendInitRequest() {
-        let initRequest = new Uint8Array([ 0xFF, 0x00, 0x06, 0x12, 0x00, 0x00]);
+        let initRequest = new Uint8Array([ 0xFF, 0x00, 0x07, 0x01, 0x12, 0x00, 0x00]);
         sendMessage(initRequest);
         logText("Init request sent...");
     }
@@ -261,12 +263,12 @@ button:active {
         let msg = {};
 
         msg.size = (view[1] << 8) + view[2];
-        msg.type = view[3];
+        msg.type = view[4];
 
         if (msg.type == SETTING_INIT) {
-            msg.nbSettings = view[4];
+            msg.nbSettings = view[5];
 
-            let settingView = view.slice(5);
+            let settingView = view.slice(6);
 
             for (let i = 0; i < msg.nbSettings; i++) {
                 let setting = {};
@@ -286,13 +288,16 @@ button:active {
             }
         }
         else if (msg.type == SETTING_UPDATE) {
-            let ref = view[4];
-            let len = view[5];
-            let val = view.slice(6, 6 + len);
+            let ref = view[5];
+            let len = view[6];
+            let val = view.slice(7, 7 + len);
 
             let node = document.getElementById("ref" + ref);
 
             node.innerText = new TextDecoder().decode(val);
+        }
+        else if (msg.type == NOTIF) {
+            alert("Notif " + view[5]);
         }
 
         return;

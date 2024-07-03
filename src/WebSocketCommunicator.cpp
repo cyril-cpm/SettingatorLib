@@ -65,6 +65,14 @@ WebSocketCTR* WebSocketCTR::CreateInstance(int port)
     return new WebSocketCTR(port);
 }
 
+WebSocketCTR* WebSocketCTR::CreateSTAInstance(const char* SSID, const char* password, int port)
+{
+    WiFi.mode(WIFI_STA);
+    WiFi.begin(SSID, password);
+
+    return WebSocketCTR::CreateInstance(port);
+}
+
 
 int WebSocketCTR::Write(Message& msg)
 {
