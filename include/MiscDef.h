@@ -3,7 +3,9 @@
 
 #include <Arduino.h>
 
-#ifdef SERIAL_DEBUG
+#define SERIAL_DEBUG 1
+
+#if SERIAL_DEBUG
 
 #define DEBUG(X) X
 
