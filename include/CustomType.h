@@ -3,11 +3,11 @@
 
 #include "Setting.h"
 
-class BaseCustomType : public Setting
+class BaseCustomType
 {
     public:
 
-        BaseCustomType(Type type, void* dataPtr, size_t dataSize, const char* name, void (*callback)());
+        BaseCustomType(Setting::Type type, void* dataPtr, size_t dataSize, const char* name, void (*callback)());
 
         virtual operator float() = 0;
         virtual void operator=(float value) = 0;
@@ -17,9 +17,11 @@ class BaseCustomType : public Setting
         //virtual STR_Float& operator--() = 0;
 
         void Update();
+        void SetAutoUpdate(bool value);
 
     protected:
         bool    fAutoUpdate = false;
+        setting_ref fRef = 0;
 
     private:
         BaseCustomType();

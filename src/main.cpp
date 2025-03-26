@@ -18,14 +18,19 @@ Servo motorServo(GPIO_NUM_27);
 
 bool displayMotorPos = false;
 
+
+
+Settingator STR(nullptr);
+
+STR_Float motorPos = 18.0f;
+
 void shoot()
 {
+    motorPos.Update();
   triggerServo.write(95);
   delay(1000);
   triggerServo.write(40);
 }
-
-STR_Float motorPos = 0;
 
 /*char* posLabel = (char*)malloc(6);
 uint8_t refPosLabel = 0;
@@ -56,18 +61,22 @@ void balai()
 void setup() {
   Serial.begin(115200);
 
+    motorPos = 25.0f;
+
   /*for (int i = 0; i < 3; i++)
     posLabel[i] = '0';
 
   posLabel[3] = '\0';*/
 
+  //STR_Float testFl = 18.0f;
+
   triggerServo.write(40);
 
   motorServo.write(0);
 
-  delay(1000);
+  //delay(1000);
 
-  balai();
+  //balai();
 
   //STR.SetCommunicator(ESPNowCTR::CreateInstanceDiscoverableWithSSID("Turret"));
 
@@ -108,6 +117,7 @@ void setup() {
         motorPos = 0;
     updatePosLabel();
   });*/
+  //motorPos.SetAutoUpdate(true);
 }
 
 void loop () {

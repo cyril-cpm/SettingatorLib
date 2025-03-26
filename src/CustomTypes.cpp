@@ -1,16 +1,20 @@
 #include "CustomType.h"
 #include "Settingator.h"
 
-BaseCustomType::BaseCustomType(Type type, void* dataPtr, size_t dataSize, const char* name, void (*callback)()) :
-    Setting(Setting::Type::CustomFloat, dataPtr, dataSize,  "CUSTOM FLOAD", nullptr, STR.settingRefCount())
+BaseCustomType::BaseCustomType(Setting::Type type, void* dataPtr, size_t dataSize, const char* name, void (*callback)())
 {
-
+    fRef = STR.AddSetting(type, dataPtr, dataSize,  "CUSTOM FLOAT", nullptr);
 }
 
 void BaseCustomType::Update()
 {
     if (fAutoUpdate)
-        STR.SendUpdateMessage(this);
+        STR.SendUpdateMessage(fRef);
+}
+
+void BaseCustomType::SetAutoUpdate(bool value)
+{
+    fAutoUpdate = value;
 }
 
 STR_Float::STR_Float() : BaseCustomType(Setting::Type::CustomFloat, &fValue, sizeof(fValue),  "CUSTOM FLOAD", nullptr)
@@ -31,34 +35,41 @@ STR_Float::operator float()
 void STR_Float::operator=(float value)
 {
     fValue = value;
+    Update();
 }
 
 void STR_Float::operator+=(float value)
 {
     fValue += value;
+    Update();
 }
 
 void STR_Float::operator-=(float value)
 {
     fValue -= value;
+    Update();
 }
 
 float STR_Float::operator++()
 {
     return ++fValue;
+    Update();
 }
 
 float STR_Float::operator--()
 {
     return --fValue;
+    Update();
 }
 
 float STR_Float::operator++(int)
 {
     return fValue++;
+    Update();
 }
 
 float STR_Float::operator--(int)
 {
     return fValue--;
+    Update();
 }
