@@ -49,6 +49,8 @@ class Settingator
     void        SavePreferences();
     void        begin();
 
+    setting_ref settingRefCount();
+
     private:
 
     ICTR*                   fCommunicator = nullptr;

@@ -344,4 +344,9 @@ void Settingator::_removeDirectSettingUpdateConfig(Message* msg)
     fCommunicator->RemoveDirectSettingUpdateConfig(buffer[5], buffer[6]);
 }
 
+setting_ref Settingator::settingRefCount()
+{
+    return fInternalRefCount++;
+}
+
 Settingator STR(nullptr);
