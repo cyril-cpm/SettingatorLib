@@ -1,10 +1,10 @@
 {
     "name": "Settingator",
     "version": "0.3.1",
-    "author": "Nit",
+    "author": "CPM",
     "repository": {
         "type": "git",
-        "url": "https://github.com/cyril-musikaloid/SettingatorLib",
+        "url": "https://github.com/cyril-cpm/SettingatorLib",
         "branch": "horizontalSlider"
     },
     "dependencies": {
