@@ -110,7 +110,7 @@ uint8_t Settingator::AddSetting(Setting::Type type, void* data_ptr, size_t data_
 {
     fSettingVector.push_back(Setting(type, data_ptr, data_size, name, callback, fInternalRefCount++));
 
-    if (type != Setting::Type::Trigger)
+    /*if (type != Setting::Type::Trigger)
     {
         void* buf = malloc(data_size * sizeof(byte));
         DEBUG_PRINT_LN(name)
@@ -124,7 +124,7 @@ uint8_t Settingator::AddSetting(Setting::Type type, void* data_ptr, size_t data_
             setting->update((byte*)buf, len);
             DEBUG_PRINT_VALUE_BUF_LN(name, (byte*)buf, len)
         }
-    }
+    }*/
 
     return(fInternalRefCount-1);
 }
@@ -344,4 +344,9 @@ void Settingator::_removeDirectSettingUpdateConfig(Message* msg)
     fCommunicator->RemoveDirectSettingUpdateConfig(buffer[5], buffer[6]);
 }
 
-Settingator STR(nullptr);
+setting_ref Settingator::settingRefCount()
+{
+    return fInternalRefCount++;
+}
+
+//Settingator STR(nullptr);

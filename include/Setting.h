@@ -15,7 +15,10 @@ public:
         Slider = 0x01,
         Trigger = 0x02,
         Switch = 0x03,
-        Label = 0x04
+        Label = 0x04,
+
+        // TESTING PURPOSE ONLY
+        CustomFloat = 0xFE
     };
 
     Setting(Type type, void* dataPtr, size_t dataSize, const char* name, void (*callback)(), setting_ref ref);
