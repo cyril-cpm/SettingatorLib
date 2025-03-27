@@ -8,13 +8,7 @@ class BaseCustomType
     public:
 
         BaseCustomType(Setting::Type type, void* dataPtr, size_t dataSize, const char* name, void (*callback)());
-
-        virtual operator float() = 0;
-        virtual void operator=(float value) = 0;
-        virtual void operator+=(float value) = 0;
-        virtual void operator-=(float value) = 0;
-        //virtual STR_Float& operator++() = 0;
-        //virtual STR_Float& operator--() = 0;
+        void SetCallback(void (*callback)());
 
         void Update();
         void SetAutoUpdate(bool value);
@@ -34,9 +28,9 @@ class STR_Float : public BaseCustomType
         STR_Float();
         STR_Float(float value);
         virtual operator float();
-        void operator=(float value) override;
-        void operator+=(float value) override;
-        void operator-=(float value) override;
+        void operator=(float value);
+        void operator+=(float value);
+        void operator-=(float value);
         float operator++();
         float operator--();
         float operator++(int);
@@ -45,6 +39,26 @@ class STR_Float : public BaseCustomType
     private:
 
         float   fValue = 0.0f;
+};
+
+class STR_UInt32 : public BaseCustomType
+{
+    public:
+
+        STR_UInt32();
+        STR_UInt32(uint32_t value);
+        virtual operator uint32_t();
+        void operator=(uint32_t value);
+        void operator+=(uint32_t value);
+        void operator-=(uint32_t value);
+        uint32_t operator++();
+        uint32_t operator--();
+        uint32_t operator++(int);
+        uint32_t operator--(int);
+
+    private:
+
+        uint32_t   fValue = 0;
 };
 
 #endif

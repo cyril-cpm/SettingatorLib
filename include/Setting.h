@@ -17,6 +17,8 @@ public:
         Switch = 0x03,
         Label = 0x04,
 
+        UInt32 = 0x20,
+
         // TESTING PURPOSE ONLY
         CustomFloat = 0xFE
     };
@@ -44,6 +46,7 @@ public:
     Type    getType() { return fType; } const
 
     void    callback() { if (fCallback) fCallback(); }
+    void    setCallback(void (*callback)());
 
     String  getName() { return fName; }
 
