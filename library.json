@@ -1,11 +1,11 @@
 {
     "name": "Settingator",
-    "version": "0.3.2",
+    "version": "0.3.3",
     "author": "CPM",
     "repository": {
         "type": "git",
-        "url": "https://github.com/cyril-cpm/SettingatorLib",
-        "branch": "horizontalSlider"
+        "url": "https://github.com/cyril-musikaloid/SettingatorLib",
+        "branch": "main"
     },
     "dependencies": {
         "links2004/WebSockets": "^2.4.1",
