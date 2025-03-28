@@ -1,7 +1,7 @@
 #ifndef _SETTINGATOR_
 #define _SETTINGATOR_
 
-#define STR_VERSION 0x034
+#define STR_VERSION 0x035
 
 #include <vector>
 #include <Arduino.h>

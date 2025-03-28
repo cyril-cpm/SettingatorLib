@@ -18,6 +18,10 @@ public:
         Label = 0x04,
 
         UInt32 = 0x20,
+        UInt8 = 0x21,
+        UInt16 = 0x22,
+        Float = 0x23,
+        Bool = 0x24,
 
         // TESTING PURPOSE ONLY
         CustomFloat = 0xFE

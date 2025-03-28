@@ -84,3 +84,8 @@ Message* Setting::buildUpdateMessage(uint8_t* slaveID)
 
     return new Message(buffer, messageLength);
 }
+
+void Setting::setCallback(void (*callback)())
+{
+    fCallback = callback;
+}
