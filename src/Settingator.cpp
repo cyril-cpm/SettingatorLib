@@ -37,7 +37,7 @@ void Settingator::SetCommunicator(ICTR* communicator)
 
 void Settingator::Update()
 {
-    if (fCommunicator->Available())
+    if (fCommunicator && fCommunicator->Available())
     {
         Message* msg = fCommunicator->Read();
         //Serial.println("Message available");
@@ -99,10 +99,13 @@ void Settingator::AddSetting(Setting& setting)
         const char * settingName = setting.getName().c_str();
         void* buf = malloc(setting.getDataSize() * sizeof(byte));
 
-        size_t len = fPreferences->getBytes(settingName, buf, setting.getDataSize());
+        if (fPreferences)
+        {
+            size_t len = fPreferences->getBytes(settingName, buf, setting.getDataSize());
 
-        if (len)
-            setting.update((byte*)buf, len);
+            if (len)
+                setting.update((byte*)buf, len);
+        }
     }
 }
 
@@ -145,7 +148,7 @@ void Settingator::SendUpdateMessage(Setting* setting)
     if (setting)
     {
         Message* message = setting->buildUpdateMessage(fSlaveID);
-        if (message)
+        if (message && fCommunicator)
             fCommunicator->Write(*message);
         delete message;
     }
@@ -161,31 +164,36 @@ void Settingator::SendUpdateMessage(uint8_t ref)
 
 void Settingator::SendNotif(uint8_t notifByte)
 {
-    size_t notifMsgSize = 7;
+    if (fCommunicator)
+    {
+        size_t notifMsgSize = 7;
 
-    uint8_t* notifBuffer = (uint8_t*)malloc(notifMsgSize * sizeof(uint8_t));
+        uint8_t* notifBuffer = (uint8_t*)malloc(notifMsgSize * sizeof(uint8_t));
 
-    notifBuffer[0] = Message::Frame::Start;
-    notifBuffer[1] = 0;
-    notifBuffer[2] = notifMsgSize;
-    notifBuffer[3] = *fSlaveID;
-    notifBuffer[4] = Message::Type::Notif;
-    notifBuffer[5] = notifByte;
-    notifBuffer[6] = Message::Frame::End;
+        notifBuffer[0] = Message::Frame::Start;
+        notifBuffer[1] = 0;
+        notifBuffer[2] = notifMsgSize;
+        notifBuffer[3] = *fSlaveID;
+        notifBuffer[4] = Message::Type::Notif;
+        notifBuffer[5] = notifByte;
+        notifBuffer[6] = Message::Frame::End;
 
-    Message message(notifBuffer, notifMsgSize);
+        Message message(notifBuffer, notifMsgSize);
 
-    fCommunicator->Write(message);
+        fCommunicator->Write(message);
+    }
 }
 
 void Settingator::SendDirectNotif(uint8_t notifByte)
 {
-    fCommunicator->SendDirectNotif(notifByte);
+    if (fCommunicator)
+        fCommunicator->SendDirectNotif(notifByte);
 }
 
 void Settingator::SendDirectSettingUpdate(uint8_t settingRef, uint8_t* value, uint8_t valueLen)
 {
-    fCommunicator->SendDirectSettingUpdate(settingRef, value, valueLen);
+    if (fCommunicator)
+        fCommunicator->SendDirectSettingUpdate(settingRef, value, valueLen);
 }
 
 void Settingator::AddNotifCallback(void(*callback)(), uint8_t notifByte)
@@ -245,20 +253,24 @@ Setting* Settingator::GetSettingByRef(uint8_t ref)
 
 void Settingator::SavePreferences()
 {
-    DEBUG_PRINT_LN("Saving Preferences");
-    for (auto i = fSettingVector.begin(); i != fSettingVector.end(); i++)
+    if (fPreferences)
     {
-        if (i->getType() != Setting::Type::Trigger)
+        DEBUG_PRINT_LN("Saving Preferences");
+        for (auto i = fSettingVector.begin(); i != fSettingVector.end(); i++)
         {
-            fPreferences->putBytes(i->getName().c_str(), i->getDataPtr(), i->getDataSize());
-            DEBUG_PRINT_VALUE_BUF_LN(i->getName().c_str(), (byte*)i->getDataPtr(), i->getDataSize())
+            if (i->getType() != Setting::Type::Trigger)
+            {
+                fPreferences->putBytes(i->getName().c_str(), i->getDataPtr(), i->getDataSize());
+                DEBUG_PRINT_VALUE_BUF_LN(i->getName().c_str(), (byte*)i->getDataPtr(), i->getDataSize())
+            }
         }
     }
 }
 
 void Settingator::begin()
 {
-    fPreferences->end();
+    if (fPreferences)
+        fPreferences->end();
 }
 
 void Settingator::_createSlaveID(uint8_t slaveID)
@@ -270,16 +282,22 @@ void Settingator::_createSlaveID(uint8_t slaveID)
 
 void Settingator::_sendInitMessage()
 {
-    Message* initMessage = _buildSettingInitMessage();
-    //DEBUG_PRINT_LN("Settingator::Update");
+    if (fCommunicator)
+    {
+        Message* initMessage = _buildSettingInitMessage();
+        //DEBUG_PRINT_LN("Settingator::Update");
 
-    fCommunicator->Write(*initMessage);
+        fCommunicator->Write(*initMessage);
 
-    delete initMessage;
+        delete initMessage;
+    }
 }
 
 void Settingator::_treatSettingUpdateMessage(Message* msg)
 {
+    if (!msg)
+        return;
+
     byte* value;
     uint8_t ref;
     uint8_t valueLen;
@@ -309,19 +327,28 @@ void Settingator::_treatSettingUpdateMessage(Message* msg)
 
 void Settingator::_configEspNowDirectNotif(Message* msg)
 {
-    auto buffer = msg->GetBufPtr();
-    fCommunicator->ConfigEspNowDirectNotif(&buffer[6], buffer[16], buffer[5]);
+    if (fCommunicator)
+    {
+        auto buffer = msg->GetBufPtr();
+        fCommunicator->ConfigEspNowDirectNotif(&buffer[6], buffer[16], buffer[5]);
+    }
 }
 
 void Settingator::_configEspNowDirectSettingUpdate(Message* msg)
 {
-    DEBUG_PRINT_LN("Config")
-    auto buffer = msg->GetBufPtr();
-    fCommunicator->ConfigEspNowDirectSettingUpdate(&buffer[6], buffer[12], buffer[13], buffer[5]);
+    if (fCommunicator)
+    {
+        DEBUG_PRINT_LN("Config")
+        auto buffer = msg->GetBufPtr();
+        fCommunicator->ConfigEspNowDirectSettingUpdate(&buffer[6], buffer[12], buffer[13], buffer[5]);
+    }
 }
 
 void Settingator::_treatNotifMessage(Message* msg)
 {
+    if (!msg)
+        return;
+
     auto buffer = msg->GetBufPtr();
     auto notifByte = buffer[5];
 
@@ -334,12 +361,18 @@ void Settingator::_treatNotifMessage(Message* msg)
 
 void Settingator::_removeDirectNotifConfig(Message* msg)
 {
+    if (!msg || !fCommunicator)
+        return;
+
     auto buffer = msg->GetBufPtr();
     fCommunicator->RemoveDirectNotifConfig(buffer[5], buffer[6]);
 }
 
 void Settingator::_removeDirectSettingUpdateConfig(Message* msg)
 {
+    if (!msg || !fCommunicator)
+        return;
+        
     auto buffer = msg->GetBufPtr();
     fCommunicator->RemoveDirectSettingUpdateConfig(buffer[5], buffer[6]);
 }

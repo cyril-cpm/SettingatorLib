@@ -15,7 +15,7 @@ CTRBridge::CTRBridge(ICTR* master) : fMaster(master)
 
 void CTRBridge::Update()
 {
-    if (fMaster->Available())
+    if (fMaster && fMaster->Available())
     {
         Message* msg = fMaster->Read();
 
@@ -86,6 +86,9 @@ void CTRBridge::_addEspNowSlaveWithMac(uint8_t* Mac, uint8_t slaveID)
 
 void CTRBridge::_configDirectNotif(Message* msg)
 {
+    if (!msg)
+        return;
+
     auto srcSlaveID = msg->GetSlaveID();
     auto dstSalveID = msg->GetBufPtr()[4];
     auto notifByte = msg->GetBufPtr()[5];
@@ -113,7 +116,8 @@ void CTRBridge::_configDirectNotif(Message* msg)
 
     Message* configMsg = new Message(configBuffer, configBufferLength);
 
-    _getSlaveCTR(srcSlaveID)->Write(*configMsg);
+    if (_getSlaveCTR(srcSlaveID))
+        _getSlaveCTR(srcSlaveID)->Write(*configMsg);
 
     delete configBuffer;
     delete configMsg;
@@ -121,6 +125,9 @@ void CTRBridge::_configDirectNotif(Message* msg)
 
 void CTRBridge::_configDirectSettingUpdate(Message* msg)
 {
+    if (!msg)
+        return;
+
     auto srcSlaveID = msg->GetSlaveID();
     auto dstSalveID = msg->GetBufPtr()[5];
     auto settingRef = msg->GetBufPtr()[6];
@@ -149,7 +156,8 @@ void CTRBridge::_configDirectSettingUpdate(Message* msg)
 
     Message* configMsg = new Message(configBuffer, configBufferLength);
 
-    _getSlaveCTR(srcSlaveID)->Write(*configMsg);
+    if (_getSlaveCTR(srcSlaveID))
+        _getSlaveCTR(srcSlaveID)->Write(*configMsg);
 
     delete configBuffer;
     delete configMsg;
@@ -157,8 +165,11 @@ void CTRBridge::_configDirectSettingUpdate(Message* msg)
 
 void CTRBridge::_removeDirectMessageConfig(Message* msg, uint8_t messageType)
 {
-    uint8_t* buffer = msg->GetBufPtr();
-    
+    uint8_t* buffer = nullptr;
+
+    if (!msg && !(buffer = msg->GetBufPtr()))
+        return;
+
     uint8_t srcSlaveID = msg->GetSlaveID();
     uint8_t dstSlaveID = buffer[5];
     uint8_t configID = buffer[6];
@@ -178,7 +189,8 @@ void CTRBridge::_removeDirectMessageConfig(Message* msg, uint8_t messageType)
 
     Message* configMsg = new Message(configBuffer, configBufferLength);
 
-    _getSlaveCTR(srcSlaveID)->Write(*configMsg);
+    if (_getSlaveCTR(srcSlaveID))
+        _getSlaveCTR(srcSlaveID)->Write(*configMsg);
 
     delete configBuffer;
     delete configMsg;
@@ -209,6 +221,8 @@ uint8_t* CTRBridge::_getSlaveMac(uint8_t slaveID)
 slave::slave(ICTR* ctr, uint8_t slaveID, uint8_t* mac) : fCTR(ctr), fSlaveID(slaveID), fMac(mac)
 {
     Message* msg = Message::BuildInitRequestMessage(slaveID);
-    fCTR->Write(*msg);
+
+    if (fCTR)
+        fCTR->Write(*msg);
     delete msg;
 }
