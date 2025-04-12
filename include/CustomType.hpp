@@ -27,7 +27,7 @@ class STR_Type
             else if constexpr (std::is_same_v<T, bool>)
                 type = Setting::Type::Bool;
         
-            fRef = STR.AddSetting(type, dataPtr, dataSize,  "XXX", nullptr);
+            fRef = STR.AddSetting(type, dataPtr, dataSize,  name, nullptr);
         }
 
         void SetCallback(void (*callback)())
