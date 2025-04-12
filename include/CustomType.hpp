@@ -23,7 +23,7 @@ class STR_Type
             else if constexpr (std::is_same_v<T, uint32_t>)
                 type = Setting::Type::UInt32;
             else if constexpr (std::is_same_v<T, float>)
-                type = Setting::Type::CustomFloat;
+                type = Setting::Type::Float;
             else if constexpr (std::is_same_v<T, bool>)
                 type = Setting::Type::Bool;
         
