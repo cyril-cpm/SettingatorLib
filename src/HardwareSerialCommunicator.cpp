@@ -1,3 +1,5 @@
+#if ARDUINO
+
 #include "HardwareSerialCommunicator.h"
 
 #include "MiscDef.h"
@@ -101,3 +103,5 @@ void HardwareSerialCTR::_removeBufferBeginBytes(size_t numberBytes)
 
     fSerialBufferSize = fSerialBufferSize - numberBytes;
 }
+
+#endif

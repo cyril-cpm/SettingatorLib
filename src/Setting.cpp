@@ -1,13 +1,19 @@
 #include "Setting.h"
 #include "MiscDef.h"
 #include "Message.h"
-#include <Arduino.h>
+
+#if defined(ARDUINO)
+
+#elif defined(ESP_PLATFORM)
+#include <cstring>
+
+#endif
 
 Setting::Setting(Type type, void* dataPtr, size_t dataSize, const char* name, void (*callback)(), setting_ref ref)
-: fType(type), fDataPtr((byte*)dataPtr), fDataSize(dataSize), fName(name), fCallback(callback), fRef(ref)
+: fType(type), fDataPtr((uint8_t*)dataPtr), fDataSize(dataSize), fName(name), fRef(ref), fCallback(callback)
 {
 #if SERIAL_DEBUG
-    Serial.println("New Setting:");
+    /*Serial.println("New Setting:");
     Serial.print("\ttype\t\t: ");
     Serial.println(type, DEC);
     Serial.print("\tdataSize\t: ");
@@ -18,11 +24,11 @@ Setting::Setting(Type type, void* dataPtr, size_t dataSize, const char* name, vo
     Serial.print("\tref\t\t: ");
     Serial.println(ref);
     Serial.print("\tname\t\t: ");
-    Serial.println(name);
+    Serial.println(name);*/
 #endif
 }
 
-bool Setting::update(byte* newValuePtr, size_t newValueSize)
+bool Setting::update(uint8_t* newValuePtr, size_t newValueSize)
 {
     if (newValueSize > fDataSize && newValuePtr != nullptr)
         return false;
@@ -31,7 +37,7 @@ bool Setting::update(byte* newValuePtr, size_t newValueSize)
     return true;
 }
 
-void Setting::getInitRequest(byte* buffer)
+void Setting::getInitRequest(uint8_t* buffer)
 {
     size_t bufferSize = getInitRequestSize();
 
@@ -44,8 +50,14 @@ void Setting::getInitRequest(byte* buffer)
     buffer[2] = fDataSize;
     memcpy(&(buffer[3]), fDataPtr, fDataSize);
     buffer[3 + fDataSize] = fName.length();
-    byte nameIndex = 4 + fDataSize;
+    uint8_t nameIndex = 4 + fDataSize;
+
+#if defined(ARDUINO)
     fName.getBytes(buffer + 4 + fDataSize, bufferSize - nameIndex + 1, 0);
+
+#elif defined(ESP_PLATFORM)
+    
+#endif
 }
 
 size_t Setting::getInitRequestSize()
@@ -63,7 +75,7 @@ Message* Setting::buildUpdateMessage(uint8_t* slaveID)
 {
     size_t messageLength = 8 + fDataSize;
 
-    byte* buffer = (byte*)malloc(messageLength * sizeof(byte));
+    uint8_t* buffer = (uint8_t*)malloc(messageLength * sizeof(uint8_t));
 
     buffer[0] = Message::Frame::Start;
 

@@ -1,7 +1,9 @@
+#if ARDUINO
+
 #include "MiscDef.h"
 
 
-void printBuffer(const byte* ptr, size_t size, uint8_t base)
+void printBuffer(const uint8_t* ptr, size_t size, uint8_t base)
 {
 
 #if SERIAL_DEBUG
@@ -12,3 +14,5 @@ void printBuffer(const byte* ptr, size_t size, uint8_t base)
     }
 #endif
 }
+
+#endif

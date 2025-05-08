@@ -1,6 +1,8 @@
 #ifndef _WS_COMMUNICATOR_
 #define _WS_COMMUNICATOR_
 
+#ifdef ARDUINO
+
 #include "Communicator.h"
 
 class Message;
@@ -23,5 +25,7 @@ class WebSocketCTR: public ICTR
 
     WebSocketsServer* fWebSocketServer;
 };
+
+#endif
 
 #endif

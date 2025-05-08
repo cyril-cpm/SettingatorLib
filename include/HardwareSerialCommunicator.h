@@ -1,5 +1,7 @@
 #pragma once
 
+#if ARDUINO
+
 #include "Communicator.h"
 
 class Message;
@@ -25,3 +27,5 @@ class HardwareSerialCTR: public ICTR
     size_t                  fSerialBufferSize = 0;
     HardwareSerial*         fSerial;
 };
+
+#endif

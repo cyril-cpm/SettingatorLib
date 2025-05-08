@@ -3,15 +3,24 @@
 #include "Message.h"
 #include "ESPNowCommunicator.h"
 
+#ifdef ARDUINO
 #include <WiFi.h>
+
+#elif defined(ESP_PLATFORM)
+#include <stdlib.h>
+#include <cstring>
+
+#endif
 
 CTRBridge* CTRBridge::CreateInstance(ICTR* master)
 {
     return new CTRBridge(master);
 }
 
-CTRBridge::CTRBridge(ICTR* master) : fMaster(master)
-{}
+CTRBridge::CTRBridge(ICTR* master)
+{
+    fMaster = master;
+}
 
 void CTRBridge::Update()
 {
@@ -72,10 +81,16 @@ void CTRBridge::Update()
 
 void CTRBridge::_addEspNowSlaveWithSSD(char* SSID, uint8_t slaveID)
 {
+
+#if defined(ARDUINO)
     uint16_t numberOfNetwork = WiFi.scanNetworks(false, false, false, 300U, 0U, SSID);
 
     for (int i = 0; i < numberOfNetwork; i++)
         _addEspNowSlaveWithMac(WiFi.BSSID(i), slaveID + i);
+
+#elif defined(ESP_PLATFORM)
+
+#endif
 
 }
 
@@ -119,7 +134,7 @@ void CTRBridge::_configDirectNotif(Message* msg)
     if (_getSlaveCTR(srcSlaveID))
         _getSlaveCTR(srcSlaveID)->Write(*configMsg);
 
-    delete configBuffer;
+    free(configBuffer);
     delete configMsg;
 }
 
@@ -159,7 +174,7 @@ void CTRBridge::_configDirectSettingUpdate(Message* msg)
     if (_getSlaveCTR(srcSlaveID))
         _getSlaveCTR(srcSlaveID)->Write(*configMsg);
 
-    delete configBuffer;
+    free(configBuffer);
     delete configMsg;
 }
 
@@ -192,7 +207,7 @@ void CTRBridge::_removeDirectMessageConfig(Message* msg, uint8_t messageType)
     if (_getSlaveCTR(srcSlaveID))
         _getSlaveCTR(srcSlaveID)->Write(*configMsg);
 
-    delete configBuffer;
+    free(configBuffer);
     delete configMsg;
 }
 
@@ -218,8 +233,12 @@ uint8_t* CTRBridge::_getSlaveMac(uint8_t slaveID)
     return nullptr;
 }
 
-slave::slave(ICTR* ctr, uint8_t slaveID, uint8_t* mac) : fCTR(ctr), fSlaveID(slaveID), fMac(mac)
+slave::slave(ICTR* ctr, uint8_t slaveID, uint8_t* mac)
 {
+    fCTR = ctr;
+    fSlaveID = slaveID;
+    fMac = mac;
+
     Message* msg = Message::BuildInitRequestMessage(slaveID);
 
     if (fCTR)

@@ -1,3 +1,5 @@
+#ifdef ARDUINO
+
 #include "WebSocketCommunicator.h"
 
 #include "MiscDef.h"
@@ -87,3 +89,5 @@ void WebSocketCTR::Update()
 {
    fWebSocketServer->loop();
 }
+
+#endif

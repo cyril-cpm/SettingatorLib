@@ -1,6 +1,15 @@
 #include "Message.h"
-#include <Arduino.h>
 #include "MiscDef.h"
+
+#ifdef ARDUINO
+#include <Arduino.h>
+
+#elif defined(ESP_PLATFORM)
+#include <stdlib.h>
+#include <esp_types.h>
+#include <cstring>
+
+#endif
 
 Message* Message::BuildInitRequestMessage(uint8_t slaveID)
 {
@@ -14,14 +23,20 @@ Message* Message::BuildInitRequestMessage(uint8_t slaveID)
     return new Message(buffer, 7);
 }
 
-Message::Message(uint8_t* buffer, uint8_t len) : fSlaveID(buffer[3]), fType((Message::Type)buffer[4]), fLength(len)
+Message::Message(uint8_t* buffer, uint8_t len)
 {
-    fBuffer = (byte*)malloc(len * sizeof(byte));
+    fSlaveID = buffer[3];
+    fType = (Message::Type)buffer[4];
+    fLength = len;
+    fBuffer = (uint8_t*)malloc(len * sizeof(uint8_t));
     memcpy(fBuffer, buffer, len);
 }
 
-Message::Message(uint8_t** buffer, uint8_t len) : fSlaveID(*buffer[3]), fType((Message::Type)(*buffer)[4]), fLength(len)
+Message::Message(uint8_t** buffer, uint8_t len)
 {
+    fSlaveID = *buffer[3];
+    fType = (Message::Type)(*buffer)[4];
+    fLength = len;
     fBuffer = *buffer;
 }
 
@@ -40,7 +55,7 @@ uint8_t* Message::GetBufPtr()
     return fBuffer;
 }
 
-void Message::ExtractSettingUpdate(uint8_t &ref, uint8_t &newValueLen, byte **newValue)
+void Message::ExtractSettingUpdate(uint8_t &ref, uint8_t &newValueLen, uint8_t **newValue)
 {
     //Serial.println("Extracting Setting Update message");
     ref = 0;

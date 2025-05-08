@@ -5,29 +5,50 @@
 #include "Message.h"
 #include "MiscDef.h"
 
+#if defined(ARDUINO)
 #include <WiFi.h>
 #include <Preferences.h>
+
+#elif defined(ESP_PLATFORM)
+#include <cstring>
+
+#endif
 
 
 void Settingator::StartWiFi()
 {
+
+#if defined(ARDUINO)
     Serial.println("Begin WiFi");
     WiFi.mode(WIFI_AP);
 
     WiFi.softAPConfig(IPAddress(192,168,0,1), IPAddress(192,168,0,1), IPAddress(255,255,255,0));
     WiFi.softAP("espTest", "123456789");
     Serial.println(WiFi.softAPIP());
+
+#elif defined(ESP_PLATFORM)
+
+
+#endif
 }
 
 Settingator::Settingator(ICTR* communicator) : fCommunicator(communicator)
 {
+#if defined(ARDUINO)
     fPreferences = new Preferences();
     //fPreferences->begin("settingator", false);
+
+#elif defined(ESP_PALTFORM)
+
+#endif
 }
 
 Settingator::~Settingator()
 {
+
+#if defined(ARDUINO)
     delete fPreferences;
+#endif
 }
 
 void Settingator::SetCommunicator(ICTR* communicator)
@@ -51,7 +72,7 @@ void Settingator::Update()
         {
             auto msgType = msg->GetType();
 
-            switch (msg->GetType())
+            switch (msgType)
             {
             case Message::Type::InitRequest:
                 _sendInitMessage();
@@ -97,15 +118,17 @@ void Settingator::AddSetting(Setting& setting)
     if (setting.getType() != Setting::Type::Trigger)
     {
         const char * settingName = setting.getName().c_str();
-        void* buf = malloc(setting.getDataSize() * sizeof(byte));
-
+        void* buf = malloc(setting.getDataSize() * sizeof(uint8_t));
+    
+#if defined(ARDUINO)
         if (fPreferences)
         {
             size_t len = fPreferences->getBytes(settingName, buf, setting.getDataSize());
 
             if (len)
-                setting.update((byte*)buf, len);
+                setting.update((uint8_t*)buf, len);
         }
+#endif
     }
 }
 
@@ -115,7 +138,7 @@ uint8_t Settingator::AddSetting(Setting::Type type, void* data_ptr, size_t data_
 
     /*if (type != Setting::Type::Trigger)
     {
-        void* buf = malloc(data_size * sizeof(byte));
+        void* buf = malloc(data_size * sizeof(uint8_t));
         DEBUG_PRINT_LN(name)
         size_t len = fPreferences->getBytes(name, buf, data_size);
 
@@ -124,15 +147,15 @@ uint8_t Settingator::AddSetting(Setting::Type type, void* data_ptr, size_t data_
         if (setting && len)
         {
             DEBUG_PRINT_LN("Update Setting With preferences")
-            setting->update((byte*)buf, len);
-            DEBUG_PRINT_VALUE_BUF_LN(name, (byte*)buf, len)
+            setting->update((uint8_t*)buf, len);
+            DEBUG_PRINT_VALUE_BUF_LN(name, (uint8_t*)buf, len)
         }
     }*/
 
     return(fInternalRefCount-1);
 }
 
-void Settingator::UpdateSetting(uint8_t ref, byte* newValuePtr, size_t newValueSize)
+void Settingator::UpdateSetting(uint8_t ref, uint8_t* newValuePtr, size_t newValueSize)
 {
     Setting* setting = GetSettingByRef(ref);
 
@@ -212,7 +235,7 @@ Message* Settingator::_buildSettingInitMessage()
         initRequestSize += i->getInitRequestSize();
     }
 
-    byte* requestBuffer = (byte*)malloc(initRequestSize * sizeof(byte));
+    uint8_t* requestBuffer = (uint8_t*)malloc(initRequestSize * sizeof(uint8_t));
 
     requestBuffer[0] = Message::Frame::Start;
     requestBuffer[1] = initRequestSize >> 8;
@@ -221,7 +244,7 @@ Message* Settingator::_buildSettingInitMessage()
     requestBuffer[4] = Message::Type::SettingInit;
     requestBuffer[5] = fSettingVector.size();
 
-    byte* msgIndex = requestBuffer + 6;
+    uint8_t* msgIndex = requestBuffer + 6;
 
     for (auto i = fSettingVector.begin(); i != fSettingVector.end(); i++)
     {
@@ -253,6 +276,7 @@ Setting* Settingator::GetSettingByRef(uint8_t ref)
 
 void Settingator::SavePreferences()
 {
+#if defined(ARDUINO)
     if (fPreferences)
     {
         DEBUG_PRINT_LN("Saving Preferences");
@@ -261,16 +285,19 @@ void Settingator::SavePreferences()
             if (i->getType() != Setting::Type::Trigger)
             {
                 fPreferences->putBytes(i->getName().c_str(), i->getDataPtr(), i->getDataSize());
-                DEBUG_PRINT_VALUE_BUF_LN(i->getName().c_str(), (byte*)i->getDataPtr(), i->getDataSize())
+                DEBUG_PRINT_VALUE_BUF_LN(i->getName().c_str(), (uint8_t*)i->getDataPtr(), i->getDataSize())
             }
         }
     }
+#endif
 }
 
 void Settingator::begin()
 {
+#if defined(ARDUINO)
     if (fPreferences)
         fPreferences->end();
+#endif
 }
 
 void Settingator::_createSlaveID(uint8_t slaveID)
@@ -298,7 +325,7 @@ void Settingator::_treatSettingUpdateMessage(Message* msg)
     if (!msg)
         return;
 
-    byte* value;
+    uint8_t* value;
     uint8_t ref;
     uint8_t valueLen;
 
@@ -319,8 +346,10 @@ void Settingator::_treatSettingUpdateMessage(Message* msg)
         //Serial.println("Done");
     }
     else
+    {
         //Serial.println("Value Len is 0")
-;
+    }
+
     if (setting)
         setting->callback();
 }
@@ -354,7 +383,7 @@ void Settingator::_treatNotifMessage(Message* msg)
 
     for (auto i = fNotifCallback.begin(); i != fNotifCallback.end(); i++)
     {
-        if ((*i)->notifByte = notifByte)
+        if ((*i)->notifByte == notifByte)
             (*i)->callback();
     }
 }

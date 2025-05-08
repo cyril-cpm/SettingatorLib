@@ -1,7 +1,13 @@
 #ifndef _MISCDEF_
 #define _MISCDEF_
 
+#ifdef ARDUINO
 #include <Arduino.h>
+
+#elif defined(ESP_PLATFORM)
+#include <esp_types.h>
+#define HEX 16
+#endif
 
 #define SERIAL_DEBUG 1
 
@@ -15,13 +21,13 @@
 
 #endif
 
-void printBuffer(const byte* ptr, size_t size, uint8_t base = HEX);
+void printBuffer(const uint8_t* ptr, size_t size, uint8_t base = HEX);
 
-#define DEBUG_PRINT_LN(X) DEBUG(Serial.println(X);)
+#define DEBUG_PRINT_LN(X) DEBUG(/*Serial.println(X);*/)
 
-#define DEBUG_PRINT(X) DEBUG(Serial.print(X);)
+#define DEBUG_PRINT(X) DEBUG(/*Serial.print(X);*/)
 
-#define DEBUG_PRINT_VALUE(X, Y) DEBUG(Serial.print(X);Serial.print(" : ");Serial.println(Y);)
+#define DEBUG_PRINT_VALUE(X, Y) DEBUG(/*Serial.print(X);Serial.print(" : ");Serial.println(Y);*/)
 
 #define DEBUG_PRINT_BUF(PTR, SIZE) DEBUG(printBuffer(PTR, SIZE);)
 

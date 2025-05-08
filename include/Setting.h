@@ -1,11 +1,17 @@
 #ifndef _SETTING_
 #define _SETTING_
 
+#ifdef ARDUINO
 #include <Arduino.h>
+#elif defined(ESP_PLATFORM)
+#include <esp_types.h>
+#endif
+
+#include <string>
 
 class Message;
 
-typedef byte setting_ref;
+typedef uint8_t setting_ref;
 
 class Setting
 {
@@ -32,33 +38,33 @@ public:
     /*
     - Update the setting value
     */
-    bool update(byte* newValuePtr, size_t newValueSize);
+    bool update(uint8_t* newValuePtr, size_t newValueSize);
 
     /*
     - Build the init buffer describing the setting to be sent to the remote controller
     - in SETTING_INI message
     - initRequestBuffer is allocated and must be freed then.
     */
-    void getInitRequest(byte* initRequestBuffer);
+    void getInitRequest(uint8_t* initRequestBuffer);
     Message* buildUpdateMessage(uint8_t* slaveID);
 
     size_t getInitRequestSize();
 
-    uint8_t getRef() { return fRef; } const
-    size_t  getDataSize() { return fDataSize; } const
-    byte*   getDataPtr() { return fDataPtr; }
-    Type    getType() { return fType; } const
+    uint8_t getRef() const { return fRef; }
+    size_t  getDataSize() const { return fDataSize; }
+    uint8_t*   getDataPtr() { return fDataPtr; }
+    Type    getType() const { return fType; }
 
     void    callback() { if (fCallback) fCallback(); }
     void    setCallback(void (*callback)());
 
-    String  getName() { return fName; }
+    std::string  getName() { return fName; }
 
 private:
     Type fType;
-    byte* fDataPtr = nullptr;
+    uint8_t* fDataPtr = nullptr;
     size_t fDataSize = 0;
-    String fName;
+    std::string fName;
     setting_ref fRef = 0;
     void    (*fCallback)();
 };

@@ -2,8 +2,15 @@
 #include "MiscDef.h"
 #include "Message.h"
 #include <esp_now.h>
-#include <WiFi.h>
 #include <mutex>
+
+#ifdef ARDUINO
+#include <WiFi.h>
+
+#elif defined(ESP_PLATFORM)
+#include <cstring>
+
+#endif
 
 std::mutex espNowMsgListMutex;
 
@@ -23,21 +30,30 @@ espNowMsg::~espNowMsg()
 
 ESPNowCTR*  ESPNowCTR::CreateInstanceDiscoverableWithSSID(const char* deviceName)
 {
+
+#if defined(ARDUINO)
     WiFi.mode(WIFI_MODE_APSTA);
     WiFi.softAP(deviceName);
     DEBUG_PRINT(WiFi.macAddress());
+
+#elif defined(ESP_PLATFORM)
+
+#endif
 
     return new ESPNowCTR();
 }
 
 ESPNowCTR* ESPNowCTR::CreateInstanceWithMac(uint8_t* mac)
 {
+#if defined(ARDUINO)
     WiFi.mode(WIFI_STA);
     DEBUG_PRINT(WiFi.macAddress());
+#endif
 
     return new ESPNowCTR(mac);
 }
 
+#if defined(ARDUINO)
 static void receiveCallback(const uint8_t* mac, const uint8_t* inData, int len)
 {
     esp_now_peer_info peerInfo;
@@ -56,6 +72,14 @@ static void receiveCallback(const uint8_t* mac, const uint8_t* inData, int len)
     espNowMsgList.push(new espNowMsg(inData, len));
     espNowMsgListMutex.unlock();
 }
+
+#elif defined(ESP_PLATFORM)
+static void receiveCallback(const esp_now_recv_info* info, const uint8_t* data, int len)
+{
+    
+}
+
+#endif
 
 ESPNowCTR::ESPNowCTR(uint8_t* mac)
 {
