@@ -1,7 +1,7 @@
 #ifndef _WS_COMMUNICATOR_
 #define _WS_COMMUNICATOR_
 
-#ifdef ARDUINO
+#if defined(ARDUINO)
 
 #include "Communicator.h"
 

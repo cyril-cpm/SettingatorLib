@@ -1,4 +1,4 @@
-#ifdef ARDUINO
+#if defined(ARDUINO)
 
 #include "WebSocketCommunicator.h"
 

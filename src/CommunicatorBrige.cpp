@@ -3,7 +3,7 @@
 #include "Message.h"
 #include "ESPNowCommunicator.h"
 
-#ifdef ARDUINO
+#if defined(ARDUINO)
 #include <WiFi.h>
 
 #elif defined(ESP_PLATFORM)

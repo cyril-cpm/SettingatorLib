@@ -1,4 +1,4 @@
-#if ARDUINO
+#if defined(ARDUINO)
 
 #include "HardwareSerialCommunicator.h"
 

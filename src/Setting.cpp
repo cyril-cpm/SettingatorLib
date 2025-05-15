@@ -53,10 +53,10 @@ void Setting::getInitRequest(uint8_t* buffer)
     uint8_t nameIndex = 4 + fDataSize;
 
 #if defined(ARDUINO)
-    fName.getBytes(buffer + 4 + fDataSize, bufferSize - nameIndex + 1, 0);
+    fName.getBytes(buffer + nameIndex, bufferSize - nameIndex + 1, 0);
 
 #elif defined(ESP_PLATFORM)
-    
+    memcpy(buffer + nameIndex, fName.data(), fName.length());
 #endif
 }
 

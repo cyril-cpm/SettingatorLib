@@ -14,7 +14,6 @@ class STR_Type
             Setting::Type   type;
             void*           dataPtr     = &fValue;
             int             dataSize    = sizeof(fValue);
-            void            (*callback)() = nullptr;
         
             if constexpr (std::is_same_v<T, uint8_t>)
                 type = Setting::Type::UInt8;

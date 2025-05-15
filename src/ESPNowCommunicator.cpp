@@ -4,7 +4,7 @@
 #include <esp_now.h>
 #include <mutex>
 
-#ifdef ARDUINO
+#if defined(ARDUINO)
 #include <WiFi.h>
 
 #elif defined(ESP_PLATFORM)

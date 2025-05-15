@@ -1,7 +1,7 @@
 #ifndef _HTTPSERVER_
 #define _HTTPSERVER_
 
-#if ARDUINO
+#if defined(ARDUINO)
 
 #include <Arduino.h>
 

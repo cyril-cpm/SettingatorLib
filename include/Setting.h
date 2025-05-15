@@ -1,13 +1,15 @@
 #ifndef _SETTING_
 #define _SETTING_
 
-#ifdef ARDUINO
+#if defined(ARDUINO)
 #include <Arduino.h>
 #elif defined(ESP_PLATFORM)
 #include <esp_types.h>
-#endif
-
 #include <string>
+
+typedef std::string String;
+
+#endif
 
 class Message;
 
@@ -58,13 +60,13 @@ public:
     void    callback() { if (fCallback) fCallback(); }
     void    setCallback(void (*callback)());
 
-    std::string  getName() { return fName; }
+    String  getName() { return fName; }
 
 private:
     Type fType;
     uint8_t* fDataPtr = nullptr;
     size_t fDataSize = 0;
-    std::string fName;
+    String fName;
     setting_ref fRef = 0;
     void    (*fCallback)();
 };

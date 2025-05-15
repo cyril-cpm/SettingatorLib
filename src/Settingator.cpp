@@ -115,12 +115,12 @@ void Settingator::AddSetting(Setting& setting)
 {
     fSettingVector.push_back(setting);
 
+#if defined(ARDUINO)
     if (setting.getType() != Setting::Type::Trigger)
     {
         const char * settingName = setting.getName().c_str();
         void* buf = malloc(setting.getDataSize() * sizeof(uint8_t));
     
-#if defined(ARDUINO)
         if (fPreferences)
         {
             size_t len = fPreferences->getBytes(settingName, buf, setting.getDataSize());
@@ -128,8 +128,8 @@ void Settingator::AddSetting(Setting& setting)
             if (len)
                 setting.update((uint8_t*)buf, len);
         }
-#endif
     }
+#endif
 }
 
 uint8_t Settingator::AddSetting(Setting::Type type, void* data_ptr, size_t data_size, const char* name, void (*callback)())

@@ -1,6 +1,6 @@
 #pragma once
 
-#if ARDUINO
+#if defined(ARDUINO)
 
 #include "Communicator.h"
 

@@ -1,7 +1,7 @@
 #include "Message.h"
 #include "MiscDef.h"
 
-#ifdef ARDUINO
+#if defined(ARDUINO)
 #include <Arduino.h>
 
 #elif defined(ESP_PLATFORM)

@@ -1,7 +1,7 @@
 #ifndef _MISCDEF_
 #define _MISCDEF_
 
-#ifdef ARDUINO
+#if defined(ARDUINO)
 #include <Arduino.h>
 
 #elif defined(ESP_PLATFORM)
