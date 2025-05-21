@@ -60,7 +60,6 @@ class Settingator
 
     private:
 
-    ICTR*                   fCommunicator = nullptr;
     uint8_t                 fInternalRefCount = 0;
     std::vector<Setting>    fSettingVector;
     

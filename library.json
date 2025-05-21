@@ -1,6 +1,6 @@
 {
     "name": "Settingator",
-    "version": "0.3.8",
+    "version": "0.3.9",
     "author": "CPM",
     "repository": {
         "type": "git",
@@ -11,6 +11,6 @@
         "links2004/WebSockets": "^2.4.1",
         "ottowinter/ESPAsyncWebServer-esphome": "^3.1.0"
     },
-    "frameworks": "arduino",
+    "frameworks": ["espidf", "arduino"],
     "platforms": "espressif32"
 }

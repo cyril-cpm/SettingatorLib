@@ -9,31 +9,47 @@
 #elif defined(ESP_PLATFORM)
 #include <stdlib.h>
 #include <cstring>
+#include <esp_log.h>
 
 #endif
 
 CTRBridge* CTRBridge::CreateInstance(ICTR* master)
 {
+    ESP_LOGI("CTRBridge", "Creating Instance");
     return new CTRBridge(master);
 }
 
 CTRBridge::CTRBridge(ICTR* master)
 {
-    fMaster = master;
+    masterCTR = master;
+    ESP_LOGI("CTRBridge", "Instance created");
 }
 
 void CTRBridge::Update()
 {
-    if (fMaster && fMaster->Available())
+    if (masterCTR && masterCTR->Available())
     {
-        Message* msg = fMaster->Read();
+        Message* msg = masterCTR->Read();
 
         if (msg)
         {
+#if defined(ARDUINO)
+            Serial.println("A message has been read");
+#elif defined(ESP_PLATFORM)
+            ESP_LOGI("CRTBridge", "A message has been read");
+#endif
             switch (msg->GetType())
             {
             case Message::Type::EspNowInitWithSSD:
                 _addEspNowSlaveWithSSD(msg->ExtractSSD(), msg->GetSlaveID());
+                break;
+
+            case Message::Type::EspNowStartInitBroadcastedSlave:
+                _startEspNowInitBroadcasted();
+                break;
+
+            case Message::Type::EspNowStopInitBroadcastedSlave:
+                _stopEspNowInitBroadcasted();
                 break;
             
             case Message::Type::EspNowConfigDirectNotif:
@@ -55,7 +71,7 @@ void CTRBridge::Update()
             default:
                 if (msg->GetType() < Message::Type::BridgeBase)
                 {
-                    ICTR* slaveCTR = _getSlaveCTR(msg->GetSlaveID());
+                    ICTR* slaveCTR = Slave::GetSlaveCTR(msg->GetSlaveID());
 
                     if (slaveCTR)
                         slaveCTR->Write(*msg);
@@ -63,45 +79,79 @@ void CTRBridge::Update()
                 break;
             }
         }
-        fMaster->Flush();
+        masterCTR->Flush();
     }
 
-    for (auto i = fSlaves.begin(); i != fSlaves.end(); i++)
+    //ESP_LOGI("CTRBridge", "master done");
+
+    for (auto i = slaves.begin(); i != slaves.end(); i++)
     {
-        if (i->fCTR && i->fCTR->Available())
+        ICTR* slaveCTR = i->GetCTR();
+
+        if (slaveCTR && slaveCTR->Available())
         {
-            Message* msg = i->fCTR->Read();
+            Message* msg = slaveCTR->Read();
 
             if (msg)
-                fMaster->Write(*msg);
-            i->fCTR->Flush();
+                masterCTR->Write(*msg);
+            slaveCTR->Flush();
         }
     }
+
+    //ESP_LOGI("CTRBridge", "slaves done");
+
+    while (!newSlavesCTR.empty())
+    {
+
+        slaves.push_back(Slave(newSlavesCTR.front(), slaves.size()));
+        newSlavesCTR.pop();
+    }
+
+    //ESP_LOGI("CTRBridge", "new CTR done");
 }
 
 void CTRBridge::_addEspNowSlaveWithSSD(char* SSID, uint8_t slaveID)
 {
 
 #if defined(ARDUINO)
+    Serial.println("addEspNowSlaveWithSSD");
     uint16_t numberOfNetwork = WiFi.scanNetworks(false, false, false, 300U, 0U, SSID);
 
     for (int i = 0; i < numberOfNetwork; i++)
         _addEspNowSlaveWithMac(WiFi.BSSID(i), slaveID + i);
 
 #elif defined(ESP_PLATFORM)
-
+    ESP_LOGI("CTRBridge", "addEspNowSlaveWithSSD");
 #endif
 
 }
 
 void CTRBridge::_addEspNowSlaveWithMac(uint8_t* Mac, uint8_t slaveID)
 {
-     fSlaves.push_back(slave(ESPNowCTR::CreateInstanceWithMac(Mac), slaveID, Mac));
+#if defined(ARDUINO)
+    Serial.println("Slave found");
+#elif defined(ESP_PLATFORM)
+    ESP_LOGI("CRTBridge", "Slave found");
+#endif
+    slaves.push_back(Slave(ESPNowCTR::CreateInstanceWithMac(Mac), slaveID));
+}
+
+void CTRBridge::_startEspNowInitBroadcasted()
+{
+    ESPNowCore::CreateInstance();
+    initEspNowBroadcasted = true;
+    ESP_LOGI("CTRBridge", "start esp now init broadcasted slaves");
+}
+
+void CTRBridge::_stopEspNowInitBroadcasted()
+{
+    initEspNowBroadcasted = false;
+    ESP_LOGI("CTRBridge", "stop esp now init broadcasted slaves");
 }
 
 void CTRBridge::_configDirectNotif(Message* msg)
 {
-    if (!msg)
+    /*if (!msg)
         return;
 
     auto srcSlaveID = msg->GetSlaveID();
@@ -131,16 +181,16 @@ void CTRBridge::_configDirectNotif(Message* msg)
 
     Message* configMsg = new Message(configBuffer, configBufferLength);
 
-    if (_getSlaveCTR(srcSlaveID))
-        _getSlaveCTR(srcSlaveID)->Write(*configMsg);
+    if (Slave::GetSlaveCTR(srcSlaveID))
+        Slave::GetSlaveCTR(srcSlaveID)->Write(*configMsg);
 
     free(configBuffer);
-    delete configMsg;
+    delete configMsg;*/
 }
 
 void CTRBridge::_configDirectSettingUpdate(Message* msg)
 {
-    if (!msg)
+    /*if (!msg)
         return;
 
     auto srcSlaveID = msg->GetSlaveID();
@@ -171,11 +221,11 @@ void CTRBridge::_configDirectSettingUpdate(Message* msg)
 
     Message* configMsg = new Message(configBuffer, configBufferLength);
 
-    if (_getSlaveCTR(srcSlaveID))
-        _getSlaveCTR(srcSlaveID)->Write(*configMsg);
+    if (Slave::GetSlaveCTR(srcSlaveID))
+        Slave::GetSlaveCTR(srcSlaveID)->Write(*configMsg);
 
     free(configBuffer);
-    delete configMsg;
+    delete configMsg;*/
 }
 
 void CTRBridge::_removeDirectMessageConfig(Message* msg, uint8_t messageType)
@@ -204,44 +254,9 @@ void CTRBridge::_removeDirectMessageConfig(Message* msg, uint8_t messageType)
 
     Message* configMsg = new Message(configBuffer, configBufferLength);
 
-    if (_getSlaveCTR(srcSlaveID))
-        _getSlaveCTR(srcSlaveID)->Write(*configMsg);
+    if (Slave::GetSlaveCTR(srcSlaveID))
+        Slave::GetSlaveCTR(srcSlaveID)->Write(*configMsg);
 
     free(configBuffer);
     delete configMsg;
-}
-
-ICTR* CTRBridge::_getSlaveCTR(uint8_t slaveID)
-{
-    for (auto i = fSlaves.begin(); i != fSlaves.end(); i++)
-    {
-        if (i->fSlaveID == slaveID)
-            return i->fCTR;
-    }
-
-    return nullptr;
-}
-
-uint8_t* CTRBridge::_getSlaveMac(uint8_t slaveID)
-{
-    for (auto i = fSlaves.begin(); i != fSlaves.end(); i++)
-    {
-        if (i->fSlaveID == slaveID)
-            return i->fMac;
-    }
-
-    return nullptr;
-}
-
-slave::slave(ICTR* ctr, uint8_t slaveID, uint8_t* mac)
-{
-    fCTR = ctr;
-    fSlaveID = slaveID;
-    fMac = mac;
-
-    Message* msg = Message::BuildInitRequestMessage(slaveID);
-
-    if (fCTR)
-        fCTR->Write(*msg);
-    delete msg;
 }

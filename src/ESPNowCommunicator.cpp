@@ -2,6 +2,9 @@
 #include "MiscDef.h"
 #include "Message.h"
 #include <esp_now.h>
+#include <esp_wifi.h>
+#include <nvs_flash.h>
+#include <esp_mac.h>
 #include <mutex>
 
 #if defined(ARDUINO)
@@ -9,8 +12,10 @@
 
 #elif defined(ESP_PLATFORM)
 #include <cstring>
-
+#include <esp_log.h>
 #endif
+
+ESPNowCore* espNowCore = nullptr;
 
 std::mutex espNowMsgListMutex;
 
@@ -28,35 +33,31 @@ espNowMsg::~espNowMsg()
     delete data;
 }
 
-ESPNowCTR*  ESPNowCTR::CreateInstanceDiscoverableWithSSID(const char* deviceName)
+
+static bool isBroadcastMac(uint8_t* dstMac)
 {
+    bool isBroadcastMac = true;
 
-#if defined(ARDUINO)
-    WiFi.mode(WIFI_MODE_APSTA);
-    WiFi.softAP(deviceName);
-    DEBUG_PRINT(WiFi.macAddress());
+    if (dstMac)
+    {
+        for (auto i = 0; i < 6; i++)
+        {
+            if (dstMac[i] != 0xFF)
+                isBroadcastMac = false;
+        }
+    }
+    else
+        isBroadcastMac = false;
 
-#elif defined(ESP_PLATFORM)
-
-#endif
-
-    return new ESPNowCTR();
-}
-
-ESPNowCTR* ESPNowCTR::CreateInstanceWithMac(uint8_t* mac)
-{
-#if defined(ARDUINO)
-    WiFi.mode(WIFI_STA);
-    DEBUG_PRINT(WiFi.macAddress());
-#endif
-
-    return new ESPNowCTR(mac);
+    return isBroadcastMac;
 }
 
 #if defined(ARDUINO)
 static void receiveCallback(const uint8_t* mac, const uint8_t* inData, int len)
 {
     esp_now_peer_info peerInfo;
+
+    Serial.println("receivedCallback");
 
     if (esp_now_get_peer(mac, &peerInfo) == ESP_ERR_ESPNOW_NOT_FOUND)
     {
@@ -76,29 +77,135 @@ static void receiveCallback(const uint8_t* mac, const uint8_t* inData, int len)
 #elif defined(ESP_PLATFORM)
 static void receiveCallback(const esp_now_recv_info* info, const uint8_t* data, int len)
 {
-    
+    if (info)
+    {
+        if (initEspNowBroadcasted && len == 1 && data && *data == 0x42 && isBroadcastMac(info->des_addr))
+        {
+            ICTR* newCTR = ESPNowCTR::CreateInstanceWithMac(info->src_addr);
+
+            newSlavesCTR.push(newCTR);
+        }
+        else
+        {
+            if (!masterCTR)
+                masterCTR = ESPNowCTR::CreateInstanceWithMac(info->src_addr);
+
+            espNowMsgListMutex.lock();
+            espNowMsgList.push(new espNowMsg(data, len));
+            espNowMsgListMutex.unlock();
+        }
+    }
 }
 
 #endif
 
-ESPNowCTR::ESPNowCTR(uint8_t* mac)
+ESPNowCore* ESPNowCore::CreateInstance()
 {
-    esp_now_init();
-    esp_now_register_recv_cb(receiveCallback);
+    if (!espNowCore)
+        espNowCore = new ESPNowCore();
 
-    if (mac != nullptr)
+    return espNowCore;
+}
+
+ESPNowCore::ESPNowCore()
+{
+    //NVS
+    esp_err_t ret = nvs_flash_init();
+    if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+        ESP_ERROR_CHECK(nvs_flash_erase());  // Efface la mémoire si nécessaire
+        ret = nvs_flash_init();  // Réinitialise NVS
+    }
+
+    //WIFI
+    esp_err_t err = esp_event_loop_create_default();
+    if (err != ESP_OK && err != ESP_ERR_INVALID_STATE)
+        ESP_ERROR_CHECK(err);
+
+    wifi_init_config_t wifiCfg = WIFI_INIT_CONFIG_DEFAULT();
+    ESP_ERROR_CHECK(esp_wifi_init(&wifiCfg));
+    ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
+    ESP_ERROR_CHECK(esp_wifi_start());
+    ESP_ERROR_CHECK(esp_wifi_set_channel(1, WIFI_SECOND_CHAN_NONE));
+
+    //NOW
+    ESP_ERROR_CHECK(esp_now_init());
+    ESP_ERROR_CHECK(esp_now_register_recv_cb(receiveCallback));
+    
+    uint8_t mac[6];  // Tableau pour stocker l'adresse MAC
+    ESP_ERROR_CHECK(esp_read_mac(mac, ESP_MAC_WIFI_STA));  // Récupération de l'adresse MAC Wi-Fi (STA)
+
+    ESP_LOGI("MAC", "Adresse MAC (STA) : %02X:%02X:%02X:%02X:%02X:%02X",
+             mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);    
+
+}
+
+int ESPNowCore::Write(Message& buf, uint8_t* dstMac)
+{
+    //ESP_LOGI("ESPNowCTR", "Esp now write");
+
+    //DEBUG_PRINT_LN(buf.GetLength())
+    //if (buf.GetLength() > 250)
+    //   DEBUG_PRINT_LN("Alert ! message to big for ESPNow !")
+
+    //ESP_LOG_BUFFER_HEX("ESPNowCore", dstMac, 6);
+    esp_now_send(dstMac, buf.GetBufPtr(), buf.GetLength());
+    return 0;
+}
+
+void ESPNowCore::AddPeer(uint8_t* peerMac)
+{
+    esp_now_peer_info peerInfo;
+
+    if (esp_now_get_peer(peerMac, &peerInfo) == ESP_ERR_ESPNOW_NOT_FOUND)
     {
-        fMac = (uint8_t*)malloc(6 * sizeof(uint8_t));
-        memcpy(fMac, mac, 6 * sizeof(uint8_t));
-        
-        esp_now_peer_info peerInfo = {};
-
-        memcpy(peerInfo.peer_addr, fMac, 6);
-        peerInfo.channel = 0;
+        peerInfo = {};
+        memcpy(peerInfo.peer_addr, peerMac, 6);
+        peerInfo.channel = 1;
         peerInfo.encrypt = false;
 
         esp_now_add_peer(&peerInfo);
     }
+}
+
+void ESPNowCore::BroadcastPing()
+{
+    uint8_t dstMac[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+    uint8_t data = 0x42;
+
+    AddPeer(dstMac);
+
+    ESP_ERROR_CHECK(esp_now_send(dstMac, &data, sizeof(data)));
+}
+
+ESPNowCTR* ESPNowCTR::CreateInstanceWithMac(uint8_t* mac)
+{
+#if defined(ARDUINO)
+    WiFi.mode(WIFI_STA);
+    DEBUG_PRINT(WiFi.macAddress());
+    Serial.print("MyMac:");
+    Serial.print(WiFi.macAddress());
+    Serial.print("DstMac:");
+    printBuffer(mac, 6);
+#endif
+
+    return new ESPNowCTR(mac);
+}
+
+ESPNowCTR::ESPNowCTR(uint8_t* peerMac)
+{
+
+    fCore = ESPNowCore::CreateInstance();
+
+    if (peerMac != nullptr)
+    {
+        ESP_LOGI("ESPNowCTR", "mac not null");
+        fMac = (uint8_t*)malloc(6 * sizeof(uint8_t));
+        memcpy(fMac, peerMac, 6 * sizeof(uint8_t));
+        
+        fCore->AddPeer(fMac);
+    }
+
+    ESP_LOGI("ESPNowCTR", "end init");
 }
 
 ESPNowCTR::~ESPNowCTR()
@@ -125,11 +232,7 @@ void ESPNowCTR::Update()
 
 int ESPNowCTR::Write(Message& buf)
 {
-    DEBUG_PRINT_LN(buf.GetLength())
-    if (buf.GetLength() > 250)
-        DEBUG_PRINT_LN("Alert ! message to big for ESPNow !")
-    esp_now_send(fMac, buf.GetBufPtr(), buf.GetLength());
-    return 0;
+    return fCore->Write(buf, fMac);
 }
 
 espNowDirectNotif::espNowDirectNotif(const uint8_t* inMac, uint8_t inNotifByte, uint8_t inDstSlaveID) : notifByte(inNotifByte), dstSlaveID(inDstSlaveID)
@@ -156,39 +259,14 @@ espNowDirectSettingUpdate::~espNowDirectSettingUpdate()
 
 void ESPNowCTR::ConfigEspNowDirectNotif(uint8_t* mac, uint8_t notifByte, uint8_t dstSlaveID)
 {
-    esp_now_peer_info peerInfo;
-
-    if (esp_now_get_peer(mac, &peerInfo) == ESP_ERR_ESPNOW_NOT_FOUND)
-    {
-        peerInfo = {};
-        memcpy(peerInfo.peer_addr, mac, 6);
-        peerInfo.channel = 0;
-        peerInfo.encrypt = false;
-
-        esp_now_add_peer(&peerInfo);
-    }
+    fCore->AddPeer(mac);
 
     fDirectNotif.push_back(new espNowDirectNotif(mac, notifByte, dstSlaveID));
 }
 
 void ESPNowCTR::ConfigEspNowDirectSettingUpdate(uint8_t* mac, uint8_t settingRef, uint8_t settingValueLen, uint8_t dstSlaveID)
 {
-    esp_now_peer_info peerInfo;
-
-    DEBUG_PRINT_LN("CongigEspNowDirectSettingUpdate")
-    DEBUG_PRINT_VALUE_BUF_LN("Mac", mac, 6)
-    DEBUG_PRINT_VALUE("Ref", settingRef)
-    DEBUG_PRINT_VALUE("dstSlave", dstSlaveID)
-
-    if (esp_now_get_peer(mac, &peerInfo) == ESP_ERR_ESPNOW_NOT_FOUND)
-    {
-        peerInfo = {};
-        memcpy(peerInfo.peer_addr, mac, 6);
-        peerInfo.channel = 0;
-        peerInfo.encrypt = false;
-
-        esp_now_add_peer(&peerInfo);
-    }
+    fCore->AddPeer(mac);
 
     fDirectSettingUpdate.push_back(new espNowDirectSettingUpdate(mac, settingRef, dstSlaveID, settingValueLen));
 }
@@ -235,7 +313,8 @@ void ESPNowCTR::SendDirectNotif(uint8_t notifByte)
             notifBuffer[5] = notifByte;
             notifBuffer[6] = Message::Frame::End;
             
-            esp_now_send((*i)->mac, notifBuffer, notifMsgSize);
+            Message notifMessage(&notifBuffer, 7);
+            fCore->Write(notifMessage, (*i)->mac);
         }
     }
 }
@@ -270,6 +349,8 @@ void ESPNowCTR::SendDirectSettingUpdate(uint8_t settingRef, uint8_t* value, uint
             DEBUG_PRINT_VALUE_BUF_LN("Message sent", msgBuffer, msgSize)
 
             esp_now_send((*i)->mac, msgBuffer, msgSize);
+            Message msg(&msgBuffer, msgSize);
+            fCore->Write(msg, (*i)->mac);
         }
     }
 }

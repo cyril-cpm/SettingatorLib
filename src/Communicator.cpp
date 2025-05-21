@@ -3,6 +3,11 @@
 #include "MiscDef.h"
 #include "Message.h"
 
+ICTR* masterCTR = nullptr;
+std::vector<Slave> slaves;
+std::queue<ICTR*> newSlavesCTR;
+bool initEspNowBroadcasted = false;
+
 void ICTR::_receive(Message* msg)
 {
     fReceivedMessage.push(msg);
@@ -61,4 +66,37 @@ void ICTR::Flush()
 {
    delete fReceivedMessage.front();
    fReceivedMessage.pop();
+}
+
+Slave::Slave(ICTR* ctr, uint8_t slaveID)
+{
+    fCTR = ctr;
+    fSlaveID = slaveID;
+
+    Message* msg = Message::BuildInitRequestMessage(slaveID);
+
+    if (fCTR)
+        fCTR->Write(*msg);
+    delete msg;
+}
+
+ICTR* Slave::GetSlaveCTR(uint8_t slaveID)
+{
+    for (auto i = slaves.begin(); i != slaves.end(); i++)
+    {
+        if (i->fSlaveID == slaveID)
+            return i->fCTR;
+    }
+
+    return nullptr;
+}
+
+ICTR* Slave::GetCTR()
+{
+    return fCTR;
+}
+
+uint8_t Slave::GetID()
+{
+    return fSlaveID;
 }

@@ -31,11 +31,23 @@ struct espNowDirectSettingUpdate {
     uint8_t     valueLen = 0;
 };
 
+class ESPNowCore
+{
+    public:
+    static ESPNowCore*  CreateInstance();
+    ESPNowCore();
+
+    int     Write(Message& buf, uint8_t* dstMac);
+    void    Update();
+    void    AddPeer(uint8_t* peerMac);
+    void    BroadcastPing();
+};
+
+extern ESPNowCore* espNowCore;
+
 class ESPNowCTR: public ICTR
 {
     public:
-
-    static ESPNowCTR*   CreateInstanceDiscoverableWithSSID(const char* deviceName);
     static ESPNowCTR*   CreateInstanceWithMac(uint8_t* mac);
 
     virtual int         Write(Message& buf) override;
@@ -61,4 +73,6 @@ class ESPNowCTR: public ICTR
 
     std::vector<espNowDirectNotif*> fDirectNotif;
     std::vector<espNowDirectSettingUpdate*> fDirectSettingUpdate;
+
+    ESPNowCore* fCore = nullptr;
 };

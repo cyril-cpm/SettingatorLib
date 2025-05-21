@@ -11,7 +11,7 @@
 
 #elif defined(ESP_PLATFORM)
 #include <cstring>
-
+#include <esp_log.h>
 #endif
 
 
@@ -32,7 +32,7 @@ void Settingator::StartWiFi()
 #endif
 }
 
-Settingator::Settingator(ICTR* communicator) : fCommunicator(communicator)
+Settingator::Settingator(ICTR* communicator)
 {
 #if defined(ARDUINO)
     fPreferences = new Preferences();
@@ -41,6 +41,7 @@ Settingator::Settingator(ICTR* communicator) : fCommunicator(communicator)
 #elif defined(ESP_PALTFORM)
 
 #endif
+    masterCTR = communicator;
 }
 
 Settingator::~Settingator()
@@ -53,17 +54,24 @@ Settingator::~Settingator()
 
 void Settingator::SetCommunicator(ICTR* communicator)
 {
-    fCommunicator = communicator;
+    masterCTR = communicator;
 }
 
 void Settingator::Update()
 {
-    if (fCommunicator && fCommunicator->Available())
+    if (masterCTR && masterCTR->Available())
     {
-        Message* msg = fCommunicator->Read();
+        Message* msg = masterCTR->Read();
         //Serial.println("Message available");
         //printBuffer(msg->GetBufPtr(), msg->GetLength(), HEX);
         //Serial.println("");
+
+        if (msg)
+#if defined(ARDUINO)
+            Serial.println("Message Read");
+#elif defined(ESP_PLATFORM)
+            ESP_LOGI("STR","Message read");
+#endif
 
         if (!fSlaveID && msg && msg->GetType() == Message::Type::InitRequest)
             _createSlaveID(msg->GetSlaveID());
@@ -107,7 +115,7 @@ void Settingator::Update()
             }
         }
 
-        fCommunicator->Flush();
+        masterCTR->Flush();
     }
 }
 
@@ -171,8 +179,8 @@ void Settingator::SendUpdateMessage(Setting* setting)
     if (setting)
     {
         Message* message = setting->buildUpdateMessage(fSlaveID);
-        if (message && fCommunicator)
-            fCommunicator->Write(*message);
+        if (message && masterCTR)
+            masterCTR->Write(*message);
         delete message;
     }
 }
@@ -187,7 +195,7 @@ void Settingator::SendUpdateMessage(uint8_t ref)
 
 void Settingator::SendNotif(uint8_t notifByte)
 {
-    if (fCommunicator)
+    if (masterCTR)
     {
         size_t notifMsgSize = 7;
 
@@ -203,20 +211,20 @@ void Settingator::SendNotif(uint8_t notifByte)
 
         Message message(notifBuffer, notifMsgSize);
 
-        fCommunicator->Write(message);
+        masterCTR->Write(message);
     }
 }
 
 void Settingator::SendDirectNotif(uint8_t notifByte)
 {
-    if (fCommunicator)
-        fCommunicator->SendDirectNotif(notifByte);
+    if (masterCTR)
+        masterCTR->SendDirectNotif(notifByte);
 }
 
 void Settingator::SendDirectSettingUpdate(uint8_t settingRef, uint8_t* value, uint8_t valueLen)
 {
-    if (fCommunicator)
-        fCommunicator->SendDirectSettingUpdate(settingRef, value, valueLen);
+    if (masterCTR)
+        masterCTR->SendDirectSettingUpdate(settingRef, value, valueLen);
 }
 
 void Settingator::AddNotifCallback(void(*callback)(), uint8_t notifByte)
@@ -309,12 +317,12 @@ void Settingator::_createSlaveID(uint8_t slaveID)
 
 void Settingator::_sendInitMessage()
 {
-    if (fCommunicator)
+    if (masterCTR)
     {
         Message* initMessage = _buildSettingInitMessage();
         //DEBUG_PRINT_LN("Settingator::Update");
 
-        fCommunicator->Write(*initMessage);
+        masterCTR->Write(*initMessage);
 
         delete initMessage;
     }
@@ -356,20 +364,20 @@ void Settingator::_treatSettingUpdateMessage(Message* msg)
 
 void Settingator::_configEspNowDirectNotif(Message* msg)
 {
-    if (fCommunicator)
+    if (masterCTR)
     {
         auto buffer = msg->GetBufPtr();
-        fCommunicator->ConfigEspNowDirectNotif(&buffer[6], buffer[16], buffer[5]);
+        masterCTR->ConfigEspNowDirectNotif(&buffer[6], buffer[16], buffer[5]);
     }
 }
 
 void Settingator::_configEspNowDirectSettingUpdate(Message* msg)
 {
-    if (fCommunicator)
+    if (masterCTR)
     {
         DEBUG_PRINT_LN("Config")
         auto buffer = msg->GetBufPtr();
-        fCommunicator->ConfigEspNowDirectSettingUpdate(&buffer[6], buffer[12], buffer[13], buffer[5]);
+        masterCTR->ConfigEspNowDirectSettingUpdate(&buffer[6], buffer[12], buffer[13], buffer[5]);
     }
 }
 
@@ -390,20 +398,20 @@ void Settingator::_treatNotifMessage(Message* msg)
 
 void Settingator::_removeDirectNotifConfig(Message* msg)
 {
-    if (!msg || !fCommunicator)
+    if (!msg || !masterCTR)
         return;
 
     auto buffer = msg->GetBufPtr();
-    fCommunicator->RemoveDirectNotifConfig(buffer[5], buffer[6]);
+    masterCTR->RemoveDirectNotifConfig(buffer[5], buffer[6]);
 }
 
 void Settingator::_removeDirectSettingUpdateConfig(Message* msg)
 {
-    if (!msg || !fCommunicator)
+    if (!msg || !masterCTR)
         return;
         
     auto buffer = msg->GetBufPtr();
-    fCommunicator->RemoveDirectSettingUpdateConfig(buffer[5], buffer[6]);
+    masterCTR->RemoveDirectSettingUpdateConfig(buffer[5], buffer[6]);
 }
 
 setting_ref Settingator::settingRefCount()

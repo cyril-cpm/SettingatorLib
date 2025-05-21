@@ -1,3 +1,5 @@
+#pragma once
+
 #ifndef _COMMUNICATOR_
 #define _COMMUNICATOR_
 
@@ -56,5 +58,28 @@ class ICTR
     std::queue<Message*> fReceivedMessage;
 
 };
+
+extern ICTR* masterCTR;
+
+extern std::queue<ICTR*> newSlavesCTR;
+
+class Slave
+{
+    public:
+    Slave(ICTR* ctr, uint8_t slaveID);
+
+    static ICTR* GetSlaveCTR(uint8_t slaveID);
+
+    ICTR* GetCTR();
+    uint8_t GetID();
+
+    private:
+    uint8_t     fSlaveID = 0;
+    ICTR*       fCTR = nullptr;
+};
+
+extern std::vector<Slave> slaves;
+
+extern bool initEspNowBroadcasted;
 
 #endif

@@ -8,6 +8,7 @@
 
 UARTCTR* UARTCTR::CreateInstance(int baudrate)
 {
+    ESP_LOGI("UARTCTR", "Creating Instance");
     return new UARTCTR(baudrate);
 }
 
@@ -22,13 +23,19 @@ UARTCTR::UARTCTR(int baudrate)
         .rx_flow_ctrl_thresh = 0,
     };
 
+    ESP_LOGI("UARTCTR", "uart_param_config");
     ESP_ERROR_CHECK(uart_param_config(fUartPort, &uartConfig));
+    ESP_LOGI("UARTCTR", "Done");
 
+    ESP_LOGI("UARTCTR", "uart_set_pin");
     ESP_ERROR_CHECK(uart_set_pin(fUartPort, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE,
                                             UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE));
+    ESP_LOGI("UARTCTR", "Done");
 
+    ESP_LOGI("UARTCTR", "uart_driver_install");
     ESP_ERROR_CHECK(uart_driver_install(fUartPort, fRxBufferSize, fTxBufferSize,
                                         0, nullptr, 0));
+    ESP_LOGI("UARCTR", "Done");
 }
 
 int UARTCTR::Write(Message& buf)
