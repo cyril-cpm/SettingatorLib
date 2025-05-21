@@ -48,7 +48,7 @@ extern ESPNowCore* espNowCore;
 class ESPNowCTR: public ICTR
 {
     public:
-    static ESPNowCTR*   CreateInstanceWithMac(uint8_t* mac);
+    static ESPNowCTR*   CreateInstanceWithMac(const uint8_t* mac);
 
     virtual int         Write(Message& buf) override;
     virtual void        Update() override;
@@ -66,7 +66,7 @@ class ESPNowCTR: public ICTR
     virtual void SendDirectSettingUpdate(uint8_t settingRef, uint8_t* value, uint8_t valueLen) override;
     
     private:
-    ESPNowCTR(uint8_t* mac = nullptr);
+    ESPNowCTR(const uint8_t* mac = nullptr);
     ~ESPNowCTR();
 
     uint8_t*    fMac = nullptr;

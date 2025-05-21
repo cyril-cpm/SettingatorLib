@@ -8,7 +8,6 @@
 #include <mutex>
 
 #if defined(ARDUINO)
-#include <WiFi.h>
 
 #elif defined(ESP_PLATFORM)
 #include <cstring>
@@ -53,25 +52,26 @@ static bool isBroadcastMac(uint8_t* dstMac)
 }
 
 #if defined(ARDUINO)
-static void receiveCallback(const uint8_t* mac, const uint8_t* inData, int len)
+static void receiveCallback(const uint8_t* mac, const uint8_t* data, int len)
 {
-    esp_now_peer_info peerInfo;
-
-    Serial.println("receivedCallback");
-
-    if (esp_now_get_peer(mac, &peerInfo) == ESP_ERR_ESPNOW_NOT_FOUND)
+    if (mac)
     {
-        peerInfo = {};
-        memcpy(peerInfo.peer_addr, mac, 6);
-        peerInfo.channel = 0;
-        peerInfo.encrypt = false;
+        if (initEspNowBroadcasted && len == 1 && data && *data == 0x42)
+        {
+            ICTR* newCTR = ESPNowCTR::CreateInstanceWithMac(mac);
 
-        esp_now_add_peer(&peerInfo);
+            newSlavesCTR.push(newCTR);
+        }
+        else
+        {
+            if (!masterCTR)
+                masterCTR = ESPNowCTR::CreateInstanceWithMac(mac);
+
+            espNowMsgListMutex.lock();
+            espNowMsgList.push(new espNowMsg(data, len));
+            espNowMsgListMutex.unlock();
+        }
     }
-
-    espNowMsgListMutex.lock();
-    espNowMsgList.push(new espNowMsg(inData, len));
-    espNowMsgListMutex.unlock();
 }
 
 #elif defined(ESP_PLATFORM)
@@ -177,21 +177,12 @@ void ESPNowCore::BroadcastPing()
     ESP_ERROR_CHECK(esp_now_send(dstMac, &data, sizeof(data)));
 }
 
-ESPNowCTR* ESPNowCTR::CreateInstanceWithMac(uint8_t* mac)
+ESPNowCTR* ESPNowCTR::CreateInstanceWithMac(const uint8_t* mac)
 {
-#if defined(ARDUINO)
-    WiFi.mode(WIFI_STA);
-    DEBUG_PRINT(WiFi.macAddress());
-    Serial.print("MyMac:");
-    Serial.print(WiFi.macAddress());
-    Serial.print("DstMac:");
-    printBuffer(mac, 6);
-#endif
-
     return new ESPNowCTR(mac);
 }
 
-ESPNowCTR::ESPNowCTR(uint8_t* peerMac)
+ESPNowCTR::ESPNowCTR(const uint8_t* peerMac)
 {
 
     fCore = ESPNowCore::CreateInstance();
