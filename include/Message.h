@@ -29,7 +29,8 @@ public:
         EspNowRemoveDirectNotifConfig = 0x57,
         EspNowRemoveDirectSettingUpdateConfig = 0x58,
         EspNowStartInitBroadcastedSlave = 0x59,
-        EspNowStopInitBroadcastedSlave = 0x5A
+        EspNowStopInitBroadcastedSlave = 0x5A,
+        BridgeReinitSlaves = 0x5B
     };
 
     enum Frame

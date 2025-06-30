@@ -25,5 +25,6 @@ class CTRBridge
     void    _configDirectNotif(Message* msg);
     void    _configDirectSettingUpdate(Message* msg);
     void    _removeDirectMessageConfig(Message* msg, uint8_t messageType);
+    void    _reinitSlaves();
 
 };

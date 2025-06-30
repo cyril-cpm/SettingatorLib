@@ -68,6 +68,10 @@ void CTRBridge::Update()
                 _removeDirectMessageConfig(msg, Message::Type::RemoveDirectSettingUpdateConfig);
                 break;
 
+            case Message::Type::BridgeReinitSlaves:
+                _reinitSlaves();
+                break;
+
             default:
                 if (msg->GetType() < Message::Type::BridgeBase)
                 {
@@ -259,4 +263,20 @@ void CTRBridge::_removeDirectMessageConfig(Message* msg, uint8_t messageType)
 
     free(configBuffer);
     delete configMsg;
+}
+
+void CTRBridge::_reinitSlaves()
+{
+    for (auto i = slaves.begin(); i != slaves.end(); i++)
+    {
+        ICTR* slaveCTR = i->GetCTR();
+
+        if (slaveCTR && slaveCTR->Available())
+        {
+            Message* msg =  Message::BuildInitRequestMessage(i->GetID());
+
+            if (msg)
+                slaveCTR->Write(*msg);
+        }
+    }    
 }
