@@ -66,19 +66,25 @@ extern std::queue<ICTR*> newSlavesCTR;
 class Slave
 {
     public:
-    Slave(ICTR* ctr, uint8_t slaveID);
+    Slave(ICTR* ctr);
 
     static ICTR* GetSlaveCTR(uint8_t slaveID);
 
     ICTR* GetCTR();
     uint8_t GetID();
+    bool    HasSubSlave(uint8_t id);
+    void    AddSubSlave(uint8_t id);
+    void    SetID(uint8_t id);
 
     private:
     uint8_t     fSlaveID = 0;
     ICTR*       fCTR = nullptr;
+
+    std::vector<uint8_t> fSubSlave;
 };
 
-extern std::vector<Slave> slaves;
+extern std::vector<Slave*> slaves;
+extern std::queue<Slave*> slavesWaitingForID;
 
 extern bool initEspNowBroadcasted;
 

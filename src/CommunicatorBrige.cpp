@@ -40,10 +40,6 @@ void CTRBridge::Update()
 #endif
             switch (msg->GetType())
             {
-            case Message::Type::EspNowInitWithSSD:
-                _addEspNowSlaveWithSSD(msg->ExtractSSD(), msg->GetSlaveID());
-                break;
-
             case Message::Type::EspNowStartInitBroadcastedSlave:
                 _startEspNowInitBroadcasted();
                 break;
@@ -78,7 +74,24 @@ void CTRBridge::Update()
                     ICTR* slaveCTR = Slave::GetSlaveCTR(msg->GetSlaveID());
 
                     if (slaveCTR)
+                    {
                         slaveCTR->Write(*msg);
+                    }
+
+                    else if (msg->GetType() == Message::Type::InitRequest && !slavesWaitingForID.empty())
+                    {
+                        Slave* slave = slavesWaitingForID.front();
+                        if (slave)
+                        {
+                            slave->SetID(msg->GetSlaveID());
+                            slavesWaitingForID.pop();
+                            slaves.push_back(slave);
+                            slaveCTR = slave->GetCTR();
+
+                            if (slaveCTR)
+                                slaveCTR->Write(*msg);
+                        }
+                    }
                 }
                 break;
             }
@@ -87,57 +100,49 @@ void CTRBridge::Update()
     }
 
     //ESP_LOGI("CTRBridge", "master done");
-
-    for (auto i = slaves.begin(); i != slaves.end(); i++)
+    if (masterCTR)
     {
-        ICTR* slaveCTR = i->GetCTR();
-
-        if (slaveCTR && slaveCTR->Available())
+        for (auto i = slaves.begin(); i != slaves.end(); i++)
         {
-            Message* msg = slaveCTR->Read();
+            ICTR* slaveCTR = (*i)->GetCTR();
 
-            if (msg)
-                masterCTR->Write(*msg);
-            slaveCTR->Flush();
+            if (slaveCTR && slaveCTR->Available())
+            {
+                Message* msg = slaveCTR->Read();
+
+                if (msg)
+                {
+                    switch (msg->GetType())
+                        {
+                        case Message::Type::SettingInit:
+                            _treatSettingInit(msg, *i);
+                            break;
+                        }
+                    masterCTR->Write(*msg);
+                }
+                slaveCTR->Flush();
+            }
         }
     }
 
     //ESP_LOGI("CTRBridge", "slaves done");
 
-    while (!newSlavesCTR.empty())
+    if (masterCTR)
     {
+        Message* requestMsg = Message::BuildSlaveIDRequestMessage();
 
-        slaves.push_back(Slave(newSlavesCTR.front(), slaves.size()));
-        newSlavesCTR.pop();
+        while (!newSlavesCTR.empty())
+        {
+            masterCTR->Write(*requestMsg);
+            Slave* newSlave = new Slave(newSlavesCTR.front());
+            slavesWaitingForID.push(newSlave);
+            newSlavesCTR.pop();
+        }
+
+        delete requestMsg;
     }
 
     //ESP_LOGI("CTRBridge", "new CTR done");
-}
-
-void CTRBridge::_addEspNowSlaveWithSSD(char* SSID, uint8_t slaveID)
-{
-
-#if defined(ARDUINO)
-    Serial.println("addEspNowSlaveWithSSD");
-    uint16_t numberOfNetwork = WiFi.scanNetworks(false, false, false, 300U, 0U, SSID);
-
-    for (int i = 0; i < numberOfNetwork; i++)
-        _addEspNowSlaveWithMac(WiFi.BSSID(i), slaveID + i);
-
-#elif defined(ESP_PLATFORM)
-    ESP_LOGI("CTRBridge", "addEspNowSlaveWithSSD");
-#endif
-
-}
-
-void CTRBridge::_addEspNowSlaveWithMac(uint8_t* Mac, uint8_t slaveID)
-{
-#if defined(ARDUINO)
-    Serial.println("Slave found");
-#elif defined(ESP_PLATFORM)
-    ESP_LOGI("CRTBridge", "Slave found");
-#endif
-    slaves.push_back(Slave(ESPNowCTR::CreateInstanceWithMac(Mac), slaveID));
 }
 
 void CTRBridge::_startEspNowInitBroadcasted()
@@ -267,16 +272,37 @@ void CTRBridge::_removeDirectMessageConfig(Message* msg, uint8_t messageType)
 
 void CTRBridge::_reinitSlaves()
 {
+    Serial.println("_reinitSLaves");
     for (auto i = slaves.begin(); i != slaves.end(); i++)
     {
-        ICTR* slaveCTR = i->GetCTR();
+        Serial.println("looping");
+        ICTR* slaveCTR = (*i)->GetCTR();
 
-        if (slaveCTR && slaveCTR->Available())
+        if (slaveCTR)
         {
-            Message* msg =  Message::BuildInitRequestMessage(i->GetID());
+            Message* msg =  Message::BuildInitRequestMessage((*i)->GetID());
 
             if (msg)
+            {
                 slaveCTR->Write(*msg);
+                Serial.println("Slave reinit");
+
+                delete msg;
+            }
         }
     }    
+}
+
+void CTRBridge::_treatSettingInit(Message* msg, Slave *slave)
+{
+    if (!msg || !slave)
+        return;
+
+    uint8_t msgSlaveID = msg->GetSlaveID();
+
+    if (msgSlaveID == slave->GetID())
+        return;
+
+    if (!slave->HasSubSlave(msgSlaveID))
+        slave->AddSubSlave(msgSlaveID);
 }

@@ -30,7 +30,8 @@ public:
         EspNowRemoveDirectSettingUpdateConfig = 0x58,
         EspNowStartInitBroadcastedSlave = 0x59,
         EspNowStopInitBroadcastedSlave = 0x5A,
-        BridgeReinitSlaves = 0x5B
+        BridgeReinitSlaves = 0x5B,
+        SlaveIDRequest = 0x5C
     };
 
     enum Frame
@@ -40,6 +41,7 @@ public:
     };
 
     static Message* BuildInitRequestMessage(uint8_t slaveID);
+    static Message* BuildSlaveIDRequestMessage();
 
     Message() {};
     Message(uint8_t* buffer, uint8_t len);

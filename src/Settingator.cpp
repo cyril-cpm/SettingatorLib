@@ -1,6 +1,7 @@
 #include "Settingator.h"
 
 #include "Communicator.h"
+#include "CommunicatorBridge.h"
 #include "Setting.h"
 #include "Message.h"
 #include "MiscDef.h"
@@ -113,9 +114,15 @@ void Settingator::Update()
                 DEBUG_PRINT_VALUE_BUF_LN("UNTREATED MESSAGE", msg->GetBufPtr(), msg->GetLength())
                 break;
             }
+            masterCTR->Flush();
         }
-
-        masterCTR->Flush();
+        else
+        {
+            if (fBridge)
+                fBridge->Update();
+            else
+                masterCTR->Flush();
+        }
     }
 }
 

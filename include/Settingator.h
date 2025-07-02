@@ -19,6 +19,7 @@ class Preferences;
 
 class ICTR;
 class Message;
+class CTRBridge;
 
 struct notifCallback
 {
@@ -80,6 +81,8 @@ class Settingator
     void        _createSlaveID(uint8_t slaveID);
 
     std::vector<notifCallback*> fNotifCallback;
+
+    CTRBridge*  fBridge = nullptr;
 };
 
 extern Settingator STR;

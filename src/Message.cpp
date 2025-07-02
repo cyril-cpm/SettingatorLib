@@ -23,6 +23,20 @@ Message* Message::BuildInitRequestMessage(uint8_t slaveID)
     return new Message(buffer, 7);
 }
 
+Message* Message::BuildSlaveIDRequestMessage()
+{
+    uint8_t buffer[] = {
+        Message::Frame::Start,
+        0x00,
+        0x06,
+        0,
+        Message::Type::SlaveIDRequest,
+        Message::Frame::End
+    };
+
+    return new Message(buffer, 6);
+}
+
 Message::Message(uint8_t* buffer, uint8_t len)
 {
     fSlaveID = buffer[3];

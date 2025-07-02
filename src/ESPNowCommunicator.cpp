@@ -18,7 +18,22 @@ ESPNowCore* espNowCore = nullptr;
 
 std::mutex espNowMsgListMutex;
 
-std::queue<espNowMsg*> espNowMsgList;
+std::vector<std::pair<uint8_t*, std::queue<espNowMsg*>>> espNowMsgList;
+
+//std::queue<espNowMsg*> espNowMsgList;
+
+static bool compareMac(const uint8_t* mac1, const uint8_t* mac2) {
+    return memcmp(mac1, mac2, 6) == 0;
+}
+
+static std::queue<espNowMsg*>* findQueueForMac(const uint8_t* macToFind) {
+    for (auto& pair : espNowMsgList) {
+        if (compareMac(pair.first, macToFind)) {
+            return &pair.second;
+        }
+    }
+    return nullptr; // Si non trouvé
+}
 
 espNowMsg::espNowMsg(const uint8_t* inData, int inLen) : len(inLen)
 {
@@ -64,11 +79,16 @@ static void receiveCallback(const uint8_t* mac, const uint8_t* data, int len)
         }
         else
         {
-            if (!masterCTR)
+            if (!masterCTR) //A changer
                 masterCTR = ESPNowCTR::CreateInstanceWithMac(mac);
 
             espNowMsgListMutex.lock();
-            espNowMsgList.push(new espNowMsg(data, len));
+
+            auto list = findQueueForMac(mac);
+
+            if (list)
+                list->push(new espNowMsg(data, len));
+
             espNowMsgListMutex.unlock();
         }
     }
@@ -91,7 +111,12 @@ static void receiveCallback(const esp_now_recv_info* info, const uint8_t* data, 
                 masterCTR = ESPNowCTR::CreateInstanceWithMac(info->src_addr);
 
             espNowMsgListMutex.lock();
-            espNowMsgList.push(new espNowMsg(data, len));
+            
+            auto list = findQueueForMac(mac);
+
+            if (list)
+                list->push(new espNowMsg(data, len));
+
             espNowMsgListMutex.unlock();
         }
     }
@@ -179,6 +204,7 @@ void ESPNowCore::BroadcastPing()
 
 ESPNowCTR* ESPNowCTR::CreateInstanceWithMac(const uint8_t* mac)
 {
+   
     return new ESPNowCTR(mac);
 }
 
@@ -194,6 +220,10 @@ ESPNowCTR::ESPNowCTR(const uint8_t* peerMac)
         memcpy(fMac, peerMac, 6 * sizeof(uint8_t));
         
         fCore->AddPeer(fMac);
+
+        std::queue<espNowMsg*> msgList;
+
+        espNowMsgList.emplace_back(fMac, msgList); 
     }
 
     ESP_LOGI("ESPNowCTR", "end init");
@@ -208,14 +238,17 @@ void ESPNowCTR::Update()
 {
     if (espNowMsgListMutex.try_lock())
     {
-        while (espNowMsgList.size())
+        auto list = findQueueForMac(fMac);
+
+
+        while (list && list->size())
         {
-            auto msg = espNowMsgList.front();
+            auto msg = list->front();
 
             _receive(new Message(msg->data, msg->len));
 
             delete msg;
-            espNowMsgList.pop();
+            list->pop();
         }
         espNowMsgListMutex.unlock();
     }

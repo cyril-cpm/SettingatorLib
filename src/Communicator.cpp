@@ -4,8 +4,9 @@
 #include "Message.h"
 
 ICTR* masterCTR = nullptr;
-std::vector<Slave> slaves;
+std::vector<Slave*> slaves;
 std::queue<ICTR*> newSlavesCTR;
+std::queue<Slave*> slavesWaitingForID;
 bool initEspNowBroadcasted = false;
 
 void ICTR::_receive(Message* msg)
@@ -68,24 +69,17 @@ void ICTR::Flush()
    fReceivedMessage.pop();
 }
 
-Slave::Slave(ICTR* ctr, uint8_t slaveID)
+Slave::Slave(ICTR* ctr)
 {
     fCTR = ctr;
-    fSlaveID = slaveID;
-
-    Message* msg = Message::BuildInitRequestMessage(slaveID);
-
-    if (fCTR)
-        fCTR->Write(*msg);
-    delete msg;
 }
 
 ICTR* Slave::GetSlaveCTR(uint8_t slaveID)
 {
     for (auto i = slaves.begin(); i != slaves.end(); i++)
     {
-        if (i->fSlaveID == slaveID)
-            return i->fCTR;
+        if ((*i)->fSlaveID == slaveID)
+            return (*i)->fCTR;
     }
 
     return nullptr;
@@ -99,4 +93,30 @@ ICTR* Slave::GetCTR()
 uint8_t Slave::GetID()
 {
     return fSlaveID;
+}
+
+bool Slave::HasSubSlave(uint8_t id)
+{
+    bool found = false;
+
+    for (auto i = fSubSlave.begin(); i != fSubSlave.end(); i++)
+    {
+        if (*i == id)
+        {
+            found = true;
+            break;
+        }
+    }
+
+    return found;
+}
+
+void Slave::AddSubSlave(uint8_t id)
+{
+    fSubSlave.push_back(id);
+}
+
+void Slave::SetID(uint8_t id)
+{
+    fSlaveID = id;
 }
