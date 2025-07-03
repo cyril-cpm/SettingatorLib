@@ -298,6 +298,14 @@ void CTRBridge::_reinitSlaves()
 
                 delete msg;
             }
+
+            Message* reinitMsg = Message::BuildReInitSlaveMessage();
+
+            if (reinitMsg)
+            {
+                slaveCTR->Write(*reinitMsg);
+                delete msg;
+            }
         }
     }    
 }

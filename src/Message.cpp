@@ -37,6 +37,18 @@ Message* Message::BuildSlaveIDRequestMessage()
     return new Message(buffer, 6);
 }
 
+Message* Message::BuildReInitSlaveMessage()
+{
+    uint8_t buffer[] = {
+        Message::Frame::Start,
+        0x00,
+        0x06,
+        0,
+        Message::Type::BridgeReinitSlaves,
+        Message::Frame::End
+    }
+}
+
 Message::Message(uint8_t* buffer, uint8_t len)
 {
     fSlaveID = buffer[3];

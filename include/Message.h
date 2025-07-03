@@ -42,6 +42,7 @@ public:
 
     static Message* BuildInitRequestMessage(uint8_t slaveID);
     static Message* BuildSlaveIDRequestMessage();
+    static Message* BuildReInitSlaveMessage();
 
     Message() {};
     Message(uint8_t* buffer, uint8_t len);
