@@ -46,7 +46,9 @@ Message* Message::BuildReInitSlaveMessage()
         0,
         Message::Type::BridgeReinitSlaves,
         Message::Frame::End
-    }
+    };
+
+    return new Message(buffer, 6);
 }
 
 Message::Message(uint8_t* buffer, uint8_t len)
