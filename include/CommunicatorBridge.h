@@ -15,13 +15,14 @@ class CTRBridge
 
     CTRBridge(ICTR* first);
 
+    void    StartEspNowInitBroadcasted();
+    void    StopEspNowInitBroadcasted();
     void                Update();
+    
 
     private:
 
     void    _addEspNowSlaveWithSSD(char* SSD, uint8_t slaveID);
-    void    _startEspNowInitBroadcasted();
-    void    _stopEspNowInitBroadcasted();
     void    _configDirectNotif(Message* msg);
     void    _configDirectSettingUpdate(Message* msg);
     void    _removeDirectMessageConfig(Message* msg, uint8_t messageType);

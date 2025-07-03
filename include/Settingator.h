@@ -20,6 +20,7 @@ class Preferences;
 class ICTR;
 class Message;
 class CTRBridge;
+class CRGB;
 
 struct notifCallback
 {
@@ -51,6 +52,10 @@ class Settingator
     void SendDirectSettingUpdate(uint8_t settingRef, uint8_t* value = nullptr, uint8_t valueLen = 0);
     void AddNotifCallback(void(*callback)(), uint8_t notifByte);
     void SetCommunicator(ICTR* communicator);
+    void StartEspNowInitBroadcasted();
+    void StopEspNowInitBroadcasted();
+    void InitNetworkHID(CRGB* led);
+    void SetNetLed(uint8_t r, uint8_t g, uint8_t b);
     
     Setting*    GetSettingByRef(uint8_t ref);
 
@@ -83,6 +88,10 @@ class Settingator
     std::vector<notifCallback*> fNotifCallback;
 
     CTRBridge*  fBridge = nullptr;
+
+    uint8_t     fBroadcastButtonPin = 32;
+    uint8_t     fBridgeActivationButtonPin = 33;
+    CRGB*       fInfoLED = nullptr;
 };
 
 extern Settingator STR;

@@ -65,8 +65,11 @@ Message* ICTR::Read()
 
 void ICTR::Flush()
 {
-   delete fReceivedMessage.front();
-   fReceivedMessage.pop();
+    if (!fReceivedMessage.empty())
+    {
+        delete fReceivedMessage.front();
+        fReceivedMessage.pop();
+    }
 }
 
 Slave::Slave(ICTR* ctr)

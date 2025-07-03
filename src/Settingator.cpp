@@ -9,6 +9,7 @@
 #if defined(ARDUINO)
 #include <WiFi.h>
 #include <Preferences.h>
+#include <FastLED.h>
 
 #elif defined(ESP_PLATFORM)
 #include <cstring>
@@ -42,6 +43,7 @@ Settingator::Settingator(ICTR* communicator)
 #elif defined(ESP_PALTFORM)
 
 #endif
+
     masterCTR = communicator;
 }
 
@@ -53,6 +55,32 @@ Settingator::~Settingator()
 #endif
 }
 
+void Settingator::SetNetLed(uint8_t r, uint8_t g, uint8_t b)
+{
+    if (fInfoLED)
+        *fInfoLED = CRGB(r, g, b);
+}
+
+void Settingator::InitNetworkHID(CRGB* led)
+{
+    pinMode(fBridgeActivationButtonPin, INPUT_PULLDOWN);
+    attachInterrupt(fBridgeActivationButtonPin, [](){
+        if (initEspNowBroadcasted)
+        {
+            Serial.println("Stop");
+            STR.StopEspNowInitBroadcasted();
+            STR.SetNetLed(255, 0, 0);
+        }
+        else
+        {
+            STR.StartEspNowInitBroadcasted();
+            STR.SetNetLed(0, 255, 0);
+            Serial.println("Start");
+        }
+    }, RISING);
+    fInfoLED = led;
+}
+
 void Settingator::SetCommunicator(ICTR* communicator)
 {
     masterCTR = communicator;
@@ -60,9 +88,12 @@ void Settingator::SetCommunicator(ICTR* communicator)
 
 void Settingator::Update()
 {
-    if (masterCTR && masterCTR->Available())
+    if (masterCTR)
     {
-        Message* msg = masterCTR->Read();
+        Message* msg = nullptr;
+        
+        if (masterCTR->Available())
+            msg = masterCTR->Read();
         //Serial.println("Message available");
         //printBuffer(msg->GetBufPtr(), msg->GetLength(), HEX);
         //Serial.println("");
@@ -305,6 +336,21 @@ void Settingator::SavePreferences()
         }
     }
 #endif
+}
+
+void Settingator::StartEspNowInitBroadcasted()
+{
+    if (!fBridge)
+        fBridge = CTRBridge::CreateInstance(masterCTR);
+
+    if (fBridge)
+        fBridge->StartEspNowInitBroadcasted();
+}
+
+void Settingator::StopEspNowInitBroadcasted()
+{
+    if (fBridge)
+        fBridge->StopEspNowInitBroadcasted();
 }
 
 void Settingator::begin()

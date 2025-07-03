@@ -21,7 +21,8 @@ CTRBridge* CTRBridge::CreateInstance(ICTR* master)
 
 CTRBridge::CTRBridge(ICTR* master)
 {
-    masterCTR = master;
+    if (master)
+        masterCTR = master;
     ESP_LOGI("CTRBridge", "Instance created");
 }
 
@@ -41,11 +42,11 @@ void CTRBridge::Update()
             switch (msg->GetType())
             {
             case Message::Type::EspNowStartInitBroadcastedSlave:
-                _startEspNowInitBroadcasted();
+                StartEspNowInitBroadcasted();
                 break;
 
             case Message::Type::EspNowStopInitBroadcastedSlave:
-                _stopEspNowInitBroadcasted();
+                StopEspNowInitBroadcasted();
                 break;
             
             case Message::Type::EspNowConfigDirectNotif:
@@ -83,7 +84,10 @@ void CTRBridge::Update()
                         Slave* slave = slavesWaitingForID.front();
                         if (slave)
                         {
-                            slave->SetID(msg->GetSlaveID());
+                            if (slave->GetID() == 0)
+                                slave->SetID(msg->GetSlaveID());
+                            else
+                                slave->AddSubSlave(msg->GetSlaveID());
                             slavesWaitingForID.pop();
                             slaves.push_back(slave);
                             slaveCTR = slave->GetCTR();
@@ -117,6 +121,10 @@ void CTRBridge::Update()
                         case Message::Type::SettingInit:
                             _treatSettingInit(msg, *i);
                             break;
+
+                        case Message::Type::SlaveIDRequest:
+                            slavesWaitingForID.push(*i);
+                            break;
                         }
                     masterCTR->Write(*msg);
                 }
@@ -133,6 +141,7 @@ void CTRBridge::Update()
 
         while (!newSlavesCTR.empty())
         {
+            Serial.println("Adding new Slave");
             masterCTR->Write(*requestMsg);
             Slave* newSlave = new Slave(newSlavesCTR.front());
             slavesWaitingForID.push(newSlave);
@@ -145,14 +154,14 @@ void CTRBridge::Update()
     //ESP_LOGI("CTRBridge", "new CTR done");
 }
 
-void CTRBridge::_startEspNowInitBroadcasted()
+void CTRBridge::StartEspNowInitBroadcasted()
 {
     ESPNowCore::CreateInstance();
     initEspNowBroadcasted = true;
     ESP_LOGI("CTRBridge", "start esp now init broadcasted slaves");
 }
 
-void CTRBridge::_stopEspNowInitBroadcasted()
+void CTRBridge::StopEspNowInitBroadcasted()
 {
     initEspNowBroadcasted = false;
     ESP_LOGI("CTRBridge", "stop esp now init broadcasted slaves");

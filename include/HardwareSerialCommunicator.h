@@ -11,7 +11,7 @@ class HardwareSerialCTR: public ICTR
 {
     public:
 
-    static HardwareSerialCTR*   CreateInstance(int baudrate = 9600);
+    static HardwareSerialCTR*   CreateInstance(int baudrate = 115200);
     static HardwareSerialCTR*   CreateInstance(HardwareSerial* serial);
 
     virtual int         Write(Message& buf) override;

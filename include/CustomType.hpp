@@ -11,6 +11,7 @@ class STR_Type
 
         STR_Type(T value, const char* name = nullptr)
         {
+            fValue = value;
             Setting::Type   type;
             void*           dataPtr     = &fValue;
             int             dataSize    = sizeof(fValue);
