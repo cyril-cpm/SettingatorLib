@@ -81,7 +81,7 @@ ICTR* Slave::GetSlaveCTR(uint8_t slaveID)
 {
     for (auto i = slaves.begin(); i != slaves.end(); i++)
     {
-        if ((*i)->fSlaveID == slaveID)
+        if ((*i)->fSlaveID == slaveID || (*i)->HasSubSlave(slaveID))
             return (*i)->fCTR;
     }
 
