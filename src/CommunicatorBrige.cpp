@@ -85,11 +85,13 @@ void CTRBridge::Update()
                         if (slave)
                         {
                             if (slave->GetID() == 0)
+                            {
                                 slave->SetID(msg->GetSlaveID());
+                                slaves.push_back(slave);
+                            }
                             else
                                 slave->AddSubSlave(msg->GetSlaveID());
                             slavesWaitingForID.pop();
-                            slaves.push_back(slave);
                             slaveCTR = slave->GetCTR();
 
                             if (slaveCTR)
