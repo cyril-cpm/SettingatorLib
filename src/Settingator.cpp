@@ -14,6 +14,7 @@
 #elif defined(ESP_PLATFORM)
 #include <cstring>
 #include <esp_log.h>
+#include "esp_task_wdt.h"
 #endif
 
 
@@ -36,14 +37,6 @@ void Settingator::StartWiFi()
 
 Settingator::Settingator(ICTR* communicator)
 {
-#if defined(ARDUINO)
-    fPreferences = new Preferences();
-    //fPreferences->begin("settingator", false);
-
-#elif defined(ESP_PALTFORM)
-
-#endif
-
     masterCTR = communicator;
 }
 
@@ -159,6 +152,11 @@ void Settingator::Update()
                 masterCTR->Flush();
         }
     }
+
+#if defined(ESP_PLATFORM)
+    ESP_ERROR_CHECK(esp_task_wdt_reset());
+    vTaskDelay(1);
+#endif
 }
 
 void Settingator::AddSetting(Setting& setting)
@@ -362,6 +360,15 @@ void Settingator::begin()
 #if defined(ARDUINO)
     if (fPreferences)
         fPreferences->end();
+#endif
+
+#if defined(ARDUINO)
+    fPreferences = new Preferences();
+    //fPreferences->begin("settingator", false);
+
+#elif defined(ESP_PLATFORM)
+    if (esp_task_wdt_status(nullptr) == ESP_ERR_NOT_FOUND)
+        ESP_ERROR_CHECK(esp_task_wdt_add(nullptr));
 #endif
 }
 
