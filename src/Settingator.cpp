@@ -57,12 +57,15 @@ Settingator::~Settingator()
 
 void Settingator::SetNetLed(uint8_t r, uint8_t g, uint8_t b)
 {
+#if defined(ARDUINO)
     if (fInfoLED)
         *fInfoLED = CRGB(r, g, b);
+#endif
 }
 
 void Settingator::InitNetworkHID(CRGB* led)
 {
+#if defined (ARDUINO)
     pinMode(fBridgeActivationButtonPin, INPUT_PULLDOWN);
     attachInterrupt(fBridgeActivationButtonPin, [](){
         if (initEspNowBroadcasted)
@@ -79,6 +82,7 @@ void Settingator::InitNetworkHID(CRGB* led)
         }
     }, RISING);
     fInfoLED = led;
+#endif
 }
 
 void Settingator::SetCommunicator(ICTR* communicator)

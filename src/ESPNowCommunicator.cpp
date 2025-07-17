@@ -112,7 +112,7 @@ static void receiveCallback(const esp_now_recv_info* info, const uint8_t* data, 
 
             espNowMsgListMutex.lock();
             
-            auto list = findQueueForMac(mac);
+            auto list = findQueueForMac(info->src_addr);
 
             if (list)
                 list->push(new espNowMsg(data, len));

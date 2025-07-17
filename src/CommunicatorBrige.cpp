@@ -127,6 +127,8 @@ void CTRBridge::Update()
                         case Message::Type::SlaveIDRequest:
                             slavesWaitingForID.push(*i);
                             break;
+                        default:
+                        break;
                         }
                     masterCTR->Write(*msg);
                 }
@@ -143,7 +145,7 @@ void CTRBridge::Update()
 
         while (!newSlavesCTR.empty())
         {
-            Serial.println("Adding new Slave");
+            //Serial.println("Adding new Slave");
             masterCTR->Write(*requestMsg);
             Slave* newSlave = new Slave(newSlavesCTR.front());
             slavesWaitingForID.push(newSlave);
@@ -283,10 +285,10 @@ void CTRBridge::_removeDirectMessageConfig(Message* msg, uint8_t messageType)
 
 void CTRBridge::_reinitSlaves()
 {
-    Serial.println("_reinitSLaves");
+    //Serial.println("_reinitSLaves");
     for (auto i = slaves.begin(); i != slaves.end(); i++)
     {
-        Serial.println("looping");
+        //Serial.println("looping");
         ICTR* slaveCTR = (*i)->GetCTR();
 
         if (slaveCTR)
@@ -296,7 +298,7 @@ void CTRBridge::_reinitSlaves()
             if (msg)
             {
                 slaveCTR->Write(*msg);
-                Serial.println("Slave reinit");
+                //Serial.println("Slave reinit");
 
                 delete msg;
             }
