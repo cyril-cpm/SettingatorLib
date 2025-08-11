@@ -23,13 +23,16 @@ UARTCTR::UARTCTR(int baudrate)
         .rx_flow_ctrl_thresh = 0,
     };
 
-    ESP_LOGI("UARTCTR", "uart_param_config");
-    ESP_ERROR_CHECK(uart_param_config(fUartPort, &uartConfig));
+    ESP_LOGI("UARTCTR", "uart_set_pin");
+    auto err = uart_set_pin(fUartPort, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE,
+        UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
+
+    if (err != ESP_OK)
+        ESP_LOGE("UART", "uart_param_config failed: %s", esp_err_to_name(err));
     ESP_LOGI("UARTCTR", "Done");
 
-    ESP_LOGI("UARTCTR", "uart_set_pin");
-    ESP_ERROR_CHECK(uart_set_pin(fUartPort, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE,
-                                            UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE));
+    ESP_LOGI("UARTCTR", "uart_param_config");
+    ESP_ERROR_CHECK(uart_param_config(fUartPort, &uartConfig));
     ESP_LOGI("UARTCTR", "Done");
 
     ESP_LOGI("UARTCTR", "uart_driver_install");
