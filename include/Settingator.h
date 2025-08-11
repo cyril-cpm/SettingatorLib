@@ -9,7 +9,7 @@
 #include <Arduino.h>
 
 #elif defined(ESP_PLATFORM)
-
+#include "Led.h"
 
 #endif
 
@@ -91,7 +91,11 @@ class Settingator
 
     uint8_t     fBroadcastButtonPin = 32;
     uint8_t     fBridgeActivationButtonPin = 33;
+#if (ARDUINO)
     CRGB*       fInfoLED = nullptr;
+#elif (ESP_PLATFORM)
+    RGB*        fInfoLED = nullptr;
+#endif
 };
 
 extern Settingator STR;

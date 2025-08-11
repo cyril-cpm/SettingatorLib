@@ -15,6 +15,7 @@
 #include <cstring>
 #include <esp_log.h>
 #include "esp_task_wdt.h"
+#include "Led.h"
 #endif
 
 
@@ -53,6 +54,9 @@ void Settingator::SetNetLed(uint8_t r, uint8_t g, uint8_t b)
 #if defined(ARDUINO)
     if (fInfoLED)
         *fInfoLED = CRGB(r, g, b);
+#elif defined(ESP_PLATFORM)
+    if (fInfoLED)
+        *fInfoLED = RGB(r, g, b);
 #endif
 }
 
@@ -75,6 +79,9 @@ void Settingator::InitNetworkHID(CRGB* led)
         }
     }, RISING);
     fInfoLED = led;
+#elif defined(ESP_PLATGORM)
+    //must attach interrupt to pin
+
 #endif
 }
 
