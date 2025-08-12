@@ -9,22 +9,21 @@ class STR_Type
 {
     public:
 
-        STR_Type(T value, const char* name = nullptr)
+        STR_Type(T value, const char* name = nullptr) : fValue(value)
         {
-            fValue = value;
             Setting::Type   type;
             void*           dataPtr     = &fValue;
             int             dataSize    = sizeof(fValue);
         
-            if constexpr (std::is_same_v<T, uint8_t>)
+            if constexpr (std::is_same_v<T, uint8_t> || std::is_same_v<T, uint8_t&>)
                 type = Setting::Type::UInt8;
-            else if constexpr (std::is_same_v<T, uint16_t>)
+            else if constexpr (std::is_same_v<T, uint16_t> || std::is_same_v<T, uint16_t&>)
                 type = Setting::Type::UInt16;
-            else if constexpr (std::is_same_v<T, uint32_t>)
+            else if constexpr (std::is_same_v<T, uint32_t> || std::is_same_v<T, uint32_t&>)
                 type = Setting::Type::UInt32;
-            else if constexpr (std::is_same_v<T, float>)
+            else if constexpr (std::is_same_v<T, float> || std::is_same_v<T, float&>)
                 type = Setting::Type::Float;
-            else if constexpr (std::is_same_v<T, bool>)
+            else if constexpr (std::is_same_v<T, bool> || std::is_same_v<T, bool&>)
                 type = Setting::Type::Bool;
         
             fRef = STR.AddSetting(type, dataPtr, dataSize,  name, nullptr);
@@ -112,5 +111,11 @@ typedef STR_Type<bool> STR_Bool;
 typedef STR_Type<uint8_t> STR_UInt8;
 typedef STR_Type<uint16_t> STR_UInt16;
 typedef STR_Type<uint32_t> STR_UInt32;
+
+typedef STR_Type<float&> STR_FloatRef;
+typedef STR_Type<bool&> STR_BoolRef;
+typedef STR_Type<uint8_t&> STR_UInt8Ref;
+typedef STR_Type<uint16_t&> STR_UInt16Ref;
+typedef STR_Type<uint32_t&> STR_UInt32Ref;
 
 #endif

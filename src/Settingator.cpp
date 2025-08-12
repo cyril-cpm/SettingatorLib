@@ -146,7 +146,7 @@ void Settingator::Update()
                 _removeDirectSettingUpdateConfig(msg);
                 break;
             default:
-                DEBUG_PRINT_VALUE_BUF_LN("UNTREATED MESSAGE", msg->GetBufPtr(), msg->GetLength())
+                //DEBUG_PRINT_VALUE_BUF_LN("UNTREATED MESSAGE", msg->GetBufPtr(), msg->GetLength())
                 break;
             }
             masterCTR->Flush();
