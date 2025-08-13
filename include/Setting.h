@@ -6,6 +6,7 @@
 #elif defined(ESP_PLATFORM)
 #include <esp_types.h>
 #include <string>
+#include <functional>
 
 typedef std::string String;
 
@@ -35,7 +36,7 @@ public:
         CustomFloat = 0xFE
     };
 
-    Setting(Type type, void* dataPtr, size_t dataSize, const char* name, void (*callback)(), setting_ref ref);
+    Setting(Type type, void* dataPtr, size_t dataSize, const char* name, std::function<void()> callback, setting_ref ref);
 
     /*
     - Update the setting value
@@ -68,7 +69,8 @@ private:
     size_t fDataSize = 0;
     String fName;
     setting_ref fRef = 0;
-    void    (*fCallback)();
+    //void    (*fCallback)();
+    std::function<void()>    fCallback;
 };
 
 #endif

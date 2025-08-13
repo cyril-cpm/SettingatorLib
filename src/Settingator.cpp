@@ -187,7 +187,7 @@ void Settingator::AddSetting(Setting& setting)
 #endif
 }
 
-uint8_t Settingator::AddSetting(Setting::Type type, void* data_ptr, size_t data_size, const char* name, void (*callback)())
+uint8_t Settingator::AddSetting(Setting::Type type, void* data_ptr, size_t data_size, const char* name, std::function<void()> callback)
 {
     fSettingVector.push_back(Setting(type, data_ptr, data_size, name, callback, fInternalRefCount++));
 

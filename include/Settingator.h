@@ -43,7 +43,7 @@ class Settingator
 
     void Update();
     void AddSetting(Setting& setting);
-    uint8_t AddSetting(Setting::Type type, void* data_ptr, size_t data_size, const char* name = "sans nom", void (*callback)() = nullptr);
+    uint8_t AddSetting(Setting::Type type, void* data_ptr, size_t data_size, const char* name = "sans nom", std::function<void()> callback = nullptr);
     void UpdateSetting(uint8_t ref, uint8_t* newValuePtr, size_t newValueSize);
     void SendUpdateMessage(Setting* setting);
     void SendUpdateMessage(uint8_t ref);

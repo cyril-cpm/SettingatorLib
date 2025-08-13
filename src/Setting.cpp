@@ -9,7 +9,7 @@
 
 #endif
 
-Setting::Setting(Type type, void* dataPtr, size_t dataSize, const char* name, void (*callback)(), setting_ref ref)
+Setting::Setting(Type type, void* dataPtr, size_t dataSize, const char* name, std::function<void()> callback, setting_ref ref)
 : fType(type), fDataPtr((uint8_t*)dataPtr), fDataSize(dataSize), fName(name), fRef(ref), fCallback(callback)
 {
 #if SERIAL_DEBUG
