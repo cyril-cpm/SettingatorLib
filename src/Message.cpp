@@ -51,7 +51,7 @@ Message* Message::BuildReInitSlaveMessage()
     return new Message(buffer, 6);
 }
 
-Message::Message(uint8_t* buffer, uint8_t len)
+Message::Message(uint8_t* buffer, uint16_t len)
 {
     fSlaveID = buffer[3];
     fType = (Message::Type)buffer[4];
@@ -60,7 +60,7 @@ Message::Message(uint8_t* buffer, uint8_t len)
     memcpy(fBuffer, buffer, len);
 }
 
-Message::Message(uint8_t** buffer, uint8_t len)
+Message::Message(uint8_t** buffer, uint16_t len)
 {
     fSlaveID = *buffer[3];
     fType = (Message::Type)(*buffer)[4];
@@ -73,7 +73,7 @@ Message::~Message()
     delete fBuffer;
 }
 
-uint8_t Message::GetLength()
+uint16_t Message::GetLength()
 {
     return fLength;
 }

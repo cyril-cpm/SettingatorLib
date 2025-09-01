@@ -45,14 +45,14 @@ public:
     static Message* BuildReInitSlaveMessage();
 
     Message() {};
-    Message(uint8_t* buffer, uint8_t len);
-    Message(uint8_t** buffer, uint8_t len);
+    Message(uint8_t* buffer, uint16_t len);
+    Message(uint8_t** buffer, uint16_t len);
     ~Message();
 
     /*
     - Return length of buffer
     */
-    uint8_t GetLength();
+    uint16_t GetLength();
 
     /*
     - Return fBuffer ptr
@@ -78,7 +78,7 @@ private:
     uint8_t*   fBuffer;
     Type    fType = Uninitialised;
     uint8_t fSlaveID = 0;
-    uint8_t fLength;
+    uint16_t fLength;
 };
 
 #endif
