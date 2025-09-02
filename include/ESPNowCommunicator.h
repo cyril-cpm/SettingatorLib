@@ -69,6 +69,11 @@ class ESPNowCTR: public ICTR
     ESPNowCTR(const uint8_t* mac = nullptr);
     ~ESPNowCTR();
 
+    void _bufferizeMessage(espNowMsg* msg);
+
+    uint8_t*    fMessageBuffer = nullptr;
+    uint16_t    fMessageBufferSize = 0;
+
     uint8_t*    fMac = nullptr;
 
     std::vector<espNowDirectNotif*> fDirectNotif;

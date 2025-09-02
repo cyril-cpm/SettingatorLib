@@ -234,6 +234,35 @@ ESPNowCTR::~ESPNowCTR()
     esp_now_deinit();
 }
 
+void ESPNowCTR::_bufferizeMessage(espNowMsg* msg)
+{
+    if (fMessageBuffer == nullptr)
+    {
+        fMessageBuffer = (uint8_t*)malloc(msg->len * sizeof(uint8_t));
+        fMessageBufferSize = msg->len;
+        memcpy(fMessageBuffer, msg->data, msg->len);
+    }
+    else
+    {
+        uint8_t* tmpBuf = fMessageBuffer;
+
+        fMessageBuffer = (uint8_t*)malloc((fMessageBufferSize + msg->len) * sizeof(uint8_t));
+        memcpy(fMessageBuffer, tmpBuf, fMessageBufferSize);
+        memcpy(fMessageBuffer + fMessageBufferSize, msg->data, msg->len);
+        fMessageBufferSize += msg->len;
+        delete tmpBuf;
+    }
+
+    uint16_t* msgSize = (uint16_t*)&fMessageBuffer[1];
+
+    if (*msgSize <= fMessageBufferSize && fMessageBuffer[*msgSize-1] == Message::Frame::End)
+    {
+        _receive(new Message(fMessageBuffer, fMessageBufferSize));
+        fMessageBufferSize = 0;
+        delete fMessageBuffer;
+    }
+}
+
 void ESPNowCTR::Update()
 {
     if (espNowMsgListMutex.try_lock())
@@ -245,7 +274,12 @@ void ESPNowCTR::Update()
         {
             auto msg = list->front();
 
-            _receive(new Message(msg->data, msg->len));
+            uint16_t* msgSize = (uint16_t*)&msg->data[1];
+
+            if (*msgSize > msg->len || msg->data[*msgSize-1] != Message::Frame::End)
+                _bufferizeMessage(msg);
+            else
+                _receive(new Message(msg->data, msg->len));
 
             delete msg;
             list->pop();
@@ -256,7 +290,13 @@ void ESPNowCTR::Update()
 
 int ESPNowCTR::Write(Message& buf)
 {
-    return fCore->Write(buf, fMac);
+    DEBUG_PRINT_LN(buf.GetLength())
+    auto bufLength = buf.GetLength();
+
+    for (int i = 0; i < bufLength; i += 250)
+        esp_now_send(fMac, buf.GetBufPtr() + i, (bufLength - i) > 250 ? 250 : (bufLength - i));
+
+    return 0;
 }
 
 espNowDirectNotif::espNowDirectNotif(const uint8_t* inMac, uint8_t inNotifByte, uint8_t inDstSlaveID) : notifByte(inNotifByte), dstSlaveID(inDstSlaveID)
