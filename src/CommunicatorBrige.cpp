@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <cstring>
 #include <esp_log.h>
+#include "esp_task_wdt.h"
 
 #endif
 
@@ -24,6 +25,14 @@ CTRBridge::CTRBridge(ICTR* master)
     if (master)
         masterCTR = master;
     ESP_LOGI("CTRBridge", "Instance created");
+}
+
+void CTRBridge::begin()
+{
+#if defined(ESP_PLATFORM)
+if (esp_task_wdt_status(nullptr) == ESP_ERR_NOT_FOUND)
+    ESP_ERROR_CHECK(esp_task_wdt_add(nullptr));
+#endif
 }
 
 void CTRBridge::Update()
@@ -156,6 +165,11 @@ void CTRBridge::Update()
     }
 
     //ESP_LOGI("CTRBridge", "new CTR done");
+    
+#if defined(ESP_PLATFORM)
+    ESP_ERROR_CHECK(esp_task_wdt_reset());
+    vTaskDelay(1);
+#endif
 }
 
 void CTRBridge::StartEspNowInitBroadcasted()

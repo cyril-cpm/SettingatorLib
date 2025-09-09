@@ -15,6 +15,8 @@ class CTRBridge
 
     CTRBridge(ICTR* first);
 
+    void    begin();
+
     void    StartEspNowInitBroadcasted();
     void    StopEspNowInitBroadcasted();
     void                Update();
