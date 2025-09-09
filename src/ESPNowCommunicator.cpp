@@ -253,9 +253,12 @@ void ESPNowCTR::_bufferizeMessage(espNowMsg* msg)
         delete tmpBuf;
     }
 
-    uint16_t* msgSize = (uint16_t*)&fMessageBuffer[1];
+    uint16_t msgSize = 0;
+            
+    if (fMessageBufferSize >= 3)
+        msgSize = (fMessageBuffer[1] << 8) + fMessageBuffer[2];
 
-    if (*msgSize <= fMessageBufferSize && fMessageBuffer[*msgSize-1] == Message::Frame::End)
+    if (msgSize <= fMessageBufferSize && fMessageBuffer[msgSize-1] == Message::Frame::End)
     {
         _receive(new Message(fMessageBuffer, fMessageBufferSize));
         fMessageBufferSize = 0;
@@ -274,9 +277,12 @@ void ESPNowCTR::Update()
         {
             auto msg = list->front();
 
-            uint16_t* msgSize = (uint16_t*)&msg->data[1];
+            uint16_t msgSize = 0;
+            
+            if (msg->len >= 3)
+                msgSize = (msg->data[1] << 8) + msg->data[2];
 
-            if (*msgSize > msg->len || msg->data[*msgSize-1] != Message::Frame::End)
+            if (msgSize > msg->len || msg->data[msgSize-1] != Message::Frame::End)
                 _bufferizeMessage(msg);
             else
                 _receive(new Message(msg->data, msg->len));
