@@ -54,7 +54,8 @@ class Settingator
     void SetCommunicator(ICTR* communicator);
     void StartEspNowInitBroadcasted();
     void StopEspNowInitBroadcasted();
-    void InitNetworkHID(CRGB* led);
+    void ESPNowBroadcastPing();
+    void InitNetworkHID();
     void SetNetLed(uint8_t r, uint8_t g, uint8_t b);
     
     Setting*    GetSettingByRef(uint8_t ref);
@@ -95,7 +96,12 @@ class Settingator
     CRGB*       fInfoLED = nullptr;
 #elif (ESP_PLATFORM)
     RGB*        fInfoLED = nullptr;
+    Strip*      fInfoLEDStrip = nullptr;
 #endif
+
+    bool        fShouldStartEspNowInitBroadcasted = false;
+    bool        fShouldStopEspNowInitBroadcasted = false;
+    bool        fShouldESPNowBroadcastPing = false;
 };
 
 extern Settingator STR;

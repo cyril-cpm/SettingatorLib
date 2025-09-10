@@ -5,6 +5,7 @@
 #include "Setting.h"
 #include "Message.h"
 #include "MiscDef.h"
+#include "ESPNowCommunicator.h"
 
 #if defined(ARDUINO)
 #include <WiFi.h>
@@ -15,6 +16,8 @@
 #include <cstring>
 #include <esp_log.h>
 #include "esp_task_wdt.h"
+#include "driver/gpio.h"
+#include "esp_timer.h"
 #include "Led.h"
 #endif
 
@@ -60,7 +63,51 @@ void Settingator::SetNetLed(uint8_t r, uint8_t g, uint8_t b)
 #endif
 }
 
-void Settingator::InitNetworkHID(CRGB* led)
+void Settingator::ESPNowBroadcastPing()
+{
+    if (xPortInIsrContext())
+        fShouldESPNowBroadcastPing = true;
+    else
+        ESPNowCore::CreateInstance()->BroadcastPing();
+}
+
+#define DEBOUNCE_TIME_MS 250
+
+esp_timer_handle_t debounceTimerBroadcast;
+
+void debounceTimerBroadcastCallback(void*)
+{
+    gpio_intr_enable(BROADCAST_PIN);
+}
+
+esp_timer_handle_t debounceTimerBridgeActivation;
+
+void debounceTimerBridgeActivationCallback(void*)
+{
+    gpio_intr_enable(BRIDGE_ACTIVATION_PIN);
+}
+
+static void IRAM_ATTR broadcastInterruptHandler(void* arg)
+{
+    gpio_intr_disable(BROADCAST_PIN);
+
+    esp_timer_start_once(debounceTimerBroadcast, DEBOUNCE_TIME_MS * 1000);
+    STR.ESPNowBroadcastPing();
+}
+
+
+static void IRAM_ATTR bridgeActivationInterruptHandler(void* arg)
+{
+    gpio_intr_disable(BRIDGE_ACTIVATION_PIN);
+
+    esp_timer_start_once(debounceTimerBridgeActivation, DEBOUNCE_TIME_MS * 1000);
+    if (initEspNowBroadcasted)
+        STR.StopEspNowInitBroadcasted();
+    else
+        STR.StartEspNowInitBroadcasted();
+}
+
+void Settingator::InitNetworkHID()
 {
 #if defined (ARDUINO)
     pinMode(fBridgeActivationButtonPin, INPUT_PULLDOWN);
@@ -79,10 +126,46 @@ void Settingator::InitNetworkHID(CRGB* led)
         }
     }, RISING);
     fInfoLED = led;
-#elif defined(ESP_PLATGORM)
-    //must attach interrupt to pin
-
 #endif
+    // TIMER //
+    esp_timer_create_args_t timer_args = {
+        .callback = debounceTimerBroadcastCallback,
+        .name = "debounce_timer_broadcast"
+    };
+    ESP_ERROR_CHECK(esp_timer_create(&timer_args, &debounceTimerBroadcast));
+
+    esp_timer_create_args_t timer_args2 = {
+        .callback = debounceTimerBridgeActivationCallback,
+        .name = "debounce_timer_bridge_activation"
+    };
+    ESP_ERROR_CHECK(esp_timer_create(&timer_args2, &debounceTimerBridgeActivation));
+
+    // GPIO CONFIG //
+    gpio_config_t io_conf = {};
+    io_conf.intr_type = GPIO_INTR_DISABLE;
+    io_conf.pull_down_en = GPIO_PULLDOWN_ENABLE;
+    io_conf.pull_up_en = GPIO_PULLUP_DISABLE;
+    io_conf.mode = GPIO_MODE_INPUT;
+    io_conf.pin_bit_mask = 1ULL << BROADCAST_PIN;
+    ESP_ERROR_CHECK(gpio_config(&io_conf));
+
+    gpio_config_t io_conf2 = {};
+    io_conf2.intr_type = GPIO_INTR_DISABLE;
+    io_conf2.pull_down_en = GPIO_PULLDOWN_ENABLE;
+    io_conf2.pull_up_en = GPIO_PULLUP_DISABLE;
+    io_conf2.mode = GPIO_MODE_INPUT;
+    io_conf2.pin_bit_mask = 1ULL << BRIDGE_ACTIVATION_PIN;
+    ESP_ERROR_CHECK(gpio_config(&io_conf2));
+
+    ESP_ERROR_CHECK(gpio_install_isr_service(0));
+
+    ESP_ERROR_CHECK(gpio_isr_handler_add(BROADCAST_PIN, broadcastInterruptHandler, (void*)BROADCAST_PIN));
+    ESP_ERROR_CHECK(gpio_set_intr_type(BROADCAST_PIN, GPIO_INTR_POSEDGE));
+
+    ESP_ERROR_CHECK(gpio_isr_handler_add(BRIDGE_ACTIVATION_PIN, bridgeActivationInterruptHandler, NULL));
+    ESP_ERROR_CHECK(gpio_set_intr_type(BRIDGE_ACTIVATION_PIN, GPIO_INTR_POSEDGE));
+    fInfoLED = new RGB(0, 255, 0);
+    fInfoLEDStrip = new Strip(NET_HID_LED_PIN, fInfoLED, 1);
 }
 
 void Settingator::SetCommunicator(ICTR* communicator)
@@ -164,6 +247,27 @@ void Settingator::Update()
     ESP_ERROR_CHECK(esp_task_wdt_reset());
     vTaskDelay(1);
 #endif
+
+    if (fShouldStartEspNowInitBroadcasted)
+    {
+        StartEspNowInitBroadcasted();
+        fShouldStartEspNowInitBroadcasted = false;
+    }
+
+    if (fShouldStopEspNowInitBroadcasted)
+    {
+        StopEspNowInitBroadcasted();
+        fShouldStopEspNowInitBroadcasted = false;
+    }
+
+    if (fShouldESPNowBroadcastPing)
+    {
+        ESPNowBroadcastPing();
+        fShouldESPNowBroadcastPing = false;
+    }
+
+    if (fInfoLEDStrip)
+        fInfoLEDStrip->Show();
 }
 
 void Settingator::AddSetting(Setting& setting)
@@ -349,17 +453,37 @@ void Settingator::SavePreferences()
 
 void Settingator::StartEspNowInitBroadcasted()
 {
-    if (!fBridge)
-        fBridge = CTRBridge::CreateInstance(masterCTR);
+    if (xPortInIsrContext())
+    {
+        fShouldStartEspNowInitBroadcasted = true;
+    }
+    else
+    {
+        if (!fBridge)
+            fBridge = CTRBridge::CreateInstance(masterCTR);
 
-    if (fBridge)
-        fBridge->StartEspNowInitBroadcasted();
+        if (fBridge)
+        {
+            fBridge->StartEspNowInitBroadcasted();
+            SetNetLed(0, 0, 255);
+        }
+    }
 }
 
 void Settingator::StopEspNowInitBroadcasted()
 {
-    if (fBridge)
-        fBridge->StopEspNowInitBroadcasted();
+    if (xPortInIsrContext())
+    {
+        fShouldStopEspNowInitBroadcasted = true;
+    }
+    else
+    {
+        if (fBridge)
+        {
+            fBridge->StopEspNowInitBroadcasted();
+            SetNetLed(0, 255, 0);
+        }
+    }
 }
 
 void Settingator::begin()
@@ -377,6 +501,8 @@ void Settingator::begin()
     if (esp_task_wdt_status(nullptr) == ESP_ERR_NOT_FOUND)
         ESP_ERROR_CHECK(esp_task_wdt_add(nullptr));
 #endif
+
+    InitNetworkHID();
 }
 
 void Settingator::_createSlaveID(uint8_t slaveID)
