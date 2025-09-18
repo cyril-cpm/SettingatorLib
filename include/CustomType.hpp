@@ -21,6 +21,12 @@ class STR_Type
                 type = Setting::Type::UInt16;
             else if constexpr (std::is_same_v<T, uint32_t> || std::is_same_v<T, uint32_t&>)
                 type = Setting::Type::UInt32;
+            else if constexpr (std::is_same_v<T, int8_t> || std::is_same_v<T, int8_t&>)
+                type = Setting::Type::Int8;
+            else if constexpr (std::is_same_v<T, int16_t> || std::is_same_v<T, int16_t&>)
+                type = Setting::Type::Int16;
+            else if constexpr (std::is_same_v<T, int32_t> || std::is_same_v<T, int32_t&>)
+                type = Setting::Type::Int32;
             else if constexpr (std::is_same_v<T, float> || std::is_same_v<T, float&>)
                 type = Setting::Type::Float;
             else if constexpr (std::is_same_v<T, bool> || std::is_same_v<T, bool&>)
@@ -111,11 +117,17 @@ typedef STR_Type<bool> STR_Bool;
 typedef STR_Type<uint8_t> STR_UInt8;
 typedef STR_Type<uint16_t> STR_UInt16;
 typedef STR_Type<uint32_t> STR_UInt32;
+typedef STR_Type<int8_t> STR_Int8;
+typedef STR_Type<int16_t> STR_Int16;
+typedef STR_Type<int32_t> STR_Int32;
 
 typedef STR_Type<float&> STR_FloatRef;
 typedef STR_Type<bool&> STR_BoolRef;
 typedef STR_Type<uint8_t&> STR_UInt8Ref;
 typedef STR_Type<uint16_t&> STR_UInt16Ref;
 typedef STR_Type<uint32_t&> STR_UInt32Ref;
+typedef STR_Type<int8_t&> STR_Int8Ref;
+typedef STR_Type<int16_t&> STR_Int16Ref;
+typedef STR_Type<int32_t&> STR_Int32Ref;
 
 #endif
