@@ -21,7 +21,6 @@ class ICTR;
 class Message;
 class CTRBridge;
 class CRGB;
-class CommandHandler;
 
 struct notifCallback
 {
@@ -78,7 +77,6 @@ class Settingator
     void        _treatNotifMessage(Message* msg);
     void        _removeDirectNotifConfig(Message* msg);
     void        _removeDirectSettingUpdateConfig(Message* msg);
-    void        _treatCommandMessage(Message* msg);
 
     Message*    _buildSettingInitMessage();
     
@@ -104,8 +102,6 @@ class Settingator
     bool        fShouldStartEspNowInitBroadcasted = false;
     bool        fShouldStopEspNowInitBroadcasted = false;
     bool        fShouldESPNowBroadcastPing = false;
-
-    CommandHandler* fCommandHandler = nullptr;
 };
 
 extern Settingator STR;

@@ -20,7 +20,6 @@ public:
         RemoveDirectNotifConfig = 0x17,
         RemoveDirectSettingUpdateConfig = 0x18,
         BroadcastedPing = 0x19,
-        Command = 0x1A,
 
         /// Bridge
         BridgeBase = 0x50,
