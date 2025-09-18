@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Communicator.h"
+#include <esp_now.h>
 
 class Message;
 
@@ -41,6 +42,9 @@ class ESPNowCore
     void    Update();
     void    AddPeer(uint8_t* peerMac);
     void    BroadcastPing();
+
+    static void         receiveCallback(const esp_now_recv_info* info, const uint8_t* data, int len);
+
 };
 
 extern ESPNowCore* espNowCore;
@@ -65,6 +69,8 @@ class ESPNowCTR: public ICTR
 
     virtual void SendDirectSettingUpdate(uint8_t settingRef, uint8_t* value, uint8_t valueLen) override;
     
+    static ESPNowCTR*   FindCTRForMac(const uint8_t* mac);
+
     private:
     ESPNowCTR(const uint8_t* mac = nullptr);
     ~ESPNowCTR();
@@ -79,5 +85,7 @@ class ESPNowCTR: public ICTR
     std::vector<espNowDirectNotif*> fDirectNotif;
     std::vector<espNowDirectSettingUpdate*> fDirectSettingUpdate;
 
+    static std::vector<ESPNowCTR*>          fCTRList;
+    
     ESPNowCore* fCore = nullptr;
 };

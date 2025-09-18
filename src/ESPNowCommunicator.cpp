@@ -19,6 +19,7 @@ ESPNowCore* espNowCore = nullptr;
 std::mutex espNowMsgListMutex;
 
 std::vector<std::pair<uint8_t*, std::queue<espNowMsg*>>> espNowMsgList;
+std::vector<ESPNowCTR*> ESPNowCTR::fCTRList;
 
 //std::queue<espNowMsg*> espNowMsgList;
 
@@ -95,14 +96,17 @@ static void receiveCallback(const uint8_t* mac, const uint8_t* data, int len)
 }
 
 #elif defined(ESP_PLATFORM)
-static void receiveCallback(const esp_now_recv_info* info, const uint8_t* data, int len)
+void ESPNowCore::receiveCallback(const esp_now_recv_info* info, const uint8_t* data, int len)
 {
     if (info)
     {
         if (initEspNowBroadcasted && len == 1 && data && *data == 0x42 && isBroadcastMac(info->des_addr))
         {
-            ICTR* newCTR = ESPNowCTR::CreateInstanceWithMac(info->src_addr);
-
+            ICTR* newCTR = ESPNowCTR::FindCTRForMac(info->src_addr);
+            
+            if (!newCTR)
+                newCTR = ESPNowCTR::CreateInstanceWithMac(info->src_addr);
+            
             newSlavesCTR.push(newCTR);
         }
         else
@@ -226,12 +230,23 @@ ESPNowCTR::ESPNowCTR(const uint8_t* peerMac)
         espNowMsgList.emplace_back(fMac, msgList); 
     }
 
+    fCTRList.push_back(this);
+
     ESP_LOGI("ESPNowCTR", "end init");
 }
 
 ESPNowCTR::~ESPNowCTR()
 {
     esp_now_deinit();
+
+    for (auto i = fCTRList.begin(); i != fCTRList.end(); i++)
+    {
+        if (*i == this)
+        {
+            fCTRList.erase(i);
+            break;
+        }
+    }
 }
 
 void ESPNowCTR::_bufferizeMessage(espNowMsg* msg)
@@ -423,4 +438,15 @@ void ESPNowCTR::SendDirectSettingUpdate(uint8_t settingRef, uint8_t* value, uint
             fCore->Write(msg, (*i)->mac);
         }
     }
+}
+
+ESPNowCTR* ESPNowCTR::FindCTRForMac(const uint8_t* mac)
+{
+    for (auto i = fCTRList.begin(); i != fCTRList.end(); i++)
+    {
+        if (compareMac((*i)->fMac, mac))
+            return *i;
+    }
+
+    return nullptr;
 }

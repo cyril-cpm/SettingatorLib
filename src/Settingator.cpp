@@ -6,6 +6,7 @@
 #include "Message.h"
 #include "MiscDef.h"
 #include "ESPNowCommunicator.h"
+#include "CommandHandler.h"
 
 #if defined(ARDUINO)
 #include <WiFi.h>
@@ -71,18 +72,19 @@ void Settingator::ESPNowBroadcastPing()
         ESPNowCore::CreateInstance()->BroadcastPing();
 }
 
+#if defined(STR_BRIDGE_HID)
 #define DEBOUNCE_TIME_MS 250
 
-esp_timer_handle_t debounceTimerBroadcast;
+static esp_timer_handle_t debounceTimerBroadcast;
 
-void debounceTimerBroadcastCallback(void*)
+static void debounceTimerBroadcastCallback(void*)
 {
     gpio_intr_enable(BROADCAST_PIN);
 }
 
-esp_timer_handle_t debounceTimerBridgeActivation;
+static esp_timer_handle_t debounceTimerBridgeActivation;
 
-void debounceTimerBridgeActivationCallback(void*)
+static void debounceTimerBridgeActivationCallback(void*)
 {
     gpio_intr_enable(BRIDGE_ACTIVATION_PIN);
 }
@@ -106,9 +108,13 @@ static void IRAM_ATTR bridgeActivationInterruptHandler(void* arg)
     else
         STR.StartEspNowInitBroadcasted();
 }
+#else
+#pragma message("No Bridge HID")
+#endif
 
 void Settingator::InitNetworkHID()
 {
+#if defined(STR_BRIDGE_HID)
 #if defined (ARDUINO)
     pinMode(fBridgeActivationButtonPin, INPUT_PULLDOWN);
     attachInterrupt(fBridgeActivationButtonPin, [](){
@@ -166,6 +172,7 @@ void Settingator::InitNetworkHID()
     ESP_ERROR_CHECK(gpio_set_intr_type(BRIDGE_ACTIVATION_PIN, GPIO_INTR_POSEDGE));
     fInfoLED = new RGB(0, 255, 0);
     fInfoLEDStrip = new Strip(NET_HID_LED_PIN, fInfoLED, 1);
+#endif
 }
 
 void Settingator::SetCommunicator(ICTR* communicator)
@@ -227,6 +234,10 @@ void Settingator::Update()
 
             case Message::Type::RemoveDirectSettingUpdateConfig:
                 _removeDirectSettingUpdateConfig(msg);
+                break;
+
+            case Message::Type::Command:
+                _treatCommandMessage(msg);
                 break;
             default:
                 //DEBUG_PRINT_VALUE_BUF_LN("UNTREATED MESSAGE", msg->GetBufPtr(), msg->GetLength())
@@ -609,6 +620,19 @@ void Settingator::_removeDirectSettingUpdateConfig(Message* msg)
         
     auto buffer = msg->GetBufPtr();
     masterCTR->RemoveDirectSettingUpdateConfig(buffer[5], buffer[6]);
+}
+
+void Settingator::_treatCommandMessage(Message *msg)
+{
+    if (!msg || !masterCTR)
+        return;
+
+    auto buffer = msg->GetBufPtr();
+
+    char* cmdBuffer = (char*)&(buffer[4]);
+
+    if (fCommandHandler)
+        fCommandHandler->TreatCommand(cmdBuffer);
 }
 
 setting_ref Settingator::settingRefCount()

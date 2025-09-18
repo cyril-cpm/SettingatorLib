@@ -40,7 +40,7 @@ void CTRBridge::Update()
     if (masterCTR && masterCTR->Available())
     {
         Message* msg = masterCTR->Read();
-
+        ESP_LOGI("CRTBridge", "masterCTR data availlable");
         if (msg)
         {
 #if defined(ARDUINO)
@@ -148,16 +148,39 @@ void CTRBridge::Update()
 
     //ESP_LOGI("CTRBridge", "slaves done");
 
-    if (masterCTR)
+    if (masterCTR && !newSlavesCTR.empty())
     {
         Message* requestMsg = Message::BuildSlaveIDRequestMessage();
 
         while (!newSlavesCTR.empty())
         {
-            //Serial.println("Adding new Slave");
-            masterCTR->Write(*requestMsg);
-            Slave* newSlave = new Slave(newSlavesCTR.front());
-            slavesWaitingForID.push(newSlave);
+            ICTR* ctr = newSlavesCTR.front();
+
+            bool ctrIsUsed = false;
+            uint8_t slaveID = 0;
+
+            for (auto i = slaves.begin(); i != slaves.end(); i++)
+            {
+                if ((*i)->GetCTR() == ctr)
+                {
+                    ctrIsUsed = true;
+                    slaveID = (*i)->GetID();
+                    break;
+                }
+            }
+
+            if (ctrIsUsed)
+            {
+                Message* initRequestMsg = Message::BuildInitRequestMessage(slaveID);
+                ctr->Write(*initRequestMsg);
+                delete initRequestMsg;
+            }
+            else
+            {
+                masterCTR->Write(*requestMsg);
+                Slave* newSlave = new Slave(newSlavesCTR.front());
+                slavesWaitingForID.push(newSlave);
+            }
             newSlavesCTR.pop();
         }
 
