@@ -6,7 +6,7 @@
 #include "Message.h"
 #include "MiscDef.h"
 #include "ESPNowCommunicator.h"
-#include "CommandHandler.h"
+//#include "CommandHandler.h"
 
 #if defined(ARDUINO)
 #include <WiFi.h>
@@ -236,9 +236,9 @@ void Settingator::Update()
                 _removeDirectSettingUpdateConfig(msg);
                 break;
 
-            case Message::Type::Command:
+            /*case Message::Type::Command:
                 _treatCommandMessage(msg);
-                break;
+                break;*/
             default:
                 //DEBUG_PRINT_VALUE_BUF_LN("UNTREATED MESSAGE", msg->GetBufPtr(), msg->GetLength())
                 break;
@@ -622,7 +622,7 @@ void Settingator::_removeDirectSettingUpdateConfig(Message* msg)
     masterCTR->RemoveDirectSettingUpdateConfig(buffer[5], buffer[6]);
 }
 
-void Settingator::_treatCommandMessage(Message *msg)
+/*void Settingator::_treatCommandMessage(Message *msg)
 {
     if (!msg || !masterCTR)
         return;
@@ -633,7 +633,7 @@ void Settingator::_treatCommandMessage(Message *msg)
 
     if (fCommandHandler)
         fCommandHandler->TreatCommand(cmdBuffer);
-}
+}*/
 
 setting_ref Settingator::settingRefCount()
 {
