@@ -31,6 +31,9 @@ public:
         UInt16 = 0x22,
         Float = 0x23,
         Bool = 0x24,
+        Int32 = 0x25,
+        Int8 = 0x26,
+        Int16 = 0x27,
 
         // TESTING PURPOSE ONLY
         CustomFloat = 0xFE
