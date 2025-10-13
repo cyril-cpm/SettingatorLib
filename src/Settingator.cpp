@@ -545,29 +545,36 @@ void Settingator::_treatSettingUpdateMessage(Message* msg)
     uint8_t ref;
     uint8_t valueLen;
 
-    msg->ExtractSettingUpdate(ref, valueLen, &value);
+    uint16_t nextSettingIndex = 5;
 
-    Setting *setting = GetSettingByRef(ref);
+    do
+    {
+        nextSettingIndex = msg->ExtractSettingUpdate(ref, valueLen, &value, nextSettingIndex);
+
+        Setting *setting = GetSettingByRef(ref);
     
-    if (!setting)
-    {
-        //Serial.println("Setting Not found");
-        //Serial.println(ref);
-    }
+        if (!setting)
+        {
+            //Serial.println("Setting Not found");
+            //Serial.println(ref);
+        }
 
-    if (setting  && (valueLen == setting->getDataSize()))
-    {
-        //Serial.println("Attempt to memcpy");
-        memcpy((void*)setting->getDataPtr(), value, valueLen);
-        //Serial.println("Done");
-    }
-    else
-    {
-        //Serial.println("Value Len is 0")
-    }
+        if (setting  && (valueLen == setting->getDataSize()))
+        {
+            //Serial.println("Attempt to memcpy");
+            memcpy((void*)setting->getDataPtr(), value, valueLen);
+            //Serial.println("Done");
+        }
+        else
+        {
+            //Serial.println("Value Len is 0")
+        }
 
-    if (setting)
-        setting->callback();
+        if (setting)
+            setting->callback();
+
+    } while (msg->GetLength() > nextSettingIndex + 1);
+
 }
 
 void Settingator::_configEspNowDirectNotif(Message* msg)

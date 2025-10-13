@@ -20,6 +20,7 @@ public:
         RemoveDirectNotifConfig = 0x17,
         RemoveDirectSettingUpdateConfig = 0x18,
         BroadcastedPing = 0x19,
+        MultiSettingUpdate = 0x1B,
 
         /// Bridge
         BridgeBase = 0x50,
@@ -70,9 +71,11 @@ public:
     - Get Setting Update Message
     - Get 0 or null if wrong message type
     */
-   void ExtractSettingUpdate(uint8_t &ref, uint8_t &newValueLen, uint8_t **newValue);
+   uint16_t ExtractSettingUpdate(uint8_t &ref, uint8_t &newValueLen, uint8_t **newValue, uint16_t settingIndex = 5);
 
    char*    ExtractSSD();
+
+   uint8_t operator[](uint16_t index);
 
 private:
     uint8_t*   fBuffer;

@@ -83,7 +83,7 @@ uint8_t* Message::GetBufPtr()
     return fBuffer;
 }
 
-void Message::ExtractSettingUpdate(uint8_t &ref, uint8_t &newValueLen, uint8_t **newValue)
+uint16_t Message::ExtractSettingUpdate(uint8_t &ref, uint8_t &newValueLen, uint8_t **newValue, uint16_t settingIndex)
 {
     //Serial.println("Extracting Setting Update message");
     ref = 0;
@@ -92,22 +92,32 @@ void Message::ExtractSettingUpdate(uint8_t &ref, uint8_t &newValueLen, uint8_t *
 
     if (fType == Message::Type::SettingUpdate)
     {
-        DEBUG_PRINT_VALUE("SUCCESS: buffer type", fBuffer[4])
-        ref = fBuffer[5];
+        ref = fBuffer[settingIndex];
         DEBUG_PRINT_VALUE("ref", ref)
-        newValueLen = fBuffer[6];
+        newValueLen = fBuffer[settingIndex + 1];
         DEBUG_PRINT_VALUE("value len", newValueLen)
-        *newValue = &fBuffer[7];
+        *newValue = &fBuffer[settingIndex + 2];
         DEBUG_PRINT_VALUE_BUF_LN("value", *newValue, newValueLen)
+        return settingIndex + 2 + newValueLen;
+
     }
     else
     {
         DEBUG_PRINT_VALUE("FAIL: buffer type", fBuffer[4])
     }
     //Serial.println("Done");
+    return (fLength - 1);
 }
 
 char* Message::ExtractSSD()
 {
     return (char*)(fBuffer + 5);
+}
+
+uint8_t Message::operator[](uint16_t index)
+{
+    if (index >= fLength)
+        index = fLength - 1;
+
+    return fBuffer[index];
 }
