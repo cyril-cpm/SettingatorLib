@@ -1,15 +1,11 @@
 {
     "name": "Settingator",
-    "version": "0.3.31",
+    "version": "0.3.32",
     "author": "CPM",
     "repository": {
         "type": "git",
         "url": "https://github.com/cyril-musikaloid/SettingatorLib",
         "branch": "main"
-    },
-    "dependencies": {
-        "links2004/WebSockets": "^2.4.1",
-        "ottowinter/ESPAsyncWebServer-esphome": "^3.1.0"
     },
     "frameworks": ["espidf", "arduino"],
     "platforms": "espressif32"

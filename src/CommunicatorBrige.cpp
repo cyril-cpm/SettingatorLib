@@ -37,6 +37,7 @@ if (esp_task_wdt_status(nullptr) == ESP_ERR_NOT_FOUND)
 
 void CTRBridge::Update()
 {
+    // LECTURE DES MESSAGES DU MASTER //
     if (masterCTR && masterCTR->Available())
     {
         Message* msg = masterCTR->Read();
@@ -114,13 +115,17 @@ void CTRBridge::Update()
         masterCTR->Flush();
     }
 
-    //ESP_LOGI("CTRBridge", "master done");
+    // TRAITEMENT DES SLAVES //
     if (masterCTR)
     {
+        if (espNowCore)
+            espNowCore->HandleLinkInfo();
+            
         for (auto i = slaves.begin(); i != slaves.end(); i++)
         {
             ICTR* slaveCTR = (*i)->GetCTR();
 
+            // LECTURE DES MESSAGES DES SLAVES //
             if (slaveCTR && slaveCTR->Available())
             {
                 Message* msg = slaveCTR->Read();
@@ -148,6 +153,7 @@ void CTRBridge::Update()
 
     //ESP_LOGI("CTRBridge", "slaves done");
 
+    // TRAITEMENT DES NOUVEAUX SLAVES (assignation ID et initRequest) //
     if (masterCTR && !newSlavesCTR.empty())
     {
         Message* requestMsg = Message::BuildSlaveIDRequestMessage();

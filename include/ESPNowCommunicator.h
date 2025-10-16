@@ -2,15 +2,20 @@
 
 #include "Communicator.h"
 #include <esp_now.h>
+#include "freertos/freertos.h"
+#include "freertos/timers.h"
 
 class Message;
 
 struct espNowMsg {
-    espNowMsg(const uint8_t* inData, int inLen);
+    espNowMsg(const uint8_t* inData, int inLen, uint32_t inTimestamp = 0, int8_t inNoiseFloor = 0, int8_t inRssi = 0);
     ~espNowMsg();
 
     uint8_t*    data = nullptr;
     int         len = 0;
+    uint32_t    timestamp = 0;
+    int8_t      noiseFloor = 0;
+    int8_t      rssi = 0;
 };
 
 struct espNowDirectNotif {
@@ -42,9 +47,18 @@ class ESPNowCore
     void    Update();
     void    AddPeer(uint8_t* peerMac);
     void    BroadcastPing();
+    const uint8_t*    GetMac() const;
+    void    CreateLinkInfoTimer();
+    void    HandleLinkInfo();
+    void    ShouldSendLinkInfo(bool should = true);
 
     static void         receiveCallback(const esp_now_recv_info* info, const uint8_t* data, int len);
 
+    private:
+    uint8_t fMac[6];
+    TimerHandle_t       fLinkInfoTimer = nullptr;
+    uint32_t            fEspNowVersion = 0;
+    bool                fShouldSendLinkInfo = false;
 };
 
 extern ESPNowCore* espNowCore;
@@ -52,7 +66,7 @@ extern ESPNowCore* espNowCore;
 class ESPNowCTR: public ICTR
 {
     public:
-    static ESPNowCTR*   CreateInstanceWithMac(const uint8_t* mac);
+    static ESPNowCTR*   CreateInstanceWithMac(const uint8_t* mac, const bool createTimer = false);
 
     virtual int         Write(Message& buf) override;
     virtual void        Update() override;
@@ -71,8 +85,17 @@ class ESPNowCTR: public ICTR
     
     static ESPNowCTR*   FindCTRForMac(const uint8_t* mac);
 
+    static void         HandleLinkInfo();
+
+    void        SendPing();
+    void        SendPong();
+
+    const uint8_t*  GetMac() const;
+
+    void            ShouldSendPing(bool should = true);
+
     private:
-    ESPNowCTR(const uint8_t* mac = nullptr);
+    ESPNowCTR(const uint8_t* mac = nullptr, const bool createTimer = false);
     ~ESPNowCTR();
 
     void _bufferizeMessage(espNowMsg* msg);
@@ -86,6 +109,18 @@ class ESPNowCTR: public ICTR
     std::vector<espNowDirectSettingUpdate*> fDirectSettingUpdate;
 
     static std::vector<ESPNowCTR*>          fCTRList;
+
+    uint32_t    fLastMsgTimestamp = 0;
+    int8_t      fLastMsgRssi = 0;
+    int8_t      fLastMsgNoiseFloor = 0;
+
+    uint32_t    fPeerLastMsgDeltastamp = 0;
+    int8_t      fPeerLastMsgRssi = 0;
+    int8_t      fPeerLastMsgNoiseFloor = 0;
+
+    TimerHandle_t   fPingTimer = nullptr;
     
     ESPNowCore* fCore = nullptr;
+
+    bool        fShouldSendPing = false;
 };

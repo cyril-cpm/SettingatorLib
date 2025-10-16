@@ -32,7 +32,10 @@ public:
         EspNowStartInitBroadcastedSlave = 0x59,
         EspNowStopInitBroadcastedSlave = 0x5A,
         BridgeReinitSlaves = 0x5B,
-        SlaveIDRequest = 0x5C
+        SlaveIDRequest = 0x5C,
+        EspNowPing = 0x5D,
+        EspNowPong = 0x5E,
+        EspNowLinkInfo = 0x5F
     };
 
     enum Frame
