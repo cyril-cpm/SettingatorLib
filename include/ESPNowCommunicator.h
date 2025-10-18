@@ -2,7 +2,7 @@
 
 #include "Communicator.h"
 #include <esp_now.h>
-#include "freertos/freertos.h"
+#include "freertos/FreeRTOS.h"
 #include "freertos/timers.h"
 
 class Message;
