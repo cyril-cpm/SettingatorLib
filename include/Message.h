@@ -35,7 +35,7 @@ public:
         SlaveIDRequest = 0x5C,
         EspNowPing = 0x5D,
         EspNowPong = 0x5E,
-        EspNowLinkInfo = 0x5F
+        LinkInfo = 0x5F
     };
 
     enum Frame

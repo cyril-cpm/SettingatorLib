@@ -1,17 +1,17 @@
-#if defined(BRIDGE)
+#if defined(BRIDGE_TEST)
 #include <CommunicatorBridge.h>
 #include <UARTCommunicator.h>
 
-CTRBridge* bridge = nullptr;
+CTRBridge BRIDGE(nullptr);
 
 extern "C" void app_main()
 {
-bridge = CTRBridge::CreateInstance(UARTCTR::CreateInstance(115200));
+BRIDGE.SetMaster(UARTCTR::CreateInstance(115200));
 
-bridge->begin();
+BRIDGE.begin();
 
 while (true)
-    bridge->Update();
+    BRIDGE.Update();
 
 }
 

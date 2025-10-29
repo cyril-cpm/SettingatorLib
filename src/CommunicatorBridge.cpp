@@ -27,11 +27,45 @@ CTRBridge::CTRBridge(ICTR* master)
     ESP_LOGI("CTRBridge", "Instance created");
 }
 
+void CTRBridge::SetMaster(ICTR* master)
+{
+	if (master)
+		masterCTR = master;
+}
+
+void CTRBridge::ShouldSendLinkInfo(bool should)
+{
+	fShouldSendLinkInfo = should;
+}
+
+void linkInfoCallback(TimerHandle_t timer)
+{
+	BRIDGE.ShouldSendLinkInfo();
+}
+
+void    CTRBridge::CreateLinkInfoTimer()
+{
+    if (!fLinkInfoTimer)
+    {
+        fLinkInfoTimer = xTimerCreate(
+            "LinkInfoTImer",
+            pdMS_TO_TICKS(5000),
+            pdTRUE,
+            (void*)0,
+            linkInfoCallback
+        );
+
+        xTimerStart(fLinkInfoTimer, 0);
+    }
+}
+
 void CTRBridge::begin()
 {
 #if defined(ESP_PLATFORM)
-if (esp_task_wdt_status(nullptr) == ESP_ERR_NOT_FOUND)
-    ESP_ERROR_CHECK(esp_task_wdt_add(nullptr));
+	if (esp_task_wdt_status(nullptr) == ESP_ERR_NOT_FOUND)
+    	ESP_ERROR_CHECK(esp_task_wdt_add(nullptr));
+
+	CreateLinkInfoTimer();
 #endif
 }
 
@@ -118,9 +152,6 @@ void CTRBridge::Update()
     // TRAITEMENT DES SLAVES //
     if (masterCTR)
     {
-        if (espNowCore)
-            espNowCore->HandleLinkInfo();
-            
         for (auto i = slaves.begin(); i != slaves.end(); i++)
         {
             ICTR* slaveCTR = (*i)->GetCTR();
@@ -196,7 +227,9 @@ void CTRBridge::Update()
     //ESP_LOGI("CTRBridge", "new CTR done");
     
 #if defined(ESP_PLATFORM)
-    ESP_ERROR_CHECK(esp_task_wdt_reset());
+	HandleLinkInfo();
+
+	ESP_ERROR_CHECK(esp_task_wdt_reset());
     vTaskDelay(1);
 #endif
 }
@@ -369,4 +402,48 @@ void CTRBridge::_treatSettingInit(Message* msg, Slave *slave)
 
     if (!slave->HasSubSlave(msgSlaveID))
         slave->AddSubSlave(msgSlaveID);
+}
+
+void CTRBridge::HandleLinkInfo()
+{
+	if (!fShouldSendLinkInfo || !espNowCore || !masterCTR)
+		return;
+
+	uint8_t nbCTR = 0;
+
+	uint16_t msgSize = 13;
+	for (auto i = slaves.begin(); i != slaves; i++)
+	{
+		if (*i)
+		{
+			msgSize += (*i)->GetLinkInfoSize();
+			nbCTR = 0;
+		}
+	}
+
+	uint8_t msgBuffer[msgSize];
+	
+	msgBuffer[0] = Message::Frame::Start;
+	msgBuffer[1] = msgSize >> 8;
+	msgBuffer[2] = msgSize;
+	msgBuffer[3] = 0;
+	msgBuffer[4] = Message::Type::LinkInfo;
+	msgBuffer[5] = nbCTR;
+
+	memcpy(msgBuffer + 6, espNowCore->GetMac(), 6);
+
+	uint16_t bufIndex = 12;
+	for (auto i = slaves.begin(); i != slaves; i++)
+	{
+		if (*i)
+		{
+			(*i)->WriteLinkInfo(msgBuffer + bufIndex);
+			bufIndex += (*i)->GetLinkInfoSize();
+		}
+	}
+
+	msgBuffer[bufIndex - 1] = Message::Frame::End;
+
+	Message msg(msgBuffer, msgSize);
+	masterCTR->Write(msg);
 }

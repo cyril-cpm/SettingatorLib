@@ -50,7 +50,7 @@ class ESPNowCore
     const uint8_t*    GetMac() const;
     void    CreateLinkInfoTimer();
     void    HandleLinkInfo();
-    void    ShouldSendLinkInfo(bool should = true);
+    void    shouldsendlinkinfo(bool should = true);
 
     static void         receiveCallback(const esp_now_recv_info* info, const uint8_t* data, int len);
 

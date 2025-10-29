@@ -142,17 +142,6 @@ ESPNowCore* ESPNowCore::CreateInstance()
     return espNowCore;
 }
 
-void linkInfoCallback(TimerHandle_t timer)
-{
-    if (espNowCore)
-        espNowCore->ShouldSendLinkInfo();
-}
-
-void ESPNowCore::ShouldSendLinkInfo(bool should)
-{
-    fShouldSendLinkInfo = should;
-}
-
 ESPNowCore::ESPNowCore()
 {
     //NVS
@@ -226,22 +215,6 @@ void ESPNowCore::BroadcastPing()
 const uint8_t*    ESPNowCore::GetMac() const
 {
     return fMac;
-}
-
-void    ESPNowCore::CreateLinkInfoTimer()
-{
-    if (!fLinkInfoTimer)
-    {
-        fLinkInfoTimer = xTimerCreate(
-            "LinkInfoTImer",
-            pdMS_TO_TICKS(5000),
-            pdTRUE,
-            (void*)0,
-            linkInfoCallback
-        );
-
-        xTimerStart(fLinkInfoTimer, 0);
-    }
 }
 
 void    ESPNowCore::HandleLinkInfo()
@@ -346,8 +319,6 @@ ESPNowCTR::ESPNowCTR(const uint8_t* peerMac, const bool createTimer)
         );
 
          xTimerStart(fPingTimer, 0);
-
-        fCore->CreateLinkInfoTimer();
     }
 
     fCTRList.push_back(this);
