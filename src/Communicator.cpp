@@ -2,6 +2,7 @@
 
 #include "MiscDef.h"
 #include "Message.h"
+#include <cstdint>
 
 ICTR* masterCTR = nullptr;
 std::vector<Slave*> slaves;
@@ -72,6 +73,16 @@ void ICTR::Flush()
     }
 }
 
+uint16_t ICTR::GetLinkInfoSize() const
+{
+	return 0;
+}
+
+void ICTR::WriteLinkInfo() const
+{
+	return;
+}
+
 Slave::Slave(ICTR* ctr)
 {
     fCTR = ctr;
@@ -122,4 +133,17 @@ void Slave::AddSubSlave(uint8_t id)
 void Slave::SetID(uint8_t id)
 {
     fSlaveID = id;
+}
+
+uint16_t Slave::GetLinkInfoSize() const
+{
+	if (fCTR)
+		return fCTR->GetLinkInfoSize();
+	return 0;
+}
+
+void Slave::WriteLinkInfo(uint8_t* msgBuffer) const
+{
+	if (fCTR)
+		fCTR->WriteLinkInfo();
 }

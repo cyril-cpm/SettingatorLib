@@ -51,6 +51,10 @@ class ICTR
 
     virtual void RemoveDirectSettingUpdateConfig(uint8_t dstSlaveID, uint8_t settingRef);
 
+	virtual uint16_t	GetLinkInfoSize() const;
+
+	virtual void		WriteLinkInfo() const;
+
     protected:
 
     void _receive(Message* msg);
@@ -70,11 +74,13 @@ class Slave
 
     static ICTR* GetSlaveCTR(uint8_t slaveID);
 
-    ICTR* GetCTR();
-    uint8_t GetID();
-    bool    HasSubSlave(uint8_t id);
-    void    AddSubSlave(uint8_t id);
-    void    SetID(uint8_t id);
+    ICTR*		GetCTR();
+    uint8_t 	GetID();
+    bool    	HasSubSlave(uint8_t id);
+    void    	AddSubSlave(uint8_t id);
+    void    	SetID(uint8_t id);
+	uint16_t	GetLinkInfoSize() const;
+	void		WriteLinkInfo(uint8_t* msgBuffer) const;
 
     private:
     uint8_t     fSlaveID = 0;

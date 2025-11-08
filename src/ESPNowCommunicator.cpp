@@ -1,6 +1,7 @@
 #include "ESPNowCommunicator.h"
 #include "MiscDef.h"
 #include "Message.h"
+#include <cstdint>
 #include <esp_now.h>
 #include <esp_wifi.h>
 #include <nvs_flash.h>
@@ -592,7 +593,7 @@ void ESPNowCTR::HandleLinkInfo()
         msgBuffer[1] = bufferSize >> 8;
         msgBuffer[2] = bufferSize;
         msgBuffer[3] = 0;
-        msgBuffer[4] = Message::Type::EspNowLinkInfo;
+        msgBuffer[4] = Message::Type::LinkInfo;
         msgBuffer[5] = nbCTR;
 
         memcpy(msgBuffer + 6, espNowCore->GetMac(), 6);
@@ -622,4 +623,14 @@ void ESPNowCTR::HandleLinkInfo()
         Message msg (msgBuffer, bufferSize);
         masterCTR->Write(msg);
     }
+}
+
+uint16_t ESPNowCTR::GetLinkInfoSize() const
+{
+	return 18;
+}
+
+void ESPNowCTR::WriteLinkInfo() const
+{
+	return;
 }

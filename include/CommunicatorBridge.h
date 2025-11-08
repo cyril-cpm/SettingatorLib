@@ -3,7 +3,6 @@
 #include "Message.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/timers.h"
-#include <vector>
 
 class ICTR;
 class Slave;

@@ -412,7 +412,7 @@ void CTRBridge::HandleLinkInfo()
 	uint8_t nbCTR = 0;
 
 	uint16_t msgSize = 13;
-	for (auto i = slaves.begin(); i != slaves; i++)
+	for (auto i = slaves.begin(); i != slaves.end(); i++)
 	{
 		if (*i)
 		{
@@ -433,7 +433,7 @@ void CTRBridge::HandleLinkInfo()
 	memcpy(msgBuffer + 6, espNowCore->GetMac(), 6);
 
 	uint16_t bufIndex = 12;
-	for (auto i = slaves.begin(); i != slaves; i++)
+	for (auto i = slaves.begin(); i != slaves.end(); i++)
 	{
 		if (*i)
 		{

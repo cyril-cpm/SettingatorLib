@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Communicator.h"
+#include <cstdint>
 #include <esp_now.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/timers.h"
@@ -84,6 +85,10 @@ class ESPNowCTR: public ICTR
     virtual void SendDirectSettingUpdate(uint8_t settingRef, uint8_t* value, uint8_t valueLen) override;
     
     static ESPNowCTR*   FindCTRForMac(const uint8_t* mac);
+
+	virtual uint16_t	GetLinkInfoSize() const override;
+
+	virtual void		WriteLinkInfo() const override;
 
     static void         HandleLinkInfo();
 
