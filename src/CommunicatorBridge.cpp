@@ -417,7 +417,7 @@ void CTRBridge::HandleLinkInfo()
 		if (*i)
 		{
 			msgSize += (*i)->GetLinkInfoSize();
-			nbCTR = 0;
+			nbCTR++;
 		}
 	}
 
@@ -437,7 +437,7 @@ void CTRBridge::HandleLinkInfo()
 	{
 		if (*i)
 		{
-			(*i)->WriteLinkInfo(msgBuffer + bufIndex);
+			(*i)->WriteLinkInfoToBuffer(msgBuffer + bufIndex);
 			bufIndex += (*i)->GetLinkInfoSize();
 		}
 	}

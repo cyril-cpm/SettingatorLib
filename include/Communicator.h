@@ -12,6 +12,13 @@ class ICTR
 {
     public:
 
+	enum LinkType
+	{
+		ESP_NOW = 0x00,
+		UART = 0x01,
+		UNKNOWN = 0xFF
+	};
+
     /*
     - return true if there is bytes available to read
     */
@@ -53,7 +60,7 @@ class ICTR
 
 	virtual uint16_t	GetLinkInfoSize() const;
 
-	virtual void		WriteLinkInfo() const;
+	virtual void		WriteLinkInfoToBuffer(uint8_t* buffer) const;
 
     protected:
 
@@ -80,7 +87,7 @@ class Slave
     void    	AddSubSlave(uint8_t id);
     void    	SetID(uint8_t id);
 	uint16_t	GetLinkInfoSize() const;
-	void		WriteLinkInfo(uint8_t* msgBuffer) const;
+	void		WriteLinkInfoToBuffer(uint8_t* msgBuffer) const;
 
     private:
     uint8_t     fSlaveID = 0;

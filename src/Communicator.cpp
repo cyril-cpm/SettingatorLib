@@ -75,11 +75,12 @@ void ICTR::Flush()
 
 uint16_t ICTR::GetLinkInfoSize() const
 {
-	return 0;
+	return 1;
 }
 
-void ICTR::WriteLinkInfo() const
+void ICTR::WriteLinkInfoToBuffer(uint8_t *buffer) const
 {
+	buffer[0] = ICTR::LinkType::UNKNOWN;
 	return;
 }
 
@@ -138,12 +139,15 @@ void Slave::SetID(uint8_t id)
 uint16_t Slave::GetLinkInfoSize() const
 {
 	if (fCTR)
-		return fCTR->GetLinkInfoSize();
+		return fCTR->GetLinkInfoSize() + 1;
 	return 0;
 }
 
-void Slave::WriteLinkInfo(uint8_t* msgBuffer) const
+void Slave::WriteLinkInfoToBuffer(uint8_t* msgBuffer) const
 {
 	if (fCTR)
-		fCTR->WriteLinkInfo();
+	{
+		msgBuffer[0] = fSlaveID;
+		fCTR->WriteLinkInfoToBuffer(msgBuffer + 1);
+	}
 }

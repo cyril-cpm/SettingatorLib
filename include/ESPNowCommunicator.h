@@ -88,7 +88,7 @@ class ESPNowCTR: public ICTR
 
 	virtual uint16_t	GetLinkInfoSize() const override;
 
-	virtual void		WriteLinkInfo() const override;
+	virtual void		WriteLinkInfoToBuffer(uint8_t* buffer) const override;
 
     static void         HandleLinkInfo();
 
