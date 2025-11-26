@@ -219,15 +219,6 @@ const uint8_t*	  ESPNowCore::GetMac() const
 	return fMac;
 }
 
-void	ESPNowCore::HandleLinkInfo()
-{
-	if (fShouldSendLinkInfo)
-	{
-		ESPNowCTR::HandleLinkInfo();
-		fShouldSendLinkInfo = false;
-	}
-}
-
 ESPNowCTR* ESPNowCTR::CreateInstanceWithMac(const uint8_t* mac, const bool createTimer)
 {
    
@@ -645,7 +636,7 @@ void ESPNowCTR::WriteLinkInfoToBuffer(uint8_t* buffer) const
 	memcpy(buffer + 9, (uint8_t*)&deltaMs, 4);
 
 	buffer[13] = fPeerLastMsgRssi;
-	buffer[12] = fPeerLastMsgNoiseFloor;
+	buffer[14] = fPeerLastMsgNoiseFloor;
 
 	memcpy(buffer + 15, (uint8_t*)&(fPeerLastMsgDeltastamp), 4);
 

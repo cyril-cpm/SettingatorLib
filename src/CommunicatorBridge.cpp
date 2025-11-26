@@ -446,4 +446,6 @@ void CTRBridge::HandleLinkInfo()
 
 	Message msg(msgBuffer, msgSize);
 	masterCTR->Write(msg);
+
+	fShouldSendLinkInfo = false;
 }

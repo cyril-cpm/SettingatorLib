@@ -59,7 +59,6 @@ class ESPNowCore
     uint8_t fMac[6];
     TimerHandle_t       fLinkInfoTimer = nullptr;
     uint32_t            fEspNowVersion = 0;
-    bool                fShouldSendLinkInfo = false;
 };
 
 extern ESPNowCore* espNowCore;

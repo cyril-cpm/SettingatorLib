@@ -139,7 +139,7 @@ void Slave::SetID(uint8_t id)
 uint16_t Slave::GetLinkInfoSize() const
 {
 	if (fCTR)
-		return fCTR->GetLinkInfoSize() + 1;
+		return fCTR->GetLinkInfoSize() + 2;
 	return 0;
 }
 
@@ -147,7 +147,8 @@ void Slave::WriteLinkInfoToBuffer(uint8_t* msgBuffer) const
 {
 	if (fCTR)
 	{
-		msgBuffer[0] = fSlaveID;
-		fCTR->WriteLinkInfoToBuffer(msgBuffer + 1);
+		msgBuffer[0] = GetLinkInfoSize();
+		msgBuffer[1] = fSlaveID;
+		fCTR->WriteLinkInfoToBuffer(msgBuffer + 2);
 	}
 }
