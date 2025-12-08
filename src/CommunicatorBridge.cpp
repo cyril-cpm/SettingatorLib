@@ -175,7 +175,8 @@ void CTRBridge::Update()
                         default:
                         break;
                         }
-                    masterCTR->Write(*msg);
+					if (msg->GetType() != Message::Type::EspNowPong)
+	                    masterCTR->Write(*msg);
                 }
                 slaveCTR->Flush();
             }
@@ -215,7 +216,7 @@ void CTRBridge::Update()
             else
             {
                 masterCTR->Write(*requestMsg);
-                Slave* newSlave = new Slave(newSlavesCTR.front());
+                Slave* newSlave = new Slave(ctr);
                 slavesWaitingForID.push(newSlave);
             }
             newSlavesCTR.pop();
@@ -409,6 +410,8 @@ void CTRBridge::HandleLinkInfo()
 	if (!fShouldSendLinkInfo || !espNowCore || !masterCTR)
 		return;
 
+	ESP_LOGI("LINK", "HANDLING LINK INFO");
+
 	uint8_t nbCTR = 0;
 
 	uint16_t msgSize = 13;
@@ -442,7 +445,7 @@ void CTRBridge::HandleLinkInfo()
 		}
 	}
 
-	msgBuffer[bufIndex - 1] = Message::Frame::End;
+	msgBuffer[bufIndex] = Message::Frame::End;
 
 	Message msg(msgBuffer, msgSize);
 	masterCTR->Write(msg);
