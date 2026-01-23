@@ -4,6 +4,7 @@
 #define STR_VERSION 0x035
 
 #include <vector>
+#include <optional>
 
 #if defined(ARDUINO)
 #include <Arduino.h>
@@ -14,6 +15,7 @@
 #endif
 
 #include "Setting.h"
+#include "CommunicatorBridge.h"
 
 class Preferences;
 
@@ -38,7 +40,7 @@ class Settingator
 
     //static Settingator* CreateWSComWithHTTPServerWiFiSettingator();
 
-    Settingator(ICTR* communicator);
+    Settingator(ICTR_t communicator);
     ~Settingator();
 
     void Update();
@@ -51,7 +53,7 @@ class Settingator
     void SendDirectNotif(uint8_t notifByte);
     void SendDirectSettingUpdate(uint8_t settingRef, uint8_t* value = nullptr, uint8_t valueLen = 0);
     void AddNotifCallback(void(*callback)(), uint8_t notifByte);
-    void SetCommunicator(ICTR* communicator);
+    void SetCommunicator(ICTR_t communicator);
     void StartEspNowInitBroadcasted();
     void StopEspNowInitBroadcasted();
     void ESPNowBroadcastPing();
@@ -88,7 +90,7 @@ class Settingator
 
     std::vector<notifCallback*> fNotifCallback;
 
-    CTRBridge*  fBridge = nullptr;
+	std::optional<CTRBridge>  fBridge;
 
     uint8_t     fBroadcastButtonPin = 32;
     uint8_t     fBridgeActivationButtonPin = 33;

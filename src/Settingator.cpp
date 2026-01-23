@@ -40,7 +40,7 @@ void Settingator::StartWiFi()
 #endif
 }
 
-Settingator::Settingator(ICTR* communicator)
+Settingator::Settingator(ICTR_t communicator)
 {
     masterCTR = communicator;
 }
@@ -175,7 +175,7 @@ void Settingator::InitNetworkHID()
 #endif
 }
 
-void Settingator::SetCommunicator(ICTR* communicator)
+void Settingator::SetCommunicator(ICTR_t communicator)
 {
     masterCTR = communicator;
 }

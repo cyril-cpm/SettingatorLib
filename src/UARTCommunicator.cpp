@@ -6,10 +6,10 @@
 #include <esp_log.h>
 #include "Message.h"
 
-UARTCTR* UARTCTR::CreateInstance(int baudrate)
+UARTCTR UARTCTR::CreateInstance(int baudrate)
 {
     ESP_LOGI("UARTCTR", "Creating Instance");
-    return new UARTCTR(baudrate);
+    return UARTCTR(baudrate);
 }
 
 UARTCTR::UARTCTR(int baudrate)
@@ -41,7 +41,7 @@ UARTCTR::UARTCTR(int baudrate)
     ESP_LOGI("UARCTR", "Done");
 }
 
-int UARTCTR::Write(Message& buf)
+int UARTCTR::WriteImpl(Message& buf)
 {
     esp_err_t err = uart_write_bytes(fUartPort, buf.GetBufPtr(), buf.GetLength());
 
@@ -53,7 +53,7 @@ int UARTCTR::Write(Message& buf)
     return 0;
 }
 
-void UARTCTR::Update()
+void UARTCTR::UpdateImpl()
 {
     size_t bufferDataLen = 0;
 

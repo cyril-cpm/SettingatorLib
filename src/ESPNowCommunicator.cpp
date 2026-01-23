@@ -77,7 +77,7 @@ static void receiveCallback(const uint8_t* mac, const uint8_t* data, int len)
 	{
 		if (initEspNowBroadcasted && len == 1 && data && *data == 0x42)
 		{
-			ICTR* newCTR = ESPNowCTR::CreateInstanceWithMac(mac);
+			ICTR_t newCTR = ESPNowCTR::CreateInstanceWithMac(mac);
 
 			newSlavesCTR.push(newCTR);
 		}
@@ -105,7 +105,7 @@ void ESPNowCore::receiveCallback(const esp_now_recv_info* info, const uint8_t* d
 	{
 		if (initEspNowBroadcasted && len == 1 && data && *data == 0x42 && isBroadcastMac(info->des_addr))
 		{
-			ICTR* newCTR = ESPNowCTR::FindCTRForMac(info->src_addr);
+			ICTR_t newCTR = ESPNowCTR::FindCTRForMac(info->src_addr);
 			
 			if (!newCTR)
 				newCTR = ESPNowCTR::CreateInstanceWithMac(info->src_addr, true);
@@ -219,7 +219,7 @@ const uint8_t*	  ESPNowCore::GetMac() const
 	return fMac;
 }
 
-ESPNowCTR* ESPNowCTR::CreateInstanceWithMac(const uint8_t* mac, const bool createTimer)
+ESPNowCTR ESPNowCTR::CreateInstanceWithMac(const uint8_t* mac, const bool createTimer)
 {
    
 	return new ESPNowCTR(mac, createTimer);
@@ -370,7 +370,7 @@ void ESPNowCTR::_bufferizeMessage(espNowMsg* msg)
 	}
 }
 
-void ESPNowCTR::Update()
+void ESPNowCTR::UpdateImpl()
 {
 	if (fShouldSendPing)
 	{
@@ -430,7 +430,7 @@ void ESPNowCTR::Update()
 	}
 }
 
-int ESPNowCTR::Write(Message& buf)
+int ESPNowCTR::WriteImpl(Message& buf)
 {
 	DEBUG_PRINT_LN(buf.GetLength())
 	auto bufLength = buf.GetLength();

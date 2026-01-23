@@ -66,28 +66,29 @@ extern ESPNowCore* espNowCore;
 class ESPNowCTR: public ICTR
 {
     public:
-    static ESPNowCTR*   CreateInstanceWithMac(const uint8_t* mac, const bool createTimer = false);
 
-    virtual int         Write(Message& buf) override;
-    virtual void        Update() override;
+    static ESPNowCTR   CreateInstanceWithMac(const uint8_t* mac, const bool createTimer = false);
 
-    virtual void ConfigEspNowDirectNotif(uint8_t* mac, uint8_t notifByte, uint8_t dstSlaveID) override;
+    int         WriteImpl(Message& buf);
+    void        UpdateImpl();
 
-    virtual void ConfigEspNowDirectSettingUpdate(uint8_t* mac, uint8_t settingRef, uint8_t settingValueLen, uint8_t dstSlaveID) override;
+    void ConfigEspNowDirectNotif(uint8_t* mac, uint8_t notifByte, uint8_t dstSlaveID);
+
+    void ConfigEspNowDirectSettingUpdate(uint8_t* mac, uint8_t settingRef, uint8_t settingValueLen, uint8_t dstSlaveID);
  
-    virtual void RemoveDirectNotifConfig(uint8_t dstSlaveID, uint8_t notifByte) override;
+    void RemoveDirectNotifConfig(uint8_t dstSlaveID, uint8_t notifByte);
 
-    virtual void RemoveDirectSettingUpdateConfig(uint8_t dstSlaveID, uint8_t settingRef) override;
+    void RemoveDirectSettingUpdateConfig(uint8_t dstSlaveID, uint8_t settingRef);
 
-    virtual void SendDirectNotif(uint8_t notifByte) override;
+    void SendDirectNotif(uint8_t notifByte);
 
-    virtual void SendDirectSettingUpdate(uint8_t settingRef, uint8_t* value, uint8_t valueLen) override;
+    void SendDirectSettingUpdate(uint8_t settingRef, uint8_t* value, uint8_t valueLen);
     
     static ESPNowCTR*   FindCTRForMac(const uint8_t* mac);
 
-	virtual uint16_t	GetLinkInfoSize() const override;
+	uint16_t	GetLinkInfoSize() const;
 
-	virtual void		WriteLinkInfoToBuffer(uint8_t* buffer) const override;
+	void		WriteLinkInfoToBuffer(uint8_t* buffer) const;
 
     static void         HandleLinkInfo();
 
@@ -100,7 +101,8 @@ class ESPNowCTR: public ICTR
 
     private:
     ESPNowCTR(const uint8_t* mac = nullptr, const bool createTimer = false);
-    ~ESPNowCTR();
+
+	ESPNowCTR() = default;
 
     void _bufferizeMessage(espNowMsg* msg);
 
@@ -123,7 +125,7 @@ class ESPNowCTR: public ICTR
     int8_t      fPeerLastMsgNoiseFloor = 0;
 
     TimerHandle_t   fPingTimer = nullptr;
-    
+
     ESPNowCore* fCore = nullptr;
 
     bool        fShouldSendPing = false;

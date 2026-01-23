@@ -1,7 +1,9 @@
 #include "CommunicatorBridge.h"
 #include "Communicator.h"
+#include "Slave.h"
 #include "Message.h"
 #include "ESPNowCommunicator.h"
+#include <variant>
 
 #if defined(ARDUINO)
 #include <WiFi.h>
@@ -14,22 +16,22 @@
 
 #endif
 
-CTRBridge* CTRBridge::CreateInstance(ICTR* master)
+CTRBridge CTRBridge::CreateInstance(ICTR_t master)
 {
     ESP_LOGI("CTRBridge", "Creating Instance");
-    return new CTRBridge(master);
+    return CTRBridge(master);
 }
 
-CTRBridge::CTRBridge(ICTR* master)
+CTRBridge::CTRBridge(ICTR_t master)
 {
-    if (master)
+    if (master.index())
         masterCTR = master;
     ESP_LOGI("CTRBridge", "Instance created");
 }
 
-void CTRBridge::SetMaster(ICTR* master)
+void CTRBridge::SetMaster(ICTR_t master)
 {
-	if (master)
+	if (master.index())
 		masterCTR = master;
 }
 
@@ -72,9 +74,27 @@ void CTRBridge::begin()
 void CTRBridge::Update()
 {
     // LECTURE DES MESSAGES DU MASTER //
-    if (masterCTR && masterCTR->Available())
+    if (masterCTR.index() && std::visit([](auto&& ctr) -> bool {
+
+				using T = std::decay_t<decltype(ctr)>;
+
+				if constexpr (!std::is_same_v<T, std::monostate>)
+					return ctr.Available();
+
+				}, masterCTR))
     {
-        Message* msg = masterCTR->Read();
+        Message* msg = std::visit([](auto&& ctr) -> Message* {
+
+				using T = std::decay_t<decltype(ctr)>;
+
+				if constexpr (!std::is_same_v<T, std::monostate>)
+					return ctr.Read();
+				
+				else
+					return nullptr;
+
+				}, masterCTR);
+
         ESP_LOGI("CRTBridge", "masterCTR data availlable");
         if (msg)
         {
@@ -92,7 +112,7 @@ void CTRBridge::Update()
             case Message::Type::EspNowStopInitBroadcastedSlave:
                 StopEspNowInitBroadcasted();
                 break;
-            
+
             case Message::Type::EspNowConfigDirectNotif:
                 _configDirectNotif(msg);
                 break;
@@ -120,7 +140,7 @@ void CTRBridge::Update()
 
                     if (slaveCTR)
                     {
-                        slaveCTR->Write(*msg);
+						slaveCTR->Write(*msg);
                     }
 
                     else if (msg->GetType() == Message::Type::InitRequest && !slavesWaitingForID.empty())
@@ -146,15 +166,23 @@ void CTRBridge::Update()
                 break;
             }
         }
-        masterCTR->Flush();
+		std::visit([](auto&& ctr) {
+
+				using T = std::decay_t<decltype(ctr)>;
+
+				if constexpr (!std::is_same_v<T, std::monostate>)
+					ctr.Flush();
+			
+			}, masterCTR);
+
     }
 
     // TRAITEMENT DES SLAVES //
-    if (masterCTR)
+    if (masterCTR.index())
     {
         for (auto i = slaves.begin(); i != slaves.end(); i++)
         {
-            ICTR* slaveCTR = (*i)->GetCTR();
+            ICTR_t slaveCTR = (*i)->GetCTR();
 
             // LECTURE DES MESSAGES DES SLAVES //
             if (slaveCTR && slaveCTR->Available())
@@ -192,7 +220,7 @@ void CTRBridge::Update()
 
         while (!newSlavesCTR.empty())
         {
-            ICTR* ctr = newSlavesCTR.front();
+            ICTR_t ctr = newSlavesCTR.front();
 
             bool ctrIsUsed = false;
             uint8_t slaveID = 0;
@@ -209,9 +237,17 @@ void CTRBridge::Update()
 
             if (ctrIsUsed)
             {
-                Message* initRequestMsg = Message::BuildInitRequestMessage(slaveID);
-                ctr->Write(*initRequestMsg);
-                delete initRequestMsg;
+				if (ctr.index())
+				{
+					std::visit([](auto&& ctr) {
+
+							using T = std::decay_t<decltype(ctr)>;
+
+							if constexpr (!std::is_same_v<T, std::monostate)
+								ctr.Write(Message::BuildInitRequestMessage(slaveID);
+
+						}, ctr);
+				}
             }
             else
             {
@@ -366,7 +402,7 @@ void CTRBridge::_reinitSlaves()
     for (auto i = slaves.begin(); i != slaves.end(); i++)
     {
         //Serial.println("looping");
-        ICTR* slaveCTR = (*i)->GetCTR();
+        ICTR_t slaveCTR = (*i)->GetCTR();
 
         if (slaveCTR)
         {

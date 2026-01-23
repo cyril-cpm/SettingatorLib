@@ -2,12 +2,8 @@
 
 #include "MiscDef.h"
 #include "Message.h"
-#include <cstdint>
+#include <variant>
 
-ICTR* masterCTR = nullptr;
-std::vector<Slave*> slaves;
-std::queue<ICTR*> newSlavesCTR;
-std::queue<Slave*> slavesWaitingForID;
 bool initEspNowBroadcasted = false;
 
 void ICTR::_receive(Message* msg)
@@ -51,10 +47,10 @@ uint8_t ICTR::GetBoxSize() const
 }
 
 
-bool ICTR::Available()
+bool ICTR::Available(this auto&& self)
 {
-    Update();
-    return fReceivedMessage.size();
+    self.Update();
+    return self.fReceivedMessage.size();
 }
 
 Message* ICTR::Read()
@@ -84,71 +80,12 @@ void ICTR::WriteLinkInfoToBuffer(uint8_t *buffer) const
 	return;
 }
 
-Slave::Slave(ICTR* ctr)
+int ICTR::Write(this auto&& self, Message& buf)
 {
-    fCTR = ctr;
+	return self.WriteImpl(buf);
 }
 
-ICTR* Slave::GetSlaveCTR(uint8_t slaveID)
+void ICTR::Update(this auto&& self)
 {
-    for (auto i = slaves.begin(); i != slaves.end(); i++)
-    {
-        if ((*i)->fSlaveID == slaveID || (*i)->HasSubSlave(slaveID))
-            return (*i)->fCTR;
-    }
-
-    return nullptr;
-}
-
-ICTR* Slave::GetCTR()
-{
-    return fCTR;
-}
-
-uint8_t Slave::GetID()
-{
-    return fSlaveID;
-}
-
-bool Slave::HasSubSlave(uint8_t id)
-{
-    bool found = false;
-
-    for (auto i = fSubSlave.begin(); i != fSubSlave.end(); i++)
-    {
-        if (*i == id)
-        {
-            found = true;
-            break;
-        }
-    }
-
-    return found;
-}
-
-void Slave::AddSubSlave(uint8_t id)
-{
-    fSubSlave.push_back(id);
-}
-
-void Slave::SetID(uint8_t id)
-{
-    fSlaveID = id;
-}
-
-uint16_t Slave::GetLinkInfoSize() const
-{
-	if (fCTR)
-		return fCTR->GetLinkInfoSize() + 2;
-	return 0;
-}
-
-void Slave::WriteLinkInfoToBuffer(uint8_t* msgBuffer) const
-{
-	if (fCTR)
-	{
-		msgBuffer[0] = GetLinkInfoSize();
-		msgBuffer[1] = fSlaveID;
-		fCTR->WriteLinkInfoToBuffer(msgBuffer + 2);
-	}
+	self.UpdateImpl();
 }

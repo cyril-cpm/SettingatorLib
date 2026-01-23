@@ -11,15 +11,16 @@ class UARTCTR: public ICTR
 {
     public:
 
-    static UARTCTR* CreateInstance(int baudrate = 115200);
-    
-    virtual int     Write(Message& buf) override;
-    virtual void    Update() override;
+    static UARTCTR CreateInstance(int baudrate = 115200);
+
+    int     WriteImpl(Message& buf);
+    void    UpdateImpl();
 
     private:
 
     UARTCTR(int baudrate);
-    
+	UARTCTR() = default;
+
     void            _removeBufferBeginBytes(size_t numberBytes);
 
     uint8_t*        fUartBuffer = nullptr;

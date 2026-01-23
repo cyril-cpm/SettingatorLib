@@ -4,16 +4,16 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/timers.h"
 
-class ICTR;
-class Slave;
+#include "Slave.h"
+#include "Communicator.h"
 
 class CTRBridge
 {
 	public:
 
-	static	CTRBridge*   CreateInstance(ICTR* master);
+	static	CTRBridge   CreateInstance(ICTR_t master);
 
-	CTRBridge(ICTR* master);
+	CTRBridge(ICTR_t master);
 
 	void	begin();
 
@@ -23,7 +23,7 @@ class CTRBridge
 	void			HandleLinkInfo();
     void			ShouldSendLinkInfo(bool should = true);
 	void			CreateLinkInfoTimer();
-	void			SetMaster(ICTR* master);
+	void			SetMaster(ICTR_t master);
 
 	private:
 

@@ -1,10 +1,8 @@
 #pragma once
 
-#ifndef _COMMUNICATOR_
-#define _COMMUNICATOR_
-
 #include <sys/_stdint.h>
 #include <queue>
+#include <variant>
 
 class Message;
 
@@ -22,47 +20,49 @@ class ICTR
     /*
     - return true if there is bytes available to read
     */
-    virtual bool Available();
+    bool Available(this auto&& self);
 
     /*
     - Write Buffer to communicator
     */
-    virtual int Write(Message& buf) = 0;
+    int Write(this auto&& self, Message& buf);
 
     /*
     - Read a message if avaible or return empty Message
      */
-    virtual Message* Read();
+    Message* Read();
 
     /*
     - Flush message after having executed
     */
-    virtual void    Flush();
+    void    Flush();
 
     /*
     - Update internal Buffer
     */
-    virtual void Update() = 0;
+    void Update(this auto&& self);
 
-    virtual uint8_t GetBoxSize() const;
+    uint8_t GetBoxSize() const;
 
-    virtual void ConfigEspNowDirectNotif(uint8_t* mac, uint8_t notifByte, uint8_t dstSlaveID);
+    void ConfigEspNowDirectNotif(uint8_t* mac, uint8_t notifByte, uint8_t dstSlaveID);
 
-    virtual void ConfigEspNowDirectSettingUpdate(uint8_t* mac, uint8_t settingRef, uint8_t settingValueLen, uint8_t dstSlaveID);
+    void ConfigEspNowDirectSettingUpdate(uint8_t* mac, uint8_t settingRef, uint8_t settingValueLen, uint8_t dstSlaveID);
 
-    virtual void SendDirectNotif(uint8_t notifByte);
-    
-    virtual void SendDirectSettingUpdate(uint8_t settingRef, uint8_t* value, uint8_t valueLen);
+    void SendDirectNotif(uint8_t notifByte);
 
-    virtual void RemoveDirectNotifConfig(uint8_t dstSlaveID, uint8_t notifByte);
+    void SendDirectSettingUpdate(uint8_t settingRef, uint8_t* value, uint8_t valueLen);
 
-    virtual void RemoveDirectSettingUpdateConfig(uint8_t dstSlaveID, uint8_t settingRef);
+    void RemoveDirectNotifConfig(uint8_t dstSlaveID, uint8_t notifByte);
 
-	virtual uint16_t	GetLinkInfoSize() const;
+    void RemoveDirectSettingUpdateConfig(uint8_t dstSlaveID, uint8_t settingRef);
 
-	virtual void		WriteLinkInfoToBuffer(uint8_t* buffer) const;
+	uint16_t	GetLinkInfoSize() const;
+
+	void		WriteLinkInfoToBuffer(uint8_t* buffer) const;
 
     protected:
+	
+	ICTR() = default;
 
     void _receive(Message* msg);
 
@@ -70,35 +70,4 @@ class ICTR
 
 };
 
-extern ICTR* masterCTR;
 
-extern std::queue<ICTR*> newSlavesCTR;
-
-class Slave
-{
-    public:
-    Slave(ICTR* ctr);
-
-    static ICTR* GetSlaveCTR(uint8_t slaveID);
-
-    ICTR*		GetCTR();
-    uint8_t 	GetID();
-    bool    	HasSubSlave(uint8_t id);
-    void    	AddSubSlave(uint8_t id);
-    void    	SetID(uint8_t id);
-	uint16_t	GetLinkInfoSize() const;
-	void		WriteLinkInfoToBuffer(uint8_t* msgBuffer) const;
-
-    private:
-    uint8_t     fSlaveID = 0;
-    ICTR*       fCTR = nullptr;
-
-    std::vector<uint8_t> fSubSlave;
-};
-
-extern std::vector<Slave*> slaves;
-extern std::queue<Slave*> slavesWaitingForID;
-
-extern bool initEspNowBroadcasted;
-
-#endif
