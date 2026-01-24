@@ -18,8 +18,16 @@ ICTR* Slave::GetSlaveCTR(uint8_t slaveID)
     {
         if (slave->fSlaveID == slaveID || slave->HasSubSlave(slaveID))
             return std::visit([](auto&& ctr) -> ICTR* {
-					return &ctr;
-					}, slave->fCTR);
+
+					using T = std::decay_t<decltype(ctr)>;
+
+					if constexpr (!std::is_same_v<T, std::monostate>)
+						return &ctr;
+
+					else
+						return nullptr;
+
+				}, slave->fCTR);
     }
 
     return nullptr;
@@ -81,10 +89,18 @@ uint16_t Slave::GetLinkInfoSize() const
 
 void Slave::WriteLinkInfoToBuffer(uint8_t* msgBuffer) const
 {
-	if (fCTR)
+	if (fCTR.index())
 	{
 		msgBuffer[0] = GetLinkInfoSize();
 		msgBuffer[1] = fSlaveID;
-		fCTR->WriteLinkInfoToBuffer(msgBuffer + 2);
+
+		std::visit([msgBuffer](auto&& ctr) {
+
+				using T = std::decay_t<decltype(ctr)>;
+
+				if constexpr (!std::is_same_v<T, std::monostate>)
+					ctr.WriteLinkInfoToBuffer(msgBuffer + 2);
+			
+			}, fCTR);
 	}
 }
