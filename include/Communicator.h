@@ -8,7 +8,7 @@ class Message;
 
 class ICTR
 {
-    public:
+	public:
 
 	enum LinkType
 	{
@@ -17,56 +17,57 @@ class ICTR
 		UNKNOWN = 0xFF
 	};
 
-    /*
-    - return true if there is bytes available to read
-    */
-    bool Available(this auto&& self);
+	/*
+	- return true if there is bytes available to read
+	*/
+	bool Available(this auto&& self);
 
-    /*
-    - Write Buffer to communicator
-    */
-    int Write(this auto&& self, Message& buf);
+	/*
+	- Write Buffer to communicator
+	*/
+	int Write(this auto&& self, Message& buf);
+	int Write(this auto&& self, Message&& buf);
 
-    /*
-    - Read a message if avaible or return empty Message
-     */
-    Message* Read();
+	/*
+	- Read a message if avaible or return empty Message
+	 */
+	Message* Read();
 
-    /*
-    - Flush message after having executed
-    */
-    void    Flush();
+	/*
+	- Flush message after having executed
+	*/
+	void	Flush();
 
-    /*
-    - Update internal Buffer
-    */
-    void Update(this auto&& self);
+	/*
+	- Update internal Buffer
+	*/
+	void Update(this auto&& self);
 
-    uint8_t GetBoxSize() const;
+	uint8_t GetBoxSize() const;
 
-    void ConfigEspNowDirectNotif(uint8_t* mac, uint8_t notifByte, uint8_t dstSlaveID);
+	void ConfigEspNowDirectNotif(uint8_t* mac, uint8_t notifByte, uint8_t dstSlaveID);
 
-    void ConfigEspNowDirectSettingUpdate(uint8_t* mac, uint8_t settingRef, uint8_t settingValueLen, uint8_t dstSlaveID);
+	void ConfigEspNowDirectSettingUpdate(uint8_t* mac, uint8_t settingRef, uint8_t settingValueLen, uint8_t dstSlaveID);
 
-    void SendDirectNotif(uint8_t notifByte);
+	void SendDirectNotif(uint8_t notifByte);
 
-    void SendDirectSettingUpdate(uint8_t settingRef, uint8_t* value, uint8_t valueLen);
+	void SendDirectSettingUpdate(uint8_t settingRef, uint8_t* value, uint8_t valueLen);
 
-    void RemoveDirectNotifConfig(uint8_t dstSlaveID, uint8_t notifByte);
+	void RemoveDirectNotifConfig(uint8_t dstSlaveID, uint8_t notifByte);
 
-    void RemoveDirectSettingUpdateConfig(uint8_t dstSlaveID, uint8_t settingRef);
+	void RemoveDirectSettingUpdateConfig(uint8_t dstSlaveID, uint8_t settingRef);
 
 	uint16_t	GetLinkInfoSize() const;
 
 	void		WriteLinkInfoToBuffer(uint8_t* buffer) const;
 
-    protected:
+	protected:
 	
 	ICTR() = default;
 
-    void _receive(Message* msg);
+	void _receive(Message* msg);
 
-    std::queue<Message*> fReceivedMessage;
+	std::queue<Message*> fReceivedMessage;
 
 };
 

@@ -3,6 +3,7 @@
 #include "Slave.h"
 #include "Message.h"
 #include "ESPNowCommunicator.h"
+#include <type_traits>
 #include <variant>
 
 #if defined(ARDUINO)
@@ -226,8 +227,6 @@ void CTRBridge::Update()
     // TRAITEMENT DES NOUVEAUX SLAVES (assignation ID et initRequest) //
     if (masterCTR.index() && !newSlavesCTR.empty())
     {
-        Message* requestMsg = Message::BuildSlaveIDRequestMessage();
-
         while (!newSlavesCTR.empty())
         {
             ICTR_t ctr = std::move(newSlavesCTR.front());
@@ -271,11 +270,11 @@ void CTRBridge::Update()
             }
             else
             {
-				std::visit([requestMsg](auto&& ctr) {
+				std::visit([](auto&& ctr) {
 						using T = std::decay_t<decltype(ctr)>;
 
 						if constexpr (!std::is_same_v<T, std::monostate>)
-							ctr.Write(*requestMsg);
+							ctr.Write(Message::BuildSlaveIDRequestMessage());
 
 					}, masterCTR);
 
@@ -283,8 +282,6 @@ void CTRBridge::Update()
                 slavesWaitingForID.push(newSlave);
             }
         }
-
-        delete requestMsg;
     }
 
     //ESP_LOGI("CTRBridge", "new CTR done");
@@ -428,27 +425,12 @@ void CTRBridge::_reinitSlaves()
     for (const auto& slave : slaves)
     {
         //Serial.println("looping");
-        ICTR_t slaveCTR = slave->GetCTR();
+        ICTR* slaveCTR = slave->GetCTR();
 
         if (slaveCTR)
         {
-            Message* msg =  Message::BuildInitRequestMessage(slave->GetID());
-
-            if (msg)
-            {
-                slaveCTR->Write(*msg);
-                //Serial.println("Slave reinit");
-
-                delete msg;
-            }
-
-            Message* reinitMsg = Message::BuildReInitSlaveMessage();
-
-            if (reinitMsg)
-            {
-                slaveCTR->Write(*reinitMsg);
-                delete msg;
-            }
+            slaveCTR->Write(Message::BuildInitRequestMessage(slave->GetID()));
+            slaveCTR->Write(Message::BuildReInitSlaveMessage());
         }
     }
 }
@@ -469,7 +451,7 @@ void CTRBridge::_treatSettingInit(Message* msg, Slave *slave)
 
 void CTRBridge::HandleLinkInfo()
 {
-	if (!fShouldSendLinkInfo || !espNowCore || !masterCTR)
+	if (!fShouldSendLinkInfo || !espNowCore || !masterCTR.index())
 		return;
 
 	ESP_LOGI("LINK", "HANDLING LINK INFO");
@@ -510,7 +492,15 @@ void CTRBridge::HandleLinkInfo()
 	msgBuffer[bufIndex] = Message::Frame::End;
 
 	Message msg(msgBuffer, msgSize);
-	masterCTR->Write(msg);
+
+	std::visit([&msg](auto&& ctr) {
+
+			using T = std::decay_t<decltype(ctr)>;
+
+			if constexpr (!std::is_same_v<T, std::monostate>)
+				ctr.Write(msg);
+
+			}, masterCTR);
 
 	fShouldSendLinkInfo = false;
 }

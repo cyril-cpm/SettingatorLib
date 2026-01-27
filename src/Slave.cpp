@@ -81,10 +81,16 @@ void Slave::SetID(uint8_t id)
 
 uint16_t Slave::GetLinkInfoSize() const
 {
-	if (fCTR.index())
-		return std::visit([](auto&& self) -> uint16_t
-				{ return self.GetLinkInfoSize() + 2;}, fCTR);
-	return 0;
+		return std::visit([](auto&& ctr) -> uint16_t {
+
+				using T = std::decay_t<decltype(ctr)>;
+
+				if constexpr (!std::is_same_v<T, std::monostate>)
+					return ctr.GetLinkInfoSize() + 2;
+
+				else
+					return 0;
+			}, fCTR);
 }
 
 void Slave::WriteLinkInfoToBuffer(uint8_t* msgBuffer) const

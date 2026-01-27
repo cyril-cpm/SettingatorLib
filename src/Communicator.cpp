@@ -85,6 +85,11 @@ int ICTR::Write(this auto&& self, Message& buf)
 	return self.WriteImpl(buf);
 }
 
+int ICTR::Write(this auto&& self, Message&& buf)
+{
+	return self.WriteImpl(buf);
+}
+
 void ICTR::Update(this auto&& self)
 {
 	self.UpdateImpl();

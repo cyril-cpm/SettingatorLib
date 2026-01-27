@@ -2,7 +2,7 @@
 #include <CommunicatorBridge.h>
 #include <UARTCommunicator.h>
 
-CTRBridge BRIDGE(nullptr);
+CTRBridge BRIDGE{ICTR_t{}};
 
 extern "C" void app_main()
 {

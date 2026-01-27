@@ -2,6 +2,7 @@
 #include "Communicator.h"
 #include "MiscDef.h"
 #include "Message.h"
+#include "Slave.h"
 #include <cstdint>
 #include <esp_now.h>
 #include <esp_wifi.h>
