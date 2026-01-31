@@ -71,11 +71,11 @@ size_t Setting::getInitRequestSize()
     return bufferSize;
 }
 
-Message* Setting::buildUpdateMessage(uint8_t* slaveID)
+Message Setting::buildUpdateMessage(uint8_t* slaveID)
 {
     size_t messageLength = 8 + fDataSize;
 
-    uint8_t* buffer = (uint8_t*)malloc(messageLength * sizeof(uint8_t));
+	std::vector<uint8_t> buffer(messageLength);
 
     buffer[0] = Message::Frame::Start;
 
@@ -94,7 +94,7 @@ Message* Setting::buildUpdateMessage(uint8_t* slaveID)
     memcpy(&(buffer[7]), fDataPtr, fDataSize);
     buffer[messageLength - 1] = Message::Frame::End;
 
-    return new Message(buffer, messageLength);
+    return Message(std::move(buffer));
 }
 
 void Setting::setCallback(void (*callback)())

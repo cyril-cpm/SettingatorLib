@@ -6,6 +6,9 @@
 #include "Message.h"
 #include "MiscDef.h"
 #include "ESPNowCommunicator.h"
+#include "Slave.h"
+#include <type_traits>
+#include <variant>
 //#include "CommandHandler.h"
 
 #if defined(ARDUINO)
@@ -27,12 +30,12 @@ void Settingator::StartWiFi()
 {
 
 #if defined(ARDUINO)
-    Serial.println("Begin WiFi");
-    WiFi.mode(WIFI_AP);
+	Serial.println("Begin WiFi");
+	WiFi.mode(WIFI_AP);
 
-    WiFi.softAPConfig(IPAddress(192,168,0,1), IPAddress(192,168,0,1), IPAddress(255,255,255,0));
-    WiFi.softAP("espTest", "123456789");
-    Serial.println(WiFi.softAPIP());
+	WiFi.softAPConfig(IPAddress(192,168,0,1), IPAddress(192,168,0,1), IPAddress(255,255,255,0));
+	WiFi.softAP("espTest", "123456789");
+	Serial.println(WiFi.softAPIP());
 
 #elif defined(ESP_PLATFORM)
 
@@ -42,34 +45,34 @@ void Settingator::StartWiFi()
 
 Settingator::Settingator(ICTR_t communicator)
 {
-    masterCTR = communicator;
+	masterCTR = communicator;
 }
 
 Settingator::~Settingator()
 {
 
 #if defined(ARDUINO)
-    delete fPreferences;
+	delete fPreferences;
 #endif
 }
 
 void Settingator::SetNetLed(uint8_t r, uint8_t g, uint8_t b)
 {
 #if defined(ARDUINO)
-    if (fInfoLED)
-        *fInfoLED = CRGB(r, g, b);
+	if (fInfoLED)
+		*fInfoLED = CRGB(r, g, b);
 #elif defined(ESP_PLATFORM)
-    if (fInfoLED)
-        *fInfoLED = RGB(r, g, b);
+	if (fInfoLED)
+		*fInfoLED = RGB(r, g, b);
 #endif
 }
 
 void Settingator::ESPNowBroadcastPing()
 {
-    if (xPortInIsrContext())
-        fShouldESPNowBroadcastPing = true;
-    else
-        ESPNowCore::CreateInstance()->BroadcastPing();
+	if (xPortInIsrContext())
+		fShouldESPNowBroadcastPing = true;
+	else
+		ESPNowCore::CreateInstance()->BroadcastPing();
 }
 
 #if defined(STR_BRIDGE_HID)
@@ -79,34 +82,34 @@ static esp_timer_handle_t debounceTimerBroadcast;
 
 static void debounceTimerBroadcastCallback(void*)
 {
-    gpio_intr_enable(BROADCAST_PIN);
+	gpio_intr_enable(BROADCAST_PIN);
 }
 
 static esp_timer_handle_t debounceTimerBridgeActivation;
 
 static void debounceTimerBridgeActivationCallback(void*)
 {
-    gpio_intr_enable(BRIDGE_ACTIVATION_PIN);
+	gpio_intr_enable(BRIDGE_ACTIVATION_PIN);
 }
 
 static void IRAM_ATTR broadcastInterruptHandler(void* arg)
 {
-    gpio_intr_disable(BROADCAST_PIN);
+	gpio_intr_disable(BROADCAST_PIN);
 
-    esp_timer_start_once(debounceTimerBroadcast, DEBOUNCE_TIME_MS * 1000);
-    STR.ESPNowBroadcastPing();
+	esp_timer_start_once(debounceTimerBroadcast, DEBOUNCE_TIME_MS * 1000);
+	STR.ESPNowBroadcastPing();
 }
 
 
 static void IRAM_ATTR bridgeActivationInterruptHandler(void* arg)
 {
-    gpio_intr_disable(BRIDGE_ACTIVATION_PIN);
+	gpio_intr_disable(BRIDGE_ACTIVATION_PIN);
 
-    esp_timer_start_once(debounceTimerBridgeActivation, DEBOUNCE_TIME_MS * 1000);
-    if (initEspNowBroadcasted)
-        STR.StopEspNowInitBroadcasted();
-    else
-        STR.StartEspNowInitBroadcasted();
+	esp_timer_start_once(debounceTimerBridgeActivation, DEBOUNCE_TIME_MS * 1000);
+	if (initEspNowBroadcasted)
+		STR.StopEspNowInitBroadcasted();
+	else
+		STR.StartEspNowInitBroadcasted();
 }
 #else
 #pragma message("No Bridge HID")
@@ -116,535 +119,598 @@ void Settingator::InitNetworkHID()
 {
 #if defined(STR_BRIDGE_HID)
 #if defined (ARDUINO)
-    pinMode(fBridgeActivationButtonPin, INPUT_PULLDOWN);
-    attachInterrupt(fBridgeActivationButtonPin, [](){
-        if (initEspNowBroadcasted)
-        {
-            Serial.println("Stop");
-            STR.StopEspNowInitBroadcasted();
-            STR.SetNetLed(255, 0, 0);
-        }
-        else
-        {
-            STR.StartEspNowInitBroadcasted();
-            STR.SetNetLed(0, 255, 0);
-            Serial.println("Start");
-        }
-    }, RISING);
-    fInfoLED = led;
+	pinMode(fBridgeActivationButtonPin, INPUT_PULLDOWN);
+	attachInterrupt(fBridgeActivationButtonPin, [](){
+		if (initEspNowBroadcasted)
+		{
+			Serial.println("Stop");
+			STR.StopEspNowInitBroadcasted();
+			STR.SetNetLed(255, 0, 0);
+		}
+		else
+		{
+			STR.StartEspNowInitBroadcasted();
+			STR.SetNetLed(0, 255, 0);
+			Serial.println("Start");
+		}
+	}, RISING);
+	fInfoLED = led;
 #endif
-    // TIMER //
-    esp_timer_create_args_t timer_args = {
-        .callback = debounceTimerBroadcastCallback,
-        .name = "debounce_timer_broadcast"
-    };
-    ESP_ERROR_CHECK(esp_timer_create(&timer_args, &debounceTimerBroadcast));
+	// TIMER //
+	esp_timer_create_args_t timer_args = {
+		.callback = debounceTimerBroadcastCallback,
+		.name = "debounce_timer_broadcast"
+	};
+	ESP_ERROR_CHECK(esp_timer_create(&timer_args, &debounceTimerBroadcast));
 
-    esp_timer_create_args_t timer_args2 = {
-        .callback = debounceTimerBridgeActivationCallback,
-        .name = "debounce_timer_bridge_activation"
-    };
-    ESP_ERROR_CHECK(esp_timer_create(&timer_args2, &debounceTimerBridgeActivation));
+	esp_timer_create_args_t timer_args2 = {
+		.callback = debounceTimerBridgeActivationCallback,
+		.name = "debounce_timer_bridge_activation"
+	};
+	ESP_ERROR_CHECK(esp_timer_create(&timer_args2, &debounceTimerBridgeActivation));
 
-    // GPIO CONFIG //
-    gpio_config_t io_conf = {};
-    io_conf.intr_type = GPIO_INTR_DISABLE;
-    io_conf.pull_down_en = GPIO_PULLDOWN_ENABLE;
-    io_conf.pull_up_en = GPIO_PULLUP_DISABLE;
-    io_conf.mode = GPIO_MODE_INPUT;
-    io_conf.pin_bit_mask = 1ULL << BROADCAST_PIN;
-    ESP_ERROR_CHECK(gpio_config(&io_conf));
+	// GPIO CONFIG //
+	gpio_config_t io_conf = {};
+	io_conf.intr_type = GPIO_INTR_DISABLE;
+	io_conf.pull_down_en = GPIO_PULLDOWN_ENABLE;
+	io_conf.pull_up_en = GPIO_PULLUP_DISABLE;
+	io_conf.mode = GPIO_MODE_INPUT;
+	io_conf.pin_bit_mask = 1ULL << BROADCAST_PIN;
+	ESP_ERROR_CHECK(gpio_config(&io_conf));
 
-    gpio_config_t io_conf2 = {};
-    io_conf2.intr_type = GPIO_INTR_DISABLE;
-    io_conf2.pull_down_en = GPIO_PULLDOWN_ENABLE;
-    io_conf2.pull_up_en = GPIO_PULLUP_DISABLE;
-    io_conf2.mode = GPIO_MODE_INPUT;
-    io_conf2.pin_bit_mask = 1ULL << BRIDGE_ACTIVATION_PIN;
-    ESP_ERROR_CHECK(gpio_config(&io_conf2));
+	gpio_config_t io_conf2 = {};
+	io_conf2.intr_type = GPIO_INTR_DISABLE;
+	io_conf2.pull_down_en = GPIO_PULLDOWN_ENABLE;
+	io_conf2.pull_up_en = GPIO_PULLUP_DISABLE;
+	io_conf2.mode = GPIO_MODE_INPUT;
+	io_conf2.pin_bit_mask = 1ULL << BRIDGE_ACTIVATION_PIN;
+	ESP_ERROR_CHECK(gpio_config(&io_conf2));
 
-    ESP_ERROR_CHECK(gpio_install_isr_service(0));
+	ESP_ERROR_CHECK(gpio_install_isr_service(0));
 
-    ESP_ERROR_CHECK(gpio_isr_handler_add(BROADCAST_PIN, broadcastInterruptHandler, (void*)BROADCAST_PIN));
-    ESP_ERROR_CHECK(gpio_set_intr_type(BROADCAST_PIN, GPIO_INTR_POSEDGE));
+	ESP_ERROR_CHECK(gpio_isr_handler_add(BROADCAST_PIN, broadcastInterruptHandler, (void*)BROADCAST_PIN));
+	ESP_ERROR_CHECK(gpio_set_intr_type(BROADCAST_PIN, GPIO_INTR_POSEDGE));
 
-    ESP_ERROR_CHECK(gpio_isr_handler_add(BRIDGE_ACTIVATION_PIN, bridgeActivationInterruptHandler, NULL));
-    ESP_ERROR_CHECK(gpio_set_intr_type(BRIDGE_ACTIVATION_PIN, GPIO_INTR_POSEDGE));
-    fInfoLED = new RGB(0, 255, 0);
-    fInfoLEDStrip = new Strip(NET_HID_LED_PIN, fInfoLED, 1);
+	ESP_ERROR_CHECK(gpio_isr_handler_add(BRIDGE_ACTIVATION_PIN, bridgeActivationInterruptHandler, NULL));
+	ESP_ERROR_CHECK(gpio_set_intr_type(BRIDGE_ACTIVATION_PIN, GPIO_INTR_POSEDGE));
+	fInfoLED = new RGB(0, 255, 0);
+	fInfoLEDStrip = new Strip(NET_HID_LED_PIN, fInfoLED, 1);
 #endif
 }
 
 void Settingator::SetCommunicator(ICTR_t communicator)
 {
-    masterCTR = communicator;
+	masterCTR = communicator;
 }
 
 void Settingator::Update()
 {
-    if (masterCTR)
-    {
-        Message* msg = nullptr;
-        
-        if (masterCTR->Available())
-            msg = masterCTR->Read();
-        //Serial.println("Message available");
-        //printBuffer(msg->GetBufPtr(), msg->GetLength(), HEX);
-        //Serial.println("");
+	if (masterCTR.index())
+	{
 
-        if (msg)
+		Message* msg = std::visit([](auto&& ctr) -> Message* {
+
+				using T = std::decay_t<decltype(ctr)>;
+
+				if constexpr (!std::is_same_v<T, std::monostate>)
+				{
+					if (ctr.Available())
+						return ctr.Read();
+
+					else
+						return nullptr;
+				}
+				else
+					return nullptr;
+			}, masterCTR);
+
+		if (msg)
 #if defined(ARDUINO)
-            Serial.println("Message Read");
+			Serial.println("Message Read");
 #elif defined(ESP_PLATFORM)
-            ESP_LOGI("STR","Message read");
+			ESP_LOGI("STR","Message read");
 #endif
 
-        if (!fSlaveID && msg && msg->GetType() == Message::Type::InitRequest)
-            _createSlaveID(msg->GetSlaveID());
+		if (!fSlaveID && msg && msg->GetType() == Message::Type::InitRequest)
+			_createSlaveID(msg->GetSlaveID());
 
-        if (fSlaveID && msg && *fSlaveID == msg->GetSlaveID())
-        {
-            auto msgType = msg->GetType();
+		if (fSlaveID && msg && *fSlaveID == msg->GetSlaveID())
+		{
+			auto msgType = msg->GetType();
 
-            switch (msgType)
-            {
-            case Message::Type::InitRequest:
-                _sendInitMessage();
-                break;
-            
-            case Message::Type::SettingUpdate:
-                _treatSettingUpdateMessage(msg);
-                break;
+			switch (msgType)
+			{
+			case Message::Type::InitRequest:
+				_sendInitMessage();
+				break;
 
-            case Message::Type::ConfigEspNowDirectNotif:
-                _configEspNowDirectNotif(msg);
-                break;
+			case Message::Type::SettingUpdate:
+				_treatSettingUpdateMessage(msg);
+				break;
 
-            case Message::Type::ConfigEspNowDirectSettingUpdate:
-                _configEspNowDirectSettingUpdate(msg);
-                break;
+			case Message::Type::ConfigEspNowDirectNotif:
+				_configEspNowDirectNotif(msg);
+				break;
 
-            case Message::Type::Notif:
-                _treatNotifMessage(msg);
-                break;
+			case Message::Type::ConfigEspNowDirectSettingUpdate:
+				_configEspNowDirectSettingUpdate(msg);
+				break;
 
-            case Message::Type::RemoveDirectNotifConfig:
-                _removeDirectNotifConfig(msg);
-                break;
+			case Message::Type::Notif:
+				_treatNotifMessage(msg);
+				break;
 
-            case Message::Type::RemoveDirectSettingUpdateConfig:
-                _removeDirectSettingUpdateConfig(msg);
-                break;
+			case Message::Type::RemoveDirectNotifConfig:
+				_removeDirectNotifConfig(msg);
+				break;
 
-            /*case Message::Type::Command:
-                _treatCommandMessage(msg);
-                break;*/
-            default:
-                //DEBUG_PRINT_VALUE_BUF_LN("UNTREATED MESSAGE", msg->GetBufPtr(), msg->GetLength())
-                break;
-            }
-            masterCTR->Flush();
-        }
-        else
-        {
-            if (fBridge)
-                fBridge->Update();
-            else
-                masterCTR->Flush();
-        }
-    }
+			case Message::Type::RemoveDirectSettingUpdateConfig:
+				_removeDirectSettingUpdateConfig(msg);
+				break;
+
+			/*case Message::Type::Command:
+				_treatCommandMessage(msg);
+				break;*/
+			default:
+				//DEBUG_PRINT_VALUE_BUF_LN("UNTREATED MESSAGE", msg->GetBufPtr(), msg->GetLength())
+				break;
+			}
+
+			std::visit([](auto&& ctr) {
+
+					using T = std::decay_t<decltype(ctr)>;
+
+					if constexpr (!std::is_same_v<T,std::monostate>)
+						ctr.Flush();
+
+				}, masterCTR);
+		}
+		else
+		{
+			if (fBridge)
+				fBridge->Update();
+			else
+			{
+				std::visit([](auto&& ctr) {
+
+						using T = std::decay_t<decltype(ctr)>;
+
+						if constexpr (!std::is_same_v<T,std::monostate>)
+							ctr.Flush();
+
+					}, masterCTR);
+			}
+		}
+	}
 
 #if defined(ESP_PLATFORM)
-    ESP_ERROR_CHECK(esp_task_wdt_reset());
-    vTaskDelay(1);
+	ESP_ERROR_CHECK(esp_task_wdt_reset());
+	vTaskDelay(1);
 #endif
 
-    if (fShouldStartEspNowInitBroadcasted)
-    {
-        StartEspNowInitBroadcasted();
-        fShouldStartEspNowInitBroadcasted = false;
-    }
+	if (fShouldStartEspNowInitBroadcasted)
+	{
+		StartEspNowInitBroadcasted();
+		fShouldStartEspNowInitBroadcasted = false;
+	}
 
-    if (fShouldStopEspNowInitBroadcasted)
-    {
-        StopEspNowInitBroadcasted();
-        fShouldStopEspNowInitBroadcasted = false;
-    }
+	if (fShouldStopEspNowInitBroadcasted)
+	{
+		StopEspNowInitBroadcasted();
+		fShouldStopEspNowInitBroadcasted = false;
+	}
 
-    if (fShouldESPNowBroadcastPing)
-    {
-        ESPNowBroadcastPing();
-        fShouldESPNowBroadcastPing = false;
-    }
+	if (fShouldESPNowBroadcastPing)
+	{
+		ESPNowBroadcastPing();
+		fShouldESPNowBroadcastPing = false;
+	}
 
-    if (fInfoLEDStrip)
-        fInfoLEDStrip->Show();
+	if (fInfoLEDStrip)
+		fInfoLEDStrip->Show();
 }
 
 void Settingator::AddSetting(Setting& setting)
 {
-    fSettingVector.push_back(setting);
+	fSettingVector.push_back(setting);
 
 #if defined(ARDUINO)
-    if (setting.getType() != Setting::Type::Trigger)
-    {
-        const char * settingName = setting.getName().c_str();
-        void* buf = malloc(setting.getDataSize() * sizeof(uint8_t));
-    
-        if (fPreferences)
-        {
-            size_t len = fPreferences->getBytes(settingName, buf, setting.getDataSize());
+	if (setting.getType() != Setting::Type::Trigger)
+	{
+		const char * settingName = setting.getName().c_str();
+		void* buf = malloc(setting.getDataSize() * sizeof(uint8_t));
+	
+		if (fPreferences)
+		{
+			size_t len = fPreferences->getBytes(settingName, buf, setting.getDataSize());
 
-            if (len)
-                setting.update((uint8_t*)buf, len);
-        }
-    }
+			if (len)
+				setting.update((uint8_t*)buf, len);
+		}
+	}
 #endif
 }
 
 uint8_t Settingator::AddSetting(Setting::Type type, void* data_ptr, size_t data_size, const char* name, std::function<void()> callback)
 {
-    fSettingVector.push_back(Setting(type, data_ptr, data_size, name, callback, fInternalRefCount++));
+	fSettingVector.push_back(Setting(type, data_ptr, data_size, name, callback, fInternalRefCount++));
 
-    /*if (type != Setting::Type::Trigger)
-    {
-        void* buf = malloc(data_size * sizeof(uint8_t));
-        DEBUG_PRINT_LN(name)
-        size_t len = fPreferences->getBytes(name, buf, data_size);
+	/*if (type != Setting::Type::Trigger)
+	{
+		void* buf = malloc(data_size * sizeof(uint8_t));
+		DEBUG_PRINT_LN(name)
+		size_t len = fPreferences->getBytes(name, buf, data_size);
 
-        Setting* setting = GetSettingByRef(fInternalRefCount-1);
+		Setting* setting = GetSettingByRef(fInternalRefCount-1);
 
-        if (setting && len)
-        {
-            DEBUG_PRINT_LN("Update Setting With preferences")
-            setting->update((uint8_t*)buf, len);
-            DEBUG_PRINT_VALUE_BUF_LN(name, (uint8_t*)buf, len)
-        }
-    }*/
+		if (setting && len)
+		{
+			DEBUG_PRINT_LN("Update Setting With preferences")
+			setting->update((uint8_t*)buf, len);
+			DEBUG_PRINT_VALUE_BUF_LN(name, (uint8_t*)buf, len)
+		}
+	}*/
 
-    return(fInternalRefCount-1);
+	return(fInternalRefCount-1);
 }
 
 void Settingator::UpdateSetting(uint8_t ref, uint8_t* newValuePtr, size_t newValueSize)
 {
-    Setting* setting = GetSettingByRef(ref);
+	Setting* setting = GetSettingByRef(ref);
 
-    if (setting)
-    {
-        setting->update(newValuePtr, newValueSize);
-        SendUpdateMessage(setting);
-    }
+	if (setting)
+	{
+		setting->update(newValuePtr, newValueSize);
+		SendUpdateMessage(setting);
+	}
 }
 
 void Settingator::SendUpdateMessage(Setting* setting)
 {
-    if (setting)
-    {
-        Message* message = setting->buildUpdateMessage(fSlaveID);
-        if (message && masterCTR)
-            masterCTR->Write(*message);
-        delete message;
-    }
+	if (setting)
+	{
+		std::visit([this, &setting](auto&& ctr) {
+					
+				using T = std::decay_t<decltype(ctr)>;
+
+				if constexpr (!std::is_same_v<T, std::monostate>)
+					ctr.Write(setting->buildUpdateMessage(fSlaveID));
+
+			}, masterCTR);
+	}
 }
 
 void Settingator::SendUpdateMessage(uint8_t ref)
 {
-    Setting* setting = GetSettingByRef(ref);
+	Setting* setting = GetSettingByRef(ref);
 
-    if (setting)
-        SendUpdateMessage(setting);
+	if (setting)
+		SendUpdateMessage(setting);
 }
 
 void Settingator::SendNotif(uint8_t notifByte)
 {
-    if (masterCTR)
-    {
-        size_t notifMsgSize = 7;
+	std::visit([this, notifByte](auto&& ctr) {
 
-        uint8_t* notifBuffer = (uint8_t*)malloc(notifMsgSize * sizeof(uint8_t));
+			using T = std::decay_t<decltype(ctr)>;
 
-        notifBuffer[0] = Message::Frame::Start;
-        notifBuffer[1] = 0;
-        notifBuffer[2] = notifMsgSize;
-        notifBuffer[3] = *fSlaveID;
-        notifBuffer[4] = Message::Type::Notif;
-        notifBuffer[5] = notifByte;
-        notifBuffer[6] = Message::Frame::End;
+			if constexpr (!std::is_same_v<T, std::monostate>)
+			{
+				ctr.Write({
+						Message::Frame::Start,
+						0,
+						7,
+						*fSlaveID,
+						Message::Type::Notif,
+						notifByte,
+						Message::Frame::End
+					});
+			}
+		}, masterCTR);
 
-        Message message(notifBuffer, notifMsgSize);
-
-        masterCTR->Write(message);
-    }
 }
 
 void Settingator::SendDirectNotif(uint8_t notifByte)
 {
-    if (masterCTR)
-        masterCTR->SendDirectNotif(notifByte);
+	std::visit([notifByte](auto&& ctr) {
+
+			using T = std::decay_t<decltype(ctr)>;
+
+			if constexpr (!std::is_same_v<T, std::monostate>)
+				ctr.SendDirectNotif(notifByte);
+
+		}, masterCTR);
 }
 
 void Settingator::SendDirectSettingUpdate(uint8_t settingRef, uint8_t* value, uint8_t valueLen)
 {
-    if (masterCTR)
-        masterCTR->SendDirectSettingUpdate(settingRef, value, valueLen);
+	std::visit([settingRef, value, valueLen](auto&& ctr) {
+
+			using T = std::decay_t<decltype(ctr)>;
+
+			if constexpr (!std::is_same_v<T, std::monostate>)
+				ctr.SendDirectSettingUpdate(settingRef, value, valueLen);
+		}, masterCTR);
 }
 
 void Settingator::AddNotifCallback(void(*callback)(), uint8_t notifByte)
 {
-    fNotifCallback.push_back(new notifCallback(callback, notifByte));
+	fNotifCallback.push_back(new notifCallback(callback, notifByte));
 }
 
-Message* Settingator::_buildSettingInitMessage()
+Message Settingator::_buildSettingInitMessage()
 {
-    size_t initRequestSize = 7;
+	size_t initRequestSize = 7;
 
-    DEBUG_PRINT_LN("build setting init message")
+	DEBUG_PRINT_LN("build setting init message")
 
-    for (auto i = fSettingVector.begin(); i != fSettingVector.end(); i++)
-    {
-        initRequestSize += i->getInitRequestSize();
-    }
+	for (Setting& setting : fSettingVector)
+		initRequestSize += setting.getInitRequestSize();
 
-    uint8_t* requestBuffer = (uint8_t*)malloc(initRequestSize * sizeof(uint8_t));
+	std::vector<uint8_t> requestBuffer(initRequestSize);
 
-    requestBuffer[0] = Message::Frame::Start;
-    requestBuffer[1] = initRequestSize >> 8;
-    requestBuffer[2] = initRequestSize;
-    requestBuffer[3] = *fSlaveID;
-    requestBuffer[4] = Message::Type::SettingInit;
-    requestBuffer[5] = fSettingVector.size();
+	requestBuffer[0] = Message::Frame::Start;
+	requestBuffer[1] = initRequestSize >> 8;
+	requestBuffer[2] = initRequestSize;
+	requestBuffer[3] = *fSlaveID;
+	requestBuffer[4] = Message::Type::SettingInit;
+	requestBuffer[5] = fSettingVector.size();
 
-    uint8_t* msgIndex = requestBuffer + 6;
+	uint8_t* msgIndex = requestBuffer.data() + 6;
 
-    for (auto i = fSettingVector.begin(); i != fSettingVector.end(); i++)
-    {
-        i->getInitRequest(msgIndex);
-        msgIndex += i ->getInitRequestSize();
-    }
+	for (Setting& setting : fSettingVector)
+	{
+		setting.getInitRequest(msgIndex);
+		msgIndex += setting.getInitRequestSize();
+	}
 
-    requestBuffer[initRequestSize - 1] = Message::Frame::End;
+	requestBuffer[initRequestSize - 1] = Message::Frame::End;
 
-    DEBUG_PRINT_VALUE("initRequestSize", initRequestSize)
+	DEBUG_PRINT_VALUE("initRequestSize", initRequestSize)
 
-    return new Message(requestBuffer, initRequestSize);
+	return Message(std::move(requestBuffer));
 }
 
 Setting* Settingator::GetSettingByRef(uint8_t ref)
 {
-    DEBUG_PRINT_VALUE("Searching setting ref", ref);
-    for (auto it = fSettingVector.begin(); it != fSettingVector.end(); it++)
-    {
-        if (it->getRef() == ref)
-        {
-            DEBUG_PRINT_LN("FOUND");
-            return &(*it);
-        }
-    }
-    DEBUG_PRINT("NOT found");
-    return nullptr;
+	DEBUG_PRINT_VALUE("Searching setting ref", ref);
+	for (auto it = fSettingVector.begin(); it != fSettingVector.end(); it++)
+	{
+		if (it->getRef() == ref)
+		{
+			DEBUG_PRINT_LN("FOUND");
+			return &(*it);
+		}
+	}
+	DEBUG_PRINT("NOT found");
+	return nullptr;
 }
 
 void Settingator::SavePreferences()
 {
 #if defined(ARDUINO)
-    if (fPreferences)
-    {
-        DEBUG_PRINT_LN("Saving Preferences");
-        for (auto i = fSettingVector.begin(); i != fSettingVector.end(); i++)
-        {
-            if (i->getType() != Setting::Type::Trigger)
-            {
-                fPreferences->putBytes(i->getName().c_str(), i->getDataPtr(), i->getDataSize());
-                DEBUG_PRINT_VALUE_BUF_LN(i->getName().c_str(), (uint8_t*)i->getDataPtr(), i->getDataSize())
-            }
-        }
-    }
+	if (fPreferences)
+	{
+		DEBUG_PRINT_LN("Saving Preferences");
+		for (auto i = fSettingVector.begin(); i != fSettingVector.end(); i++)
+		{
+			if (i->getType() != Setting::Type::Trigger)
+			{
+				fPreferences->putBytes(i->getName().c_str(), i->getDataPtr(), i->getDataSize());
+				DEBUG_PRINT_VALUE_BUF_LN(i->getName().c_str(), (uint8_t*)i->getDataPtr(), i->getDataSize())
+			}
+		}
+	}
 #endif
 }
 
 void Settingator::StartEspNowInitBroadcasted()
 {
-    if (xPortInIsrContext())
-    {
-        fShouldStartEspNowInitBroadcasted = true;
-    }
-    else
-    {
-        if (!fBridge)
-            fBridge = CTRBridge::CreateInstance(masterCTR);
+	if (xPortInIsrContext())
+	{
+		fShouldStartEspNowInitBroadcasted = true;
+	}
+	else
+	{
+		if (!fBridge)
+			fBridge = CTRBridge::CreateInstance(masterCTR);
 
-        if (fBridge)
-        {
-            fBridge->StartEspNowInitBroadcasted();
-            SetNetLed(0, 0, 255);
-        }
-    }
+		if (fBridge)
+		{
+			fBridge->StartEspNowInitBroadcasted();
+			SetNetLed(0, 0, 255);
+		}
+	}
 }
 
 void Settingator::StopEspNowInitBroadcasted()
 {
-    if (xPortInIsrContext())
-    {
-        fShouldStopEspNowInitBroadcasted = true;
-    }
-    else
-    {
-        if (fBridge)
-        {
-            fBridge->StopEspNowInitBroadcasted();
-            SetNetLed(0, 255, 0);
-        }
-    }
+	if (xPortInIsrContext())
+	{
+		fShouldStopEspNowInitBroadcasted = true;
+	}
+	else
+	{
+		if (fBridge)
+		{
+			fBridge->StopEspNowInitBroadcasted();
+			SetNetLed(0, 255, 0);
+		}
+	}
 }
 
 void Settingator::begin()
 {
 #if defined(ARDUINO)
-    if (fPreferences)
-        fPreferences->end();
+	if (fPreferences)
+		fPreferences->end();
 #endif
 
 #if defined(ARDUINO)
-    fPreferences = new Preferences();
-    //fPreferences->begin("settingator", false);
+	fPreferences = new Preferences();
+	//fPreferences->begin("settingator", false);
 
 #elif defined(ESP_PLATFORM)
-    if (esp_task_wdt_status(nullptr) == ESP_ERR_NOT_FOUND)
-        ESP_ERROR_CHECK(esp_task_wdt_add(nullptr));
+	if (esp_task_wdt_status(nullptr) == ESP_ERR_NOT_FOUND)
+		ESP_ERROR_CHECK(esp_task_wdt_add(nullptr));
 #endif
 
-    InitNetworkHID();
+	InitNetworkHID();
 }
 
 void Settingator::_createSlaveID(uint8_t slaveID)
 {
-    fSlaveID = new uint8_t;
-    if (fSlaveID)
-        *fSlaveID = slaveID;
+	fSlaveID = new uint8_t;
+	if (fSlaveID)
+		*fSlaveID = slaveID;
 }
 
 void Settingator::_sendInitMessage()
 {
-    if (masterCTR)
-    {
-        Message* initMessage = _buildSettingInitMessage();
-        //DEBUG_PRINT_LN("Settingator::Update");
+	std::visit([this](auto&& ctr) {
 
-        masterCTR->Write(*initMessage);
+			using T = std::decay_t<decltype(ctr)>;
 
-        delete initMessage;
-    }
+			if constexpr (!std::is_same_v<T, std::monostate>)
+				ctr.Write(_buildSettingInitMessage());
+
+		}, masterCTR);
 }
 
 void Settingator::_treatSettingUpdateMessage(Message* msg)
 {
-    if (!msg)
-        return;
+	if (!msg)
+		return;
 
-    uint8_t* value;
-    uint8_t ref;
-    uint8_t valueLen;
+	uint8_t* value;
+	uint8_t ref;
+	uint8_t valueLen;
 
-    uint16_t nextSettingIndex = 5;
+	uint16_t nextSettingIndex = 5;
 
-    do
-    {
-        nextSettingIndex = msg->ExtractSettingUpdate(ref, valueLen, &value, nextSettingIndex);
+	do
+	{
+		nextSettingIndex = msg->ExtractSettingUpdate(ref, valueLen, &value, nextSettingIndex);
 
-        Setting *setting = GetSettingByRef(ref);
-    
-        if (!setting)
-        {
-            //Serial.println("Setting Not found");
-            //Serial.println(ref);
-        }
+		Setting *setting = GetSettingByRef(ref);
+	
+		if (!setting)
+		{
+			//Serial.println("Setting Not found");
+			//Serial.println(ref);
+		}
 
-        if (setting  && (valueLen == setting->getDataSize()))
-        {
-            //Serial.println("Attempt to memcpy");
-            memcpy((void*)setting->getDataPtr(), value, valueLen);
-            //Serial.println("Done");
-        }
-        else
-        {
-            //Serial.println("Value Len is 0")
-        }
+		if (setting  && (valueLen == setting->getDataSize()))
+		{
+			//Serial.println("Attempt to memcpy");
+			memcpy((void*)setting->getDataPtr(), value, valueLen);
+			//Serial.println("Done");
+		}
+		else
+		{
+			//Serial.println("Value Len is 0")
+		}
 
-        if (setting)
-            setting->callback();
+		if (setting)
+			setting->callback();
 
-    } while (msg->GetLength() > nextSettingIndex + 1);
+	} while (msg->GetLength() > nextSettingIndex + 1);
 
 }
 
 void Settingator::_configEspNowDirectNotif(Message* msg)
 {
-    if (masterCTR)
-    {
-        auto buffer = msg->GetBufPtr();
-        masterCTR->ConfigEspNowDirectNotif(&buffer[6], buffer[16], buffer[5]);
-    }
+	std::visit([msg](auto&& ctr) {
+
+			using T = std::decay_t<decltype(ctr)>;
+
+			if constexpr (!std::is_same_v<T, std::monostate>)
+			{
+				auto buffer = msg->GetBufPtr();
+				ctr.ConfigEspNowDirectNotif(&buffer[6], buffer[16], buffer[5]);
+			}
+		}, masterCTR);
 }
 
 void Settingator::_configEspNowDirectSettingUpdate(Message* msg)
 {
-    if (masterCTR)
-    {
-        DEBUG_PRINT_LN("Config")
-        auto buffer = msg->GetBufPtr();
-        masterCTR->ConfigEspNowDirectSettingUpdate(&buffer[6], buffer[12], buffer[13], buffer[5]);
-    }
+	std::visit([msg](auto&& ctr) {
+
+			using T = std::decay_t<decltype(ctr)>;
+
+			if constexpr (!std::is_same_v<T, std::monostate>)
+			{
+				auto buffer = msg->GetBufPtr();
+				ctr.ConfigEspNowDirectSettingUpdate(&buffer[6], buffer[12], buffer[13], buffer[5]);
+			}
+		}, masterCTR);
 }
 
 void Settingator::_treatNotifMessage(Message* msg)
 {
-    if (!msg)
-        return;
+	if (!msg)
+		return;
 
-    auto buffer = msg->GetBufPtr();
-    auto notifByte = buffer[5];
+	auto buffer = msg->GetBufPtr();
+	auto notifByte = buffer[5];
 
-    for (auto i = fNotifCallback.begin(); i != fNotifCallback.end(); i++)
-    {
-        if ((*i)->notifByte == notifByte)
-            (*i)->callback();
-    }
+	for (notifCallback* cb : fNotifCallback)
+	{
+		if (cb->notifByte == notifByte)
+			cb->callback();
+	}
 }
 
 void Settingator::_removeDirectNotifConfig(Message* msg)
 {
-    if (!msg || !masterCTR)
-        return;
+	std::visit([msg](auto&& ctr) {
 
-    auto buffer = msg->GetBufPtr();
-    masterCTR->RemoveDirectNotifConfig(buffer[5], buffer[6]);
+			using T = std::decay_t<decltype(ctr)>;
+
+			if constexpr (!std::is_same_v<T, std::monostate>)
+			{
+				if (msg)
+				{
+					auto buffer = msg->GetBufPtr();
+					ctr.RemoveDirectNotifConfig(buffer[5], buffer[6]);
+				}
+			}
+		}, masterCTR);
 }
 
 void Settingator::_removeDirectSettingUpdateConfig(Message* msg)
 {
-    if (!msg || !masterCTR)
-        return;
-        
-    auto buffer = msg->GetBufPtr();
-    masterCTR->RemoveDirectSettingUpdateConfig(buffer[5], buffer[6]);
+	std::visit([msg](auto&& ctr) {
+
+			using T = std::decay_t<decltype(ctr)>;
+
+			if constexpr (!std::is_same_v<T, std::monostate>)
+			{
+				if (msg)
+				{
+					auto buffer = msg->GetBufPtr();
+					ctr.RemoveDirectSettingUpdateConfig(buffer[5], buffer[6]);
+				}
+			}
+		}, masterCTR);
 }
 
 /*void Settingator::_treatCommandMessage(Message *msg)
 {
-    if (!msg || !masterCTR)
-        return;
+	if (!msg || !masterCTR)
+		return;
 
-    auto buffer = msg->GetBufPtr();
+	auto buffer = msg->GetBufPtr();
 
-    char* cmdBuffer = (char*)&(buffer[4]);
+	char* cmdBuffer = (char*)&(buffer[4]);
 
-    if (fCommandHandler)
-        fCommandHandler->TreatCommand(cmdBuffer);
+	if (fCommandHandler)
+		fCommandHandler->TreatCommand(cmdBuffer);
 }*/
 
 setting_ref Settingator::settingRefCount()
 {
-    return fInternalRefCount++;
+	return fInternalRefCount++;
 }
 
 //Settingator STR(nullptr);

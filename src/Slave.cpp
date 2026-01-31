@@ -3,6 +3,7 @@
 
 std::vector<Slave*> slaves;
 std::queue<ICTR_t> newSlavesCTR;
+std::queue<ICTR*> newSubSlavesCTR;
 std::queue<Slave*> slavesWaitingForID;
 ICTR_t masterCTR;
 

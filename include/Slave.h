@@ -6,6 +6,7 @@
 using ICTR_t = std::variant<std::monostate, UARTCTR, ESPNowCTR>;
 
 extern std::queue<ICTR_t> newSlavesCTR;
+extern std::queue<ICTR*> newSubSlavesCTR;
 
 class Slave
 {

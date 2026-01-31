@@ -44,7 +44,7 @@ class ESPNowCore
     static ESPNowCore*  CreateInstance();
     ESPNowCore();
 
-    int     Write(Message& buf, uint8_t* dstMac);
+    int     Write(Message&& buf, uint8_t* dstMac);
     void    Update();
     void    AddPeer(uint8_t* peerMac);
     void    BroadcastPing();
@@ -84,13 +84,11 @@ class ESPNowCTR: public ICTR
 
     void SendDirectSettingUpdate(uint8_t settingRef, uint8_t* value, uint8_t valueLen);
 
-    static ESPNowCTR*   FindCTRForMac(const uint8_t* mac);
+	static ESPNowCTR*	GetCTRForMac(const uint8_t* mac);
 
 	uint16_t	GetLinkInfoSize() const;
 
 	void		WriteLinkInfoToBuffer(uint8_t* buffer) const;
-
-    static void         HandleLinkInfo();
 
     void        SendPing();
     void        SendPong();

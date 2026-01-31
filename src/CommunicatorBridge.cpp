@@ -19,15 +19,15 @@
 
 CTRBridge CTRBridge::CreateInstance(ICTR_t master)
 {
-    ESP_LOGI("CTRBridge", "Creating Instance");
-    return CTRBridge(master);
+	ESP_LOGI("CTRBridge", "Creating Instance");
+	return CTRBridge(master);
 }
 
 CTRBridge::CTRBridge(ICTR_t master)
 {
-    if (master.index())
-        masterCTR = master;
-    ESP_LOGI("CTRBridge", "Instance created");
+	if (master.index())
+		masterCTR = master;
+	ESP_LOGI("CTRBridge", "Instance created");
 }
 
 void CTRBridge::SetMaster(ICTR_t master)
@@ -46,27 +46,27 @@ void linkInfoCallback(TimerHandle_t timer)
 	BRIDGE.ShouldSendLinkInfo();
 }
 
-void    CTRBridge::CreateLinkInfoTimer()
+void	CTRBridge::CreateLinkInfoTimer()
 {
-    if (!fLinkInfoTimer)
-    {
-        fLinkInfoTimer = xTimerCreate(
-            "LinkInfoTImer",
-            pdMS_TO_TICKS(5000),
-            pdTRUE,
-            (void*)0,
-            linkInfoCallback
-        );
+	if (!fLinkInfoTimer)
+	{
+		fLinkInfoTimer = xTimerCreate(
+			"LinkInfoTImer",
+			pdMS_TO_TICKS(5000),
+			pdTRUE,
+			(void*)0,
+			linkInfoCallback
+		);
 
-        xTimerStart(fLinkInfoTimer, 0);
-    }
+		xTimerStart(fLinkInfoTimer, 0);
+	}
 }
 
 void CTRBridge::begin()
 {
 #if defined(ESP_PLATFORM)
 	if (esp_task_wdt_status(nullptr) == ESP_ERR_NOT_FOUND)
-    	ESP_ERROR_CHECK(esp_task_wdt_add(nullptr));
+		ESP_ERROR_CHECK(esp_task_wdt_add(nullptr));
 
 	CreateLinkInfoTimer();
 #endif
@@ -74,8 +74,8 @@ void CTRBridge::begin()
 
 void CTRBridge::Update()
 {
-    // LECTURE DES MESSAGES DU MASTER //
-    if (masterCTR.index() && std::visit([](auto&& ctr) -> bool {
+	// LECTURE DES MESSAGES DU MASTER //
+	if (masterCTR.index() && std::visit([](auto&& ctr) -> bool {
 
 				using T = std::decay_t<decltype(ctr)>;
 
@@ -85,8 +85,8 @@ void CTRBridge::Update()
 				return false;
 
 				}, masterCTR))
-    {
-        Message* msg = std::visit([](auto&& ctr) -> Message* {
+	{
+		Message* msg = std::visit([](auto&& ctr) -> Message* {
 
 				using T = std::decay_t<decltype(ctr)>;
 
@@ -98,77 +98,77 @@ void CTRBridge::Update()
 
 				}, masterCTR);
 
-        ESP_LOGI("CRTBridge", "masterCTR data availlable");
-        if (msg)
-        {
+		ESP_LOGI("CRTBridge", "masterCTR data availlable");
+		if (msg)
+		{
 #if defined(ARDUINO)
-            Serial.println("A message has been read");
+			Serial.println("A message has been read");
 #elif defined(ESP_PLATFORM)
-            ESP_LOGI("CRTBridge", "A message has been read");
+			ESP_LOGI("CRTBridge", "A message has been read");
 #endif
-            switch (msg->GetType())
-            {
-            case Message::Type::EspNowStartInitBroadcastedSlave:
-                StartEspNowInitBroadcasted();
-                break;
+			switch (msg->GetType())
+			{
+			case Message::Type::EspNowStartInitBroadcastedSlave:
+				StartEspNowInitBroadcasted();
+				break;
 
-            case Message::Type::EspNowStopInitBroadcastedSlave:
-                StopEspNowInitBroadcasted();
-                break;
+			case Message::Type::EspNowStopInitBroadcastedSlave:
+				StopEspNowInitBroadcasted();
+				break;
 
-            case Message::Type::EspNowConfigDirectNotif:
-                _configDirectNotif(msg);
-                break;
+			case Message::Type::EspNowConfigDirectNotif:
+				_configDirectNotif(msg);
+				break;
 
-            case Message::Type::EspNowConfigDirectSettingUpdate:
-                _configDirectSettingUpdate(msg);
-                break;
+			case Message::Type::EspNowConfigDirectSettingUpdate:
+				_configDirectSettingUpdate(msg);
+				break;
 
-            case Message::Type::EspNowRemoveDirectNotifConfig:
-                _removeDirectMessageConfig(msg, Message::Type::RemoveDirectNotifConfig);
-                break;
+			case Message::Type::EspNowRemoveDirectNotifConfig:
+				_removeDirectMessageConfig(msg, Message::Type::RemoveDirectNotifConfig);
+				break;
 
-            case Message::Type::EspNowRemoveDirectSettingUpdateConfig:
-                _removeDirectMessageConfig(msg, Message::Type::RemoveDirectSettingUpdateConfig);
-                break;
+			case Message::Type::EspNowRemoveDirectSettingUpdateConfig:
+				_removeDirectMessageConfig(msg, Message::Type::RemoveDirectSettingUpdateConfig);
+				break;
 
-            case Message::Type::BridgeReinitSlaves:
-                _reinitSlaves();
-                break;
+			case Message::Type::BridgeReinitSlaves:
+				_reinitSlaves();
+				break;
 
-            default:
-                if (msg->GetType() < Message::Type::BridgeBase)
-                {
-                    ICTR* slaveCTR = Slave::GetSlaveCTR(msg->GetSlaveID());
+			default:
+				if (msg->GetType() < Message::Type::BridgeBase)
+				{
+					ICTR* slaveCTR = Slave::GetSlaveCTR(msg->GetSlaveID());
 
-                    if (slaveCTR)
-                    {
+					if (slaveCTR)
+					{
 						slaveCTR->Write(*msg);
-                    }
+					}
 
-                    else if (msg->GetType() == Message::Type::InitRequest && !slavesWaitingForID.empty())
-                    {
-                        Slave* slave = slavesWaitingForID.front();
-                        if (slave)
-                        {
-                            if (slave->GetID() == 0)
-                            {
-                                slave->SetID(msg->GetSlaveID());
-                                slaves.push_back(slave);
-                            }
-                            else
-                                slave->AddSubSlave(msg->GetSlaveID());
-                            slavesWaitingForID.pop();
-                            slaveCTR = slave->GetCTR();
+					else if (msg->GetType() == Message::Type::InitRequest && !slavesWaitingForID.empty())
+					{
+						Slave* slave = slavesWaitingForID.front();
+						if (slave)
+						{
+							if (slave->GetID() == 0)
+							{
+								slave->SetID(msg->GetSlaveID());
+								slaves.push_back(slave);
+							}
+							else
+								slave->AddSubSlave(msg->GetSlaveID());
+							slavesWaitingForID.pop();
+							slaveCTR = slave->GetCTR();
 
-                            if (slaveCTR)
-                                slaveCTR->Write(*msg);
-                        }
-                    }
-                }
-                break;
-            }
-        }
+							if (slaveCTR)
+								slaveCTR->Write(*msg);
+						}
+					}
+				}
+				break;
+			}
+		}
 		std::visit([](auto&& ctr) {
 
 				using T = std::decay_t<decltype(ctr)>;
@@ -178,34 +178,34 @@ void CTRBridge::Update()
 			
 			}, masterCTR);
 
-    }
+	}
 
-    // TRAITEMENT DES SLAVES //
-    if (masterCTR.index())
-    {
+	// TRAITEMENT DES SLAVES //
+	if (masterCTR.index())
+	{
 		for (const auto& slave : slaves)
-        {
-            ICTR* slaveCTR = slave->GetCTR();
+		{
+			ICTR* slaveCTR = slave->GetCTR();
 
-            // LECTURE DES MESSAGES DES SLAVES //
-            if (slaveCTR && slaveCTR->Available())
-            {
-                Message* msg = slaveCTR->Read();
+			// LECTURE DES MESSAGES DES SLAVES //
+			if (slaveCTR && slaveCTR->Available())
+			{
+				Message* msg = slaveCTR->Read();
 
-                if (msg)
-                {
-                    switch (msg->GetType())
-                        {
-                        case Message::Type::SettingInit:
-                            _treatSettingInit(msg, slave);
-                            break;
+				if (msg)
+				{
+					switch (msg->GetType())
+						{
+						case Message::Type::SettingInit:
+							_treatSettingInit(msg, slave);
+							break;
 
-                        case Message::Type::SlaveIDRequest:
-                            slavesWaitingForID.push(slave);
-                            break;
-                        default:
-                        break;
-                        }
+						case Message::Type::SlaveIDRequest:
+							slavesWaitingForID.push(slave);
+							break;
+						default:
+						break;
+						}
 					if (msg->GetType() != Message::Type::EspNowPong)
 					{
 						std::visit([msg](auto&& ctr) {
@@ -216,237 +216,216 @@ void CTRBridge::Update()
 									ctr.Write(*msg);
 							}, masterCTR);
 					}
-                }
-                slaveCTR->Flush();
-            }
-        }
-    }
-
-    //ESP_LOGI("CTRBridge", "slaves done");
-
-    // TRAITEMENT DES NOUVEAUX SLAVES (assignation ID et initRequest) //
-    if (masterCTR.index() && !newSlavesCTR.empty())
-    {
-        while (!newSlavesCTR.empty())
-        {
-            ICTR_t ctr = std::move(newSlavesCTR.front());
-            newSlavesCTR.pop();
-
-            bool ctrIsUsed = false;
-            uint8_t slaveID = 0;
-
-            for (const auto& slave: slaves)
-            {
-                if (slave->GetCTR() == std::visit([](auto&& ctr) -> ICTR* {
-
-							using T = std::decay_t<decltype(ctr)>;
-
-							if constexpr (std::is_same_v<T, std::monostate>)
-								return nullptr;
-							
-							else
-								return &ctr;
-						}, ctr))
-                {
-                    ctrIsUsed = true;
-                    slaveID = slave->GetID();
-                    break;
-                }
-            }
-
-            if (ctrIsUsed)
-            {
-				if (ctr.index())
-				{
-					std::visit([slaveID](auto&& ctr) {
-
-							using T = std::decay_t<decltype(ctr)>;
-
-							if constexpr (!std::is_same_v<T, std::monostate>)
-								ctr.Write(Message::BuildInitRequestMessage(slaveID));
-
-						}, ctr);
 				}
-            }
-            else
-            {
-				std::visit([](auto&& ctr) {
-						using T = std::decay_t<decltype(ctr)>;
+				slaveCTR->Flush();
+			}
+		}
+	}
 
-						if constexpr (!std::is_same_v<T, std::monostate>)
-							ctr.Write(Message::BuildSlaveIDRequestMessage());
+	//ESP_LOGI("CTRBridge", "slaves done");
 
-					}, masterCTR);
+	// TRAITEMENT DES NOUVEAUX SLAVES (assignation ID et initRequest) //
+	if (masterCTR.index() && !newSlavesCTR.empty())
+	{
+		while (!newSlavesCTR.empty())
+		{
+			ICTR_t ctr = std::move(newSlavesCTR.front());
+			newSlavesCTR.pop();
 
-                Slave* newSlave = new Slave(ctr);
-                slavesWaitingForID.push(newSlave);
-            }
-        }
-    }
+			bool ctrIsUsed = false;
+			uint8_t slaveID = 0;
 
-    //ESP_LOGI("CTRBridge", "new CTR done");
-    
+			std::visit([](auto&& ctr) {
+					using T = std::decay_t<decltype(ctr)>;
+
+					if constexpr (!std::is_same_v<T, std::monostate>)
+						ctr.Write(Message::BuildSlaveIDRequestMessage());
+
+				}, masterCTR);
+
+			Slave* newSlave = new Slave(ctr);
+			slavesWaitingForID.push(newSlave);
+		}
+
+
+
+
+		while (!newSubSlavesCTR.empty())
+		{
+			ICTR* ctr = newSubSlavesCTR.front();
+			newSubSlavesCTR.pop();
+
+			if (ctr)
+			{
+				// ctr->Write(Message::BuildInitRequestMessage(ctr->slaveID));
+				// slaveWaitingForID.push(new Slave(ctr))
+			}
+		}
+	}
+
+	//ESP_LOGI("CTRBridge", "new CTR done");
+	
 #if defined(ESP_PLATFORM)
 	HandleLinkInfo();
 
 	ESP_ERROR_CHECK(esp_task_wdt_reset());
-    vTaskDelay(1);
+	vTaskDelay(1);
 #endif
 }
 
 void CTRBridge::StartEspNowInitBroadcasted()
 {
-    ESPNowCore::CreateInstance();
-    initEspNowBroadcasted = true;
-    ESP_LOGI("CTRBridge", "start esp now init broadcasted slaves");
+	ESPNowCore::CreateInstance();
+	initEspNowBroadcasted = true;
+	ESP_LOGI("CTRBridge", "start esp now init broadcasted slaves");
 }
 
 void CTRBridge::StopEspNowInitBroadcasted()
 {
-    initEspNowBroadcasted = false;
-    ESP_LOGI("CTRBridge", "stop esp now init broadcasted slaves");
+	initEspNowBroadcasted = false;
+	ESP_LOGI("CTRBridge", "stop esp now init broadcasted slaves");
 }
 
 void CTRBridge::_configDirectNotif(Message* msg)
 {
-    /*if (!msg)
-        return;
+	/*if (!msg)
+		return;
 
-    auto srcSlaveID = msg->GetSlaveID();
-    auto dstSalveID = msg->GetBufPtr()[4];
-    auto notifByte = msg->GetBufPtr()[5];
+	auto srcSlaveID = msg->GetSlaveID();
+	auto dstSalveID = msg->GetBufPtr()[4];
+	auto notifByte = msg->GetBufPtr()[5];
 
-    uint16_t configBufferLength = 14;
+	uint16_t configBufferLength = 14;
 
-    uint8_t* configBuffer = (uint8_t*)malloc(sizeof(uint8_t) * configBufferLength);
+	uint8_t* configBuffer = (uint8_t*)malloc(sizeof(uint8_t) * configBufferLength);
 
-    configBuffer[0] = Message::Frame::Start;
-    configBuffer[1] = 0;
-    configBuffer[2] = configBufferLength;
-    configBuffer[3] = srcSlaveID;
-    configBuffer[4] = Message::Type::ConfigEspNowDirectNotif;
-    configBuffer[5] = dstSalveID;
+	configBuffer[0] = Message::Frame::Start;
+	configBuffer[1] = 0;
+	configBuffer[2] = configBufferLength;
+	configBuffer[3] = srcSlaveID;
+	configBuffer[4] = Message::Type::ConfigEspNowDirectNotif;
+	configBuffer[5] = dstSalveID;
 
-    uint8_t* dstMac = _getSlaveMac(dstSalveID);
+	uint8_t* dstMac = _getSlaveMac(dstSalveID);
 
-    if (dstMac)
-        memcpy(&configBuffer[6], dstMac, 6);
-    else
-        bzero(&configBuffer[6], 6);
+	if (dstMac)
+		memcpy(&configBuffer[6], dstMac, 6);
+	else
+		bzero(&configBuffer[6], 6);
 
-    configBuffer[12] = notifByte;
-    configBuffer[13] = Message::Frame::End;
+	configBuffer[12] = notifByte;
+	configBuffer[13] = Message::Frame::End;
 
-    Message* configMsg = new Message(configBuffer, configBufferLength);
+	Message* configMsg = new Message(configBuffer, configBufferLength);
 
-    if (Slave::GetSlaveCTR(srcSlaveID))
-        Slave::GetSlaveCTR(srcSlaveID)->Write(*configMsg);
+	if (Slave::GetSlaveCTR(srcSlaveID))
+		Slave::GetSlaveCTR(srcSlaveID)->Write(*configMsg);
 
-    free(configBuffer);
-    delete configMsg;*/
+	free(configBuffer);
+	delete configMsg;*/
 }
 
 void CTRBridge::_configDirectSettingUpdate(Message* msg)
 {
-    /*if (!msg)
-        return;
+	/*if (!msg)
+		return;
 
-    auto srcSlaveID = msg->GetSlaveID();
-    auto dstSalveID = msg->GetBufPtr()[5];
-    auto settingRef = msg->GetBufPtr()[6];
+	auto srcSlaveID = msg->GetSlaveID();
+	auto dstSalveID = msg->GetBufPtr()[5];
+	auto settingRef = msg->GetBufPtr()[6];
 
-    uint16_t configBufferLength = 15;
+	uint16_t configBufferLength = 15;
 
-    uint8_t* configBuffer = (uint8_t*)malloc(sizeof(uint8_t) * configBufferLength);
+	uint8_t* configBuffer = (uint8_t*)malloc(sizeof(uint8_t) * configBufferLength);
 
-    configBuffer[0] = Message::Frame::Start;
-    configBuffer[1] = 0;
-    configBuffer[2] = configBufferLength;
-    configBuffer[3] = srcSlaveID;
-    configBuffer[4] = Message::Type::ConfigEspNowDirectSettingUpdate;
-    configBuffer[5] = dstSalveID;
+	configBuffer[0] = Message::Frame::Start;
+	configBuffer[1] = 0;
+	configBuffer[2] = configBufferLength;
+	configBuffer[3] = srcSlaveID;
+	configBuffer[4] = Message::Type::ConfigEspNowDirectSettingUpdate;
+	configBuffer[5] = dstSalveID;
 
-    uint8_t* dstMac = _getSlaveMac(dstSalveID);
+	uint8_t* dstMac = _getSlaveMac(dstSalveID);
 
-    if (dstMac)
-        memcpy(&configBuffer[6], dstMac, 6);
-    else
-        bzero(&configBuffer[6], 6);
+	if (dstMac)
+		memcpy(&configBuffer[6], dstMac, 6);
+	else
+		bzero(&configBuffer[6], 6);
 
-    configBuffer[12] = settingRef;
-    configBuffer[13] = msg->GetBufPtr()[7];
-    configBuffer[14] = Message::Frame::End;
+	configBuffer[12] = settingRef;
+	configBuffer[13] = msg->GetBufPtr()[7];
+	configBuffer[14] = Message::Frame::End;
 
-    Message* configMsg = new Message(configBuffer, configBufferLength);
+	Message* configMsg = new Message(configBuffer, configBufferLength);
 
-    if (Slave::GetSlaveCTR(srcSlaveID))
-        Slave::GetSlaveCTR(srcSlaveID)->Write(*configMsg);
+	if (Slave::GetSlaveCTR(srcSlaveID))
+		Slave::GetSlaveCTR(srcSlaveID)->Write(*configMsg);
 
-    free(configBuffer);
-    delete configMsg;*/
+	free(configBuffer);
+	delete configMsg;*/
 }
 
 void CTRBridge::_removeDirectMessageConfig(Message* msg, uint8_t messageType)
 {
-    uint8_t* buffer = nullptr;
+	uint8_t* buffer = nullptr;
 
-    if (!msg && !(buffer = msg->GetBufPtr()))
-        return;
+	if (!msg && !(buffer = msg->GetBufPtr()))
+		return;
 
-    uint8_t srcSlaveID = msg->GetSlaveID();
-    uint8_t dstSlaveID = buffer[5];
-    uint8_t configID = buffer[6];
+	uint8_t srcSlaveID = msg->GetSlaveID();
+	uint8_t dstSlaveID = buffer[5];
+	uint8_t configID = buffer[6];
 
-    uint16_t configBufferLength = 8;
+	uint16_t configBufferLength = 8;
 
-    uint8_t* configBuffer = (uint8_t*) malloc(sizeof(uint8_t) * configBufferLength);
+	uint8_t* configBuffer = (uint8_t*) malloc(sizeof(uint8_t) * configBufferLength);
 
-    configBuffer[0] = Message::Frame::Start;
-    configBuffer[1] = 0;
-    configBuffer[2] = configBufferLength;
-    configBuffer[3] = srcSlaveID;
-    configBuffer[4] = messageType;
-    configBuffer[5] = dstSlaveID;
-    configBuffer[6] = configID;
-    configBuffer[7] = Message::Frame::End;
+	configBuffer[0] = Message::Frame::Start;
+	configBuffer[1] = 0;
+	configBuffer[2] = configBufferLength;
+	configBuffer[3] = srcSlaveID;
+	configBuffer[4] = messageType;
+	configBuffer[5] = dstSlaveID;
+	configBuffer[6] = configID;
+	configBuffer[7] = Message::Frame::End;
 
-    Message* configMsg = new Message(configBuffer, configBufferLength);
+	Message* configMsg = new Message(configBuffer, configBufferLength);
 
-    if (Slave::GetSlaveCTR(srcSlaveID))
-        Slave::GetSlaveCTR(srcSlaveID)->Write(*configMsg);
+	if (Slave::GetSlaveCTR(srcSlaveID))
+		Slave::GetSlaveCTR(srcSlaveID)->Write(*configMsg);
 
-    free(configBuffer);
-    delete configMsg;
+	free(configBuffer);
+	delete configMsg;
 }
 
 void CTRBridge::_reinitSlaves()
 {
-    //Serial.println("_reinitSLaves");
-    for (const auto& slave : slaves)
-    {
-        //Serial.println("looping");
-        ICTR* slaveCTR = slave->GetCTR();
+	//Serial.println("_reinitSLaves");
+	for (const auto& slave : slaves)
+	{
+		//Serial.println("looping");
+		ICTR* slaveCTR = slave->GetCTR();
 
-        if (slaveCTR)
-        {
-            slaveCTR->Write(Message::BuildInitRequestMessage(slave->GetID()));
-            slaveCTR->Write(Message::BuildReInitSlaveMessage());
-        }
-    }
+		if (slaveCTR)
+		{
+			slaveCTR->Write(Message::BuildInitRequestMessage(slave->GetID()));
+			slaveCTR->Write(Message::BuildReInitSlaveMessage());
+		}
+	}
 }
 
 void CTRBridge::_treatSettingInit(Message* msg, Slave *slave)
 {
-    if (!msg || !slave)
-        return;
+	if (!msg || !slave)
+		return;
 
-    uint8_t msgSlaveID = msg->GetSlaveID();
+	uint8_t msgSlaveID = msg->GetSlaveID();
 
-    if (msgSlaveID == slave->GetID())
-        return;
+	if (msgSlaveID == slave->GetID())
+		return;
 
-    if (!slave->HasSubSlave(msgSlaveID))
-        slave->AddSubSlave(msgSlaveID);
+	if (!slave->HasSubSlave(msgSlaveID))
+		slave->AddSubSlave(msgSlaveID);
 }
 
 void CTRBridge::HandleLinkInfo()

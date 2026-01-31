@@ -106,16 +106,23 @@ void ESPNowCore::receiveCallback(const esp_now_recv_info* info, const uint8_t* d
 	{
 		if (initEspNowBroadcasted && len == 1 && data && *data == 0x42 && isBroadcastMac(info->des_addr))
 		{
-			ICTR_t newCTR = ESPNowCTR::FindCTRForMac(info->src_addr);
-			
-			if (!newCTR)
-				newCTR = ESPNowCTR::CreateInstanceWithMac(info->src_addr, true);
-			
-			newSlavesCTR.push(newCTR);
+			// ICTR_t newCTR = ESPNowCTR::FindCTRForMac(info->src_addr);
+			//
+			//
+			// if (!newCTR.index())
+			// 	newCTR = ESPNowCTR::CreateInstanceWithMac(info->src_addr, true);
+			//
+			// newSlavesCTR.push(newCTR);
+
+			ESPNowCTR*	existingCTR = ESPNowCTR::GetCTRForMac(info->src_addr);
+			if (existingCTR)
+				newSubSlavesCTR.push(existingCTR);
+			else
+				newSlavesCTR.emplace(ESPNowCTR::CreateInstanceWithMac(info->src_addr, true));
 		}
 		else
 		{
-			if (!masterCTR)
+			if (masterCTR.index())
 				masterCTR = ESPNowCTR::CreateInstanceWithMac(info->src_addr);
 
 			espNowMsgListMutex.lock();
@@ -177,7 +184,7 @@ ESPNowCore::ESPNowCore()
 	ESP_ERROR_CHECK(esp_now_get_version(&fEspNowVersion));
 }
 
-int ESPNowCore::Write(Message& buf, uint8_t* dstMac)
+int ESPNowCore::Write(Message&& buf, uint8_t* dstMac)
 {
 	//ESP_LOGI("ESPNowCTR", "Esp now write");
 
@@ -222,8 +229,7 @@ const uint8_t*	  ESPNowCore::GetMac() const
 
 ESPNowCTR ESPNowCTR::CreateInstanceWithMac(const uint8_t* mac, const bool createTimer)
 {
-   
-	return new ESPNowCTR(mac, createTimer);
+	return ESPNowCTR(mac, createTimer);
 }
 
 void ESPNowCTR::SendPing()
@@ -318,20 +324,6 @@ ESPNowCTR::ESPNowCTR(const uint8_t* peerMac, const bool createTimer)
 	fCTRList.push_back(this);
 
 	ESP_LOGI("ESPNowCTR", "end init");
-}
-
-ESPNowCTR::~ESPNowCTR()
-{
-	esp_now_deinit();
-
-	for (auto i = fCTRList.begin(); i != fCTRList.end(); i++)
-	{
-		if (*i == this)
-		{
-			fCTRList.erase(i);
-			break;
-		}
-	}
 }
 
 void ESPNowCTR::ShouldSendPing(bool should)
@@ -508,20 +500,15 @@ void ESPNowCTR::SendDirectNotif(uint8_t notifByte)
 	{
 		if ((*i)->notifByte == notifByte)
 		{
-			size_t notifMsgSize = 7;
-
-			uint8_t* notifBuffer = (uint8_t*)malloc(notifMsgSize * sizeof(uint8_t));
-
-			notifBuffer[0] = Message::Frame::Start;
-			notifBuffer[1] = 0;
-			notifBuffer[2] = notifMsgSize;
-			notifBuffer[3] = (*i)->dstSlaveID;
-			notifBuffer[4] = Message::Type::Notif;
-			notifBuffer[5] = notifByte;
-			notifBuffer[6] = Message::Frame::End;
-			
-			Message notifMessage(&notifBuffer, 7);
-			fCore->Write(notifMessage, (*i)->mac);
+			fCore->Write(Message({
+						Message::Frame::Start,
+						0,
+						7,
+						(*i)->dstSlaveID,
+						Message::Type::Notif,
+						notifByte,
+						Message::Frame::End
+					}), (*i)->mac);
 		}
 	}
 }
@@ -538,7 +525,7 @@ void ESPNowCTR::SendDirectSettingUpdate(uint8_t settingRef, uint8_t* value, uint
 
 			uint16_t msgSize = 8 + valueLen;
 
-			uint8_t* msgBuffer = (uint8_t*)malloc(msgSize * sizeof(uint8_t));
+			std::vector<uint8_t> msgBuffer(msgSize);
 
 			msgBuffer[0] = Message::Frame::Start;
 			msgBuffer[1] = msgSize >> 8;
@@ -553,69 +540,21 @@ void ESPNowCTR::SendDirectSettingUpdate(uint8_t settingRef, uint8_t* value, uint
 
 			msgBuffer[msgSize-1] = Message::Frame::End;
 			
-			DEBUG_PRINT_VALUE_BUF_LN("Message sent", msgBuffer, msgSize)
+			DEBUG_PRINT_VALUE_BUF_LN("Message sent", msgBuffer.data(), msgSize)
 
-			esp_now_send((*i)->mac, msgBuffer, msgSize);
-			Message msg(&msgBuffer, msgSize);
-			fCore->Write(msg, (*i)->mac);
+			fCore->Write(Message(std::move(msgBuffer)), (*i)->mac);
 		}
 	}
 }
 
-ESPNowCTR* ESPNowCTR::FindCTRForMac(const uint8_t* mac)
+ESPNowCTR* ESPNowCTR::GetCTRForMac(const uint8_t* mac)
 {
-	for (auto i = fCTRList.begin(); i != fCTRList.end(); i++)
+	for (ESPNowCTR* ctr : fCTRList)
 	{
-		if (compareMac((*i)->fMac, mac))
-			return *i;
+		if (ctr && compareMac(ctr->fMac, mac))
+			return ctr;
 	}
-
 	return nullptr;
-}
-
-
-void ESPNowCTR::HandleLinkInfo()
-{
-	if (masterCTR && espNowCore)
-	{
-		uint8_t nbCTR = fCTRList.size();
-		uint16_t bufferSize = 13 + nbCTR * 18;
-		uint8_t msgBuffer[bufferSize];
-
-		msgBuffer[0] = Message::Frame::Start;
-		msgBuffer[1] = bufferSize >> 8;
-		msgBuffer[2] = bufferSize;
-		msgBuffer[3] = 0;
-		msgBuffer[4] = Message::Type::LinkInfo;
-		msgBuffer[5] = nbCTR;
-
-		memcpy(msgBuffer + 6, espNowCore->GetMac(), 6);
-
-		uint16_t index = 12;
-		for (auto i = fCTRList.begin(); i != fCTRList.end(); i++)
-		{
-			memcpy(msgBuffer + index, (*i)->fMac, 6);
-
-			msgBuffer[index + 6] = (*i)->fLastMsgRssi;
-			msgBuffer[index + 7] = (*i)->fLastMsgNoiseFloor;
-
-			uint32_t deltaMs = pdTICKS_TO_MS(xTaskGetTickCount()) - (*i)->fLastMsgTimestamp;
-
-			memcpy(msgBuffer + index + 8, (uint8_t*)&deltaMs, 4);
-
-			msgBuffer[index + 12] = (*i)->fPeerLastMsgRssi;
-			msgBuffer[index + 13] = (*i)->fPeerLastMsgNoiseFloor;
-
-			memcpy(msgBuffer + index + 14, (uint8_t*)&((*i)->fPeerLastMsgDeltastamp), 4);
-
-			index += 18;
-		}
-
-		msgBuffer[bufferSize - 1] = Message::Frame::End;
-
-		Message msg (msgBuffer, bufferSize);
-		masterCTR->Write(msg);
-	}
 }
 
 uint16_t ESPNowCTR::GetLinkInfoSize() const

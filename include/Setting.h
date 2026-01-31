@@ -52,7 +52,7 @@ public:
     - initRequestBuffer is allocated and must be freed then.
     */
     void getInitRequest(uint8_t* initRequestBuffer);
-    Message* buildUpdateMessage(uint8_t* slaveID);
+    Message buildUpdateMessage(uint8_t* slaveID);
 
     size_t getInitRequestSize();
 

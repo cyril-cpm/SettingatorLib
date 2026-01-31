@@ -80,7 +80,7 @@ class Settingator
     void        _removeDirectNotifConfig(Message* msg);
     void        _removeDirectSettingUpdateConfig(Message* msg);
 
-    Message*    _buildSettingInitMessage();
+    Message    _buildSettingInitMessage();
     
     Preferences*            fPreferences;
 
