@@ -20,13 +20,21 @@ class ICTR
 	/*
 	- return true if there is bytes available to read
 	*/
-	bool Available(this auto&& self);
+	bool Available(this auto&& self) {
+		self.Update();
+		return self.fReceivedMessage.size();
+	}
 
 	/*
 	- Write Buffer to communicator
 	*/
-	int Write(this auto&& self, Message& buf);
-	int Write(this auto&& self, Message&& buf);
+	int Write(this auto&& self, Message& buf) {
+		return self.WriteImpl(buf);
+	}
+
+	int Write(this auto&& self, Message&& buf) {
+		return self.WriteImpl(buf);
+	}
 
 	/*
 	- Read a message if avaible or return empty Message
@@ -41,7 +49,9 @@ class ICTR
 	/*
 	- Update internal Buffer
 	*/
-	void Update(this auto&& self);
+	void Update(this auto&& self) {
+		self.UpdateImpl();
+	}
 
 	uint8_t GetBoxSize() const;
 
