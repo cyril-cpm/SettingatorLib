@@ -57,10 +57,7 @@ Message* ICTR::Read()
 void ICTR::Flush()
 {
 	if (!fReceivedMessage.empty())
-	{
-		delete fReceivedMessage.front();
 		fReceivedMessage.pop();
-	}
 }
 
 uint16_t ICTR::GetLinkInfoSize() const

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <variant>
 #include "ESPNowCommunicator.h"
 #include "UARTCommunicator.h"
 
@@ -33,7 +34,7 @@ extern std::queue<ICTR*> newSubSlavesCTR;
 class Slave
 {
     public:
-    Slave(auto ctr);
+    Slave(ICTR_t&& ctr);
 
     static ICTR_t* GetSlaveCTR(uint8_t slaveID);
 

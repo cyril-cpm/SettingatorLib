@@ -234,18 +234,14 @@ ESPNowCTR ESPNowCTR::CreateInstanceWithMac(const uint8_t* mac, const bool create
 
 void ESPNowCTR::SendPing()
 {
-	uint8_t buffer[6] = {
-		Message::Frame::Start,
-		0x00,
-		0x06,
-		0,
-		Message::Type::EspNowPing,
-		Message::Frame::End
-	};
-	
-	Message msg(buffer, 6);
-
-	Write(msg);
+	Write(Message({
+				Message::Frame::Start,
+				0x00,
+				0x06,
+				0,
+				Message::Type::EspNowPing,
+				Message::Frame::End
+			}));
 
 	ESP_LOGI("ESPNow", "SendPing");
 
@@ -255,7 +251,9 @@ void ESPNowCTR::SendPing()
 
 void ESPNowCTR::SendPong()
 {
-	uint8_t buffer[12] = {
+	uint32_t deltaMs = pdTICKS_TO_MS(xTaskGetTickCount()) - fLastMsgTimestamp;
+
+	Write(Message({
 		Message::Frame::Start,
 		0x00,
 		0x0C,
@@ -263,20 +261,12 @@ void ESPNowCTR::SendPong()
 		Message::Type::EspNowPong,
 		(uint8_t)fLastMsgRssi,
 		(uint8_t)fLastMsgNoiseFloor,
-		0,
-		0,
-		0,
-		0,
+		(uint8_t)(deltaMs >> 24),
+		(uint8_t)(deltaMs >> 16),
+		(uint8_t)(deltaMs >> 8),
+		(uint8_t)(deltaMs),
 		Message::Frame::End
-	};
-
-	uint32_t deltaMs = pdTICKS_TO_MS(xTaskGetTickCount()) - fLastMsgTimestamp;
-
-	memcpy(buffer + 7, (uint8_t*)&deltaMs, 4);
-
-	Message msg(buffer, 12);
-
-	Write(msg);
+	}));
 
 	ESP_LOGI("ESPNow", "SendPong");
 }

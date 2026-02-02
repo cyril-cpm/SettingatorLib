@@ -8,10 +8,8 @@ std::queue<Slave*> slavesWaitingForID;
 ICTR_t masterCTR;
 
 
-Slave::Slave(auto ctr)
-{
-    fCTR = ctr;
-}
+Slave::Slave(ICTR_t&& ctr) : fCTR(std::move(ctr))
+{}
 
 ICTR_t* Slave::GetSlaveCTR(uint8_t slaveID)
 {

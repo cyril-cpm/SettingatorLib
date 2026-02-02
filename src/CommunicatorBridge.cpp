@@ -236,7 +236,7 @@ void CTRBridge::Update()
 
 				}, masterCTR);
 
-			Slave* newSlave = new Slave(ctr);
+			Slave* newSlave = new Slave(std::move(ctr));
 			slavesWaitingForID.push(newSlave);
 		}
 

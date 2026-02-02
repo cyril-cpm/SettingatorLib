@@ -55,7 +55,6 @@ public:
 	Message(std::initializer_list<uint8_t> buffer) : fBuffer(buffer) {}; // inplace init
 	Message(uint8_t* buffer, uint16_t len) : fBuffer(buffer, buffer + len) {}; // copy buf
 	Message(std::vector<uint8_t>&& buffer) : fBuffer(std::move(buffer)) {}; // move buf
-	~Message();
 
 	/*
 	- Return length of buffer

@@ -1,10 +1,10 @@
 #pragma once
 
+#include "Message.h"
 #include <sys/_stdint.h>
 #include <queue>
 #include <variant>
-
-class Message;
+#include "Message.h"
 
 class ICTR
 {
