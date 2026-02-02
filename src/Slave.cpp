@@ -13,40 +13,20 @@ Slave::Slave(auto ctr)
     fCTR = ctr;
 }
 
-ICTR* Slave::GetSlaveCTR(uint8_t slaveID)
+ICTR_t* Slave::GetSlaveCTR(uint8_t slaveID)
 {
     for (const auto& slave : slaves)
     {
         if (slave->fSlaveID == slaveID || slave->HasSubSlave(slaveID))
-            return std::visit([](auto&& ctr) -> ICTR* {
-
-					using T = std::decay_t<decltype(ctr)>;
-
-					if constexpr (!std::is_same_v<T, std::monostate>)
-						return &ctr;
-
-					else
-						return nullptr;
-
-				}, slave->fCTR);
+            return &slave->fCTR;
     }
 
     return nullptr;
 }
 
-ICTR* Slave::GetCTR()
+ICTR_t* Slave::GetCTR()
 {
-    return std::visit([](auto&& ctr) -> ICTR* {
-
-			using T = std::decay_t<decltype(ctr)>;
-
-			if constexpr (std::is_same_v<T, std::monostate>)
-				return nullptr;
-
-			else
-				return &ctr;
-
-		}, fCTR);
+    return &fCTR;
 }
 
 uint8_t Slave::GetID()

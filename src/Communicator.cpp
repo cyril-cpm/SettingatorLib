@@ -2,6 +2,7 @@
 
 #include "MiscDef.h"
 #include "Message.h"
+#include "UARTCommunicator.h"
 #include <variant>
 
 bool initEspNowBroadcasted = false;

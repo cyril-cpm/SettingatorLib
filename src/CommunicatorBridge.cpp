@@ -75,28 +75,9 @@ void CTRBridge::begin()
 void CTRBridge::Update()
 {
 	// LECTURE DES MESSAGES DU MASTER //
-	if (masterCTR.index() && std::visit([](auto&& ctr) -> bool {
-
-				using T = std::decay_t<decltype(ctr)>;
-
-				if constexpr (!std::is_same_v<T, std::monostate>)
-					return ctr.Available();
-
-				return false;
-
-				}, masterCTR))
+	if (masterCTR.index() && ICTR_T_AVAILABLE(masterCTR))
 	{
-		Message* msg = std::visit([](auto&& ctr) -> Message* {
-
-				using T = std::decay_t<decltype(ctr)>;
-
-				if constexpr (!std::is_same_v<T, std::monostate>)
-					return ctr.Read();
-				
-				else
-					return nullptr;
-
-				}, masterCTR);
+		Message* msg = ICTR_T_READ(masterCTR);
 
 		ESP_LOGI("CRTBridge", "masterCTR data availlable");
 		if (msg)
@@ -139,11 +120,16 @@ void CTRBridge::Update()
 			default:
 				if (msg->GetType() < Message::Type::BridgeBase)
 				{
-					ICTR* slaveCTR = Slave::GetSlaveCTR(msg->GetSlaveID());
+					ICTR_t* slaveCTR = Slave::GetSlaveCTR(msg->GetSlaveID());
 
 					if (slaveCTR)
 					{
-						slaveCTR->Write(*msg);
+						std::visit([msg](auto&& ctr) {
+								using T = std::decay_t<decltype(ctr)>;
+
+								if constexpr (!std::is_same_v<T, std::monostate>)
+									ctr.Write(*msg);
+							}, *slaveCTR);
 					}
 
 					else if (msg->GetType() == Message::Type::InitRequest && !slavesWaitingForID.empty())
@@ -162,7 +148,14 @@ void CTRBridge::Update()
 							slaveCTR = slave->GetCTR();
 
 							if (slaveCTR)
-								slaveCTR->Write(*msg);
+							{
+								std::visit([msg](auto&& ctr) {
+										using T = std::decay_t<decltype(ctr)>;
+
+										if constexpr (!std::is_same_v<T, std::monostate>)
+											ctr.Write(*msg);
+									}, *slaveCTR);
+							}
 						}
 					}
 				}
@@ -185,12 +178,12 @@ void CTRBridge::Update()
 	{
 		for (const auto& slave : slaves)
 		{
-			ICTR* slaveCTR = slave->GetCTR();
+			ICTR_t* slaveCTR = slave->GetCTR();
 
 			// LECTURE DES MESSAGES DES SLAVES //
-			if (slaveCTR && slaveCTR->Available())
+			if (slaveCTR && ICTR_T_AVAILABLE(*slaveCTR))
 			{
-				Message* msg = slaveCTR->Read();
+				Message* msg = ICTR_T_READ(*slaveCTR);
 
 				if (msg)
 				{
@@ -217,7 +210,7 @@ void CTRBridge::Update()
 							}, masterCTR);
 					}
 				}
-				slaveCTR->Flush();
+				ICTR_T_FLUSH(*slaveCTR);
 			}
 		}
 	}
@@ -392,7 +385,7 @@ void CTRBridge::_removeDirectMessageConfig(Message* msg, uint8_t messageType)
 	Message* configMsg = new Message(configBuffer, configBufferLength);
 
 	if (Slave::GetSlaveCTR(srcSlaveID))
-		Slave::GetSlaveCTR(srcSlaveID)->Write(*configMsg);
+		ICTR_T_WRITE(*Slave::GetSlaveCTR(srcSlaveID), configMsg, *configMsg);
 
 	free(configBuffer);
 	delete configMsg;
@@ -404,12 +397,12 @@ void CTRBridge::_reinitSlaves()
 	for (const auto& slave : slaves)
 	{
 		//Serial.println("looping");
-		ICTR* slaveCTR = slave->GetCTR();
+		ICTR_t* slaveCTR = slave->GetCTR();
 
 		if (slaveCTR)
 		{
-			slaveCTR->Write(Message::BuildInitRequestMessage(slave->GetID()));
-			slaveCTR->Write(Message::BuildReInitSlaveMessage());
+			ICTR_T_WRITE(*slaveCTR, slave, Message::BuildInitRequestMessage(slave->GetID()));
+			ICTR_T_WRITE(*slaveCTR,,Message::BuildReInitSlaveMessage());
 		}
 	}
 }
