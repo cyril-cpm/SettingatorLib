@@ -6,6 +6,7 @@
 #include <variant>
 
 std::mutex newSlavesCTRMutex;
+std::mutex reconnectedSlavesCTRMutex;
 
 bool initEspNowBroadcasted = false;
 
