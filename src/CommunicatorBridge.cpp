@@ -225,9 +225,9 @@ void CTRBridge::Update()
 	//ESP_LOGI("CTRBridge", "slaves done");
 
 	// TRAITEMENT DES NOUVEAUX SLAVES (assignation ID et initRequest) //
-	newSlavesCTRMutex.lock();
 	if (masterCTR.index())
 	{
+		newSlavesCTRMutex.lock();
 		while (!newSlavesCTR.empty())
 		{
 			ESP_LOGI("CTRBridge", "ewSlavesCTR detected");
@@ -248,23 +248,32 @@ void CTRBridge::Update()
 			Slave* newSlave = new Slave(std::move(ctr));
 			slavesWaitingForID.push(newSlave);
 		}
+		newSlavesCTRMutex.unlock();
 
 
 
 
-		while (!newSubSlavesCTR.empty())
+		while (!reconnectedSlavesCTR.empty())
 		{
-			ICTR* ctr = newSubSlavesCTR.front();
-			newSubSlavesCTR.pop();
+			ICTR* ctr = reconnectedSlavesCTR.front();
+			reconnectedSlavesCTR.pop();
 
+			ESP_LOGI("CTRBridge", "A slave has been reconnected");
 			if (ctr)
 			{
-				// ctr->Write(Message::BuildInitRequestMessage(ctr->slaveID));
-				// slaveWaitingForID.push(new Slave(ctr))
+				for (const auto& slave : slaves)
+				{
+					ESP_LOGI("CTRBridge", "looking for Slave");
+					if (slave && ctr == ICTR_T_GET_PTR(*(slave->GetCTR())))
+					{
+						ESP_LOGI("CTRBridge", "Slave found");
+						ICTR_T_WRITE(*(slave->GetCTR()), slave, Message::BuildInitRequestMessage(slave->GetID()));
+						break;
+					}
+				}
 			}
 		}
 	}
-	newSlavesCTRMutex.unlock();
 
 	//ESP_LOGI("CTRBridge", "new CTR done");
 	

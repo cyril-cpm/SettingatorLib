@@ -1,6 +1,7 @@
 #pragma once
 
 #include <variant>
+#include "Communicator.h"
 #include "ESPNowCommunicator.h"
 #include "UARTCommunicator.h"
 
@@ -27,9 +28,12 @@ using ICTR_t = std::variant<std::monostate, UARTCTR, ESPNowCTR>;
 		MONOSTATE_CHECK(ctr, return ctr.Write(MSG); , return 0;) \
 	}, CTR)
 
+#define ICTR_T_GET_PTR(CTR) std::visit([](auto&& ctr) -> ICTR* { \
+		MONOSTATE_CHECK(ctr, return &ctr; , return nullptr); \
+	}, CTR)
 
 extern std::queue<ICTR_t> newSlavesCTR;
-extern std::queue<ICTR*> newSubSlavesCTR;
+extern std::queue<ICTR*> reconnectedSlavesCTR;
 
 class Slave
 {

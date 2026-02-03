@@ -8,6 +8,7 @@
 #include <mutex>
 
 extern std::mutex newSlavesCTRMutex;
+extern std::mutex reconnectedSlavesCTRMutex;
 
 class ICTR
 {
