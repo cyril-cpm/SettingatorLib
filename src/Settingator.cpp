@@ -208,7 +208,6 @@ void Settingator::Update()
 #if defined(ARDUINO)
 			Serial.println("Message Read");
 #elif defined(ESP_PLATFORM)
-			ESP_LOGI("STR","Message read");
 #endif
 
 		if (!fSlaveID && msg && msg->GetType() == Message::Type::InitRequest)
@@ -252,7 +251,6 @@ void Settingator::Update()
 				_treatCommandMessage(msg);
 				break;*/
 			default:
-				//DEBUG_PRINT_VALUE_BUF_LN("UNTREATED MESSAGE", msg->GetBufPtr(), msg->GetLength())
 				break;
 			}
 
@@ -338,16 +336,13 @@ uint8_t Settingator::AddSetting(Setting::Type type, void* data_ptr, size_t data_
 	/*if (type != Setting::Type::Trigger)
 	{
 		void* buf = malloc(data_size * sizeof(uint8_t));
-		DEBUG_PRINT_LN(name)
 		size_t len = fPreferences->getBytes(name, buf, data_size);
 
 		Setting* setting = GetSettingByRef(fInternalRefCount-1);
 
 		if (setting && len)
 		{
-			DEBUG_PRINT_LN("Update Setting With preferences")
 			setting->update((uint8_t*)buf, len);
-			DEBUG_PRINT_VALUE_BUF_LN(name, (uint8_t*)buf, len)
 		}
 	}*/
 
@@ -442,7 +437,6 @@ Message Settingator::_buildSettingInitMessage()
 {
 	size_t initRequestSize = 7;
 
-	DEBUG_PRINT_LN("build setting init message")
 
 	for (Setting& setting : fSettingVector)
 		initRequestSize += setting.getInitRequestSize();
@@ -466,23 +460,19 @@ Message Settingator::_buildSettingInitMessage()
 
 	requestBuffer[initRequestSize - 1] = Message::Frame::End;
 
-	DEBUG_PRINT_VALUE("initRequestSize", initRequestSize)
 
 	return Message(std::move(requestBuffer));
 }
 
 Setting* Settingator::GetSettingByRef(uint8_t ref)
 {
-	DEBUG_PRINT_VALUE("Searching setting ref", ref);
 	for (auto it = fSettingVector.begin(); it != fSettingVector.end(); it++)
 	{
 		if (it->getRef() == ref)
 		{
-			DEBUG_PRINT_LN("FOUND");
 			return &(*it);
 		}
 	}
-	DEBUG_PRINT("NOT found");
 	return nullptr;
 }
 
@@ -491,13 +481,11 @@ void Settingator::SavePreferences()
 #if defined(ARDUINO)
 	if (fPreferences)
 	{
-		DEBUG_PRINT_LN("Saving Preferences");
 		for (auto i = fSettingVector.begin(); i != fSettingVector.end(); i++)
 		{
 			if (i->getType() != Setting::Type::Trigger)
 			{
 				fPreferences->putBytes(i->getName().c_str(), i->getDataPtr(), i->getDataSize());
-				DEBUG_PRINT_VALUE_BUF_LN(i->getName().c_str(), (uint8_t*)i->getDataPtr(), i->getDataSize())
 			}
 		}
 	}

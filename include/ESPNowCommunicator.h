@@ -128,3 +128,5 @@ class ESPNowCTR: public ICTR
 
     bool        fShouldSendPing = false;
 };
+
+bool compareMac(const uint8_t* mac1, const uint8_t* mac2);

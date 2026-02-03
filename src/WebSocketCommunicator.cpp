@@ -49,8 +49,6 @@ WebSocketCTR* WebSocketCTR::CreateInstance(int port)
 {
 
 #if 0
-    DEBUG_PRINT("Wifi status : ")
-    DEBUG_PRINT_LN(WiFi.status())
 
     if (WiFi.status() != WL_CONNECTED)
     {

@@ -5,6 +5,7 @@
 #include "ESPNowCommunicator.h"
 #include <type_traits>
 #include <variant>
+#include "MiscDef.h"
 
 #if defined(ARDUINO)
 #include <WiFi.h>
@@ -17,9 +18,10 @@
 
 #endif
 
+const char* tag("CTRBridge");
+
 CTRBridge CTRBridge::CreateInstance(ICTR_t master)
 {
-	ESP_LOGI("CTRBridge", "Creating Instance");
 	return CTRBridge(master);
 }
 
@@ -27,7 +29,6 @@ CTRBridge::CTRBridge(ICTR_t master)
 {
 	if (master.index())
 		masterCTR = master;
-	ESP_LOGI("CTRBridge", "Instance created");
 }
 
 void CTRBridge::SetMaster(ICTR_t master)
@@ -79,14 +80,11 @@ void CTRBridge::Update()
 	{
 		Message* msg = ICTR_T_READ(masterCTR);
 
-		ESP_LOGI("CRTBridge", "masterCTR data availlable");
 		if (msg)
 		{
 #if defined(ARDUINO)
 			Serial.println("A message has been read");
 #elif defined(ESP_PLATFORM)
-			ESP_LOGI("CRTBridge", "A message has been read");
-			ESP_LOG_BUFFER_HEX("CTRBridge", msg->GetBufPtr(), msg->GetLength());
 #endif
 			switch (msg->GetType())
 			{
@@ -135,20 +133,16 @@ void CTRBridge::Update()
 
 					else if (msg->GetType() == Message::Type::InitRequest && !slavesWaitingForID.empty())
 					{
-						ESP_LOGI("CTRBridge", "Init Request received");
 						Slave* slave = slavesWaitingForID.front();
 						if (slave)
 						{
-							ESP_LOGI("CTRBridge", "Slave waiting for ID found");
 							if (slave->GetID() == 0)
 							{
-								ESP_LOGI("CTRBridge", "Has no ID, push it in slaves vector");
 								slave->SetID(msg->GetSlaveID());
 								slaves.push_back(slave);
 							}
 							else
 							{
-								ESP_LOGI("CTRBridge", "Already has an ID, adding SubSlave");
 								slave->AddSubSlave(msg->GetSlaveID());
 							}
 							slavesWaitingForID.pop();
@@ -222,7 +216,6 @@ void CTRBridge::Update()
 		}
 	}
 
-	//ESP_LOGI("CTRBridge", "slaves done");
 
 	// TRAITEMENT DES NOUVEAUX SLAVES (assignation ID et initRequest) //
 	if (masterCTR.index())
@@ -230,7 +223,6 @@ void CTRBridge::Update()
 		newSlavesCTRMutex.lock();
 		while (!newSlavesCTR.empty())
 		{
-			ESP_LOGI("CTRBridge", "ewSlavesCTR detected");
 			ICTR_t ctr = std::move(newSlavesCTR.front());
 			newSlavesCTR.pop();
 
@@ -253,29 +245,16 @@ void CTRBridge::Update()
 
 
 
-		while (!reconnectedSlavesCTR.empty())
+		while (!reconnectedSlaves.empty())
 		{
-			ICTR* ctr = reconnectedSlavesCTR.front();
-			reconnectedSlavesCTR.pop();
+			LOG("A SlaveCTR has reconnected");
+			Slave* slave = reconnectedSlaves.front();
+			reconnectedSlaves.pop();
 
-			ESP_LOGI("CTRBridge", "A slave has been reconnected");
-			if (ctr)
-			{
-				for (const auto& slave : slaves)
-				{
-					ESP_LOGI("CTRBridge", "looking for Slave");
-					if (slave && ctr == ICTR_T_GET_PTR(*(slave->GetCTR())))
-					{
-						ESP_LOGI("CTRBridge", "Slave found");
-						ICTR_T_WRITE(*(slave->GetCTR()), slave, Message::BuildInitRequestMessage(slave->GetID()));
-						break;
-					}
-				}
-			}
+			ICTR_T_WRITE(*(slave->GetCTR()), slave, Message::BuildInitRequestMessage(slave->GetID()));
 		}
 	}
 
-	//ESP_LOGI("CTRBridge", "new CTR done");
 	
 #if defined(ESP_PLATFORM)
 	HandleLinkInfo();
@@ -289,13 +268,11 @@ void CTRBridge::StartEspNowInitBroadcasted()
 {
 	ESPNowCore::CreateInstance();
 	initEspNowBroadcasted = true;
-	ESP_LOGI("CTRBridge", "start esp now init broadcasted slaves");
 }
 
 void CTRBridge::StopEspNowInitBroadcasted()
 {
 	initEspNowBroadcasted = false;
-	ESP_LOGI("CTRBridge", "stop esp now init broadcasted slaves");
 }
 
 void CTRBridge::_configDirectNotif(Message* msg)
@@ -445,7 +422,6 @@ void CTRBridge::HandleLinkInfo()
 	if (!fShouldSendLinkInfo || !espNowCore || !masterCTR.index())
 		return;
 
-	ESP_LOGI("LINK", "HANDLING LINK INFO");
 
 	uint8_t nbCTR = 0;
 

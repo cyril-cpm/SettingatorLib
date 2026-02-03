@@ -1,9 +1,10 @@
 #include "Slave.h"
+#include "ESPNowCommunicator.h"
 #include <variant>
 
 std::vector<Slave*> slaves;
 std::queue<ICTR_t> newSlavesCTR;
-std::queue<ICTR*> reconnectedSlavesCTR;
+std::queue<Slave*> reconnectedSlaves;
 std::queue<Slave*> slavesWaitingForID;
 ICTR_t masterCTR;
 
@@ -20,6 +21,22 @@ ICTR_t* Slave::GetSlaveCTR(uint8_t slaveID)
     }
 
     return nullptr;
+}
+
+Slave* Slave::GetSlaveForMac(const uint8_t *mac)
+{
+	for (const auto& slave : slaves)
+	{
+		if (compareMac(mac, ESPNOWCTR_GET_MAC(*(slave->GetCTR()))))
+			return slave;
+	}
+
+	// for (const auto& slave : slavesWaitingForID)
+	// {
+	// 	if (compareMac(mac, EPSNOWCTR_GET_MAC(*(slave->GetCTR()))))
+	// 		return slave;
+	// }
+	return nullptr;
 }
 
 ICTR_t* Slave::GetCTR()

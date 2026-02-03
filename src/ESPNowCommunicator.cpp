@@ -26,7 +26,7 @@ std::vector<ESPNowCTR*> ESPNowCTR::fCTRList;
 
 //std::queue<espNowMsg*> espNowMsgList;
 
-static bool compareMac(const uint8_t* mac1, const uint8_t* mac2) {
+bool compareMac(const uint8_t* mac1, const uint8_t* mac2) {
 	return memcmp(mac1, mac2, 6) == 0;
 }
 
@@ -114,13 +114,13 @@ void ESPNowCore::receiveCallback(const esp_now_recv_info* info, const uint8_t* d
 			//
 			// newSlavesCTR.push(newCTR);
 
-			ESPNowCTR*	existingCTR = ESPNowCTR::GetCTRForMac(info->src_addr);
-			
-			if (existingCTR)
+			Slave* existingSlave = Slave::GetSlaveForMac(info->src_addr);
+
+			if (existingSlave)
 			{
-				reconnectedSlavesCTRMutex.lock();
-				reconnectedSlavesCTR.push(existingCTR);
-				reconnectedSlavesCTRMutex.unlock();
+				reconnectedSlavesMutex.lock();
+				reconnectedSlaves.push(existingSlave);
+				reconnectedSlavesMutex.unlock();
 			}
 			else
 			{
@@ -187,21 +187,14 @@ ESPNowCore::ESPNowCore()
 	
 	ESP_ERROR_CHECK(esp_read_mac(fMac, ESP_MAC_WIFI_STA));	// Récupération de l'adresse MAC Wi-Fi (STA)
 
-	ESP_LOGI("MAC", "Adresse MAC (STA) : %02X:%02X:%02X:%02X:%02X:%02X",
-			 fMac[0], fMac[1], fMac[2], fMac[3], fMac[4], fMac[5]);
-
 	ESP_ERROR_CHECK(esp_now_get_version(&fEspNowVersion));
 }
 
 int ESPNowCore::Write(Message&& buf, uint8_t* dstMac)
 {
-	//ESP_LOGI("ESPNowCTR", "Esp now write");
 
-	//DEBUG_PRINT_LN(buf.GetLength())
 	//if (buf.GetLength() > 250)
-	//	 DEBUG_PRINT_LN("Alert ! message to big for ESPNow !")
 
-	//ESP_LOG_BUFFER_HEX("ESPNowCore", dstMac, 6);
 	esp_now_send(dstMac, buf.GetBufPtr(), buf.GetLength());
 	return 0;
 }
@@ -241,6 +234,11 @@ ESPNowCTR ESPNowCTR::CreateInstanceWithMac(const uint8_t* mac, const bool create
 	return ESPNowCTR(mac, createTimer);
 }
 
+const uint8_t* ESPNowCTR::GetMac() const
+{
+	return fMac;
+}
+
 void ESPNowCTR::SendPing()
 {
 	Write(Message({
@@ -252,7 +250,6 @@ void ESPNowCTR::SendPing()
 				Message::Frame::End
 			}));
 
-	ESP_LOGI("ESPNow", "SendPing");
 
 	if (fPingTimer)
 		xTimerChangePeriod(fPingTimer, pdMS_TO_TICKS(2000), 0);
@@ -277,7 +274,6 @@ void ESPNowCTR::SendPong()
 		Message::Frame::End
 	}));
 
-	ESP_LOGI("ESPNow", "SendPong");
 }
 
 void pingTimerCallback(TimerHandle_t timer)
@@ -296,7 +292,6 @@ ESPNowCTR::ESPNowCTR(const uint8_t* peerMac, const bool createTimer)
 
 	if (peerMac != nullptr)
 	{
-		ESP_LOGI("ESPNowCTR", "mac not null");
 		fMac = (uint8_t*)malloc(6 * sizeof(uint8_t));
 		memcpy(fMac, peerMac, 6 * sizeof(uint8_t));
 		
@@ -322,7 +317,6 @@ ESPNowCTR::ESPNowCTR(const uint8_t* peerMac, const bool createTimer)
 
 	fCTRList.push_back(this);
 
-	ESP_LOGI("ESPNowCTR", "end init");
 }
 
 void ESPNowCTR::ShouldSendPing(bool should)
@@ -407,7 +401,6 @@ void ESPNowCTR::UpdateImpl()
 						fPeerLastMsgRssi = newMessage->GetBufPtr()[5];
 						fPeerLastMsgNoiseFloor = newMessage->GetBufPtr()[6];
 						memcpy(&fPeerLastMsgDeltastamp, newMessage->GetBufPtr() + 7, 4);
-						ESP_LOGI("ESPNow", "ReceivePong");
 					}
 					else
 						SendPong();						   
@@ -424,7 +417,6 @@ void ESPNowCTR::UpdateImpl()
 
 int ESPNowCTR::WriteImpl(Message& buf)
 {
-	DEBUG_PRINT_LN(buf.GetLength())
 	auto bufLength = buf.GetLength();
 
 	for (int i = 0; i < bufLength; i += 250)
@@ -514,7 +506,6 @@ void ESPNowCTR::SendDirectNotif(uint8_t notifByte)
 
 void ESPNowCTR::SendDirectSettingUpdate(uint8_t settingRef, uint8_t* value, uint8_t valueLen)
 {
-	DEBUG_PRINT_LN("Call to SendDirectSettingUpdate")
 	for (auto i = fDirectSettingUpdate.begin(); i != fDirectSettingUpdate.end(); i++)
 	{
 		if ((*i)->settingRef == settingRef)
@@ -539,7 +530,6 @@ void ESPNowCTR::SendDirectSettingUpdate(uint8_t settingRef, uint8_t* value, uint
 
 			msgBuffer[msgSize-1] = Message::Frame::End;
 			
-			DEBUG_PRINT_VALUE_BUF_LN("Message sent", msgBuffer.data(), msgSize)
 
 			fCore->Write(Message(std::move(msgBuffer)), (*i)->mac);
 		}

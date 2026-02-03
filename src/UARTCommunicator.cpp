@@ -8,7 +8,6 @@
 
 UARTCTR UARTCTR::CreateInstance(int baudrate)
 {
-    ESP_LOGI("UARTCTR", "Creating Instance");
     return UARTCTR(baudrate);
 }
 
@@ -23,22 +22,15 @@ UARTCTR::UARTCTR(int baudrate)
         .rx_flow_ctrl_thresh = 0,
     };
 
-    ESP_LOGI("UARTCTR", "uart_set_pin");
     auto err = uart_set_pin(fUartPort, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE,
         UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
 
     if (err != ESP_OK)
-        ESP_LOGE("UART", "uart_param_config failed: %s", esp_err_to_name(err));
-    ESP_LOGI("UARTCTR", "Done");
 
-    ESP_LOGI("UARTCTR", "uart_param_config");
     ESP_ERROR_CHECK(uart_param_config(fUartPort, &uartConfig));
-    ESP_LOGI("UARTCTR", "Done");
 
-    ESP_LOGI("UARTCTR", "uart_driver_install");
     ESP_ERROR_CHECK(uart_driver_install(fUartPort, fRxBufferSize, fTxBufferSize,
                                         0, nullptr, 0));
-    ESP_LOGI("UARCTR", "Done");
 }
 
 int UARTCTR::WriteImpl(Message& buf)
@@ -47,7 +39,6 @@ int UARTCTR::WriteImpl(Message& buf)
 
     if (err == ESP_FAIL)
     {
-        ESP_LOGE("UART", "Write failed");
     }
 
     return 0;

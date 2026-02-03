@@ -81,17 +81,13 @@ uint16_t Message::ExtractSettingUpdate(uint8_t &ref, uint8_t &newValueLen, uint8
 	if (fType == Message::Type::SettingUpdate)
 	{
 		ref = fBuffer[settingIndex];
-		DEBUG_PRINT_VALUE("ref", ref)
 		newValueLen = fBuffer[settingIndex + 1];
-		DEBUG_PRINT_VALUE("value len", newValueLen)
 		*newValue = &fBuffer[settingIndex + 2];
-		DEBUG_PRINT_VALUE_BUF_LN("value", *newValue, newValueLen)
 		return settingIndex + 2 + newValueLen;
 
 	}
 	else
 	{
-		DEBUG_PRINT_VALUE("FAIL: buffer type", fBuffer[4])
 	}
 	//Serial.println("Done");
 	return (fLength - 1);
