@@ -52,9 +52,9 @@ public:
 
 	Message() = delete;
 
-	Message(std::initializer_list<uint8_t> buffer) : fBuffer(buffer) {}; // inplace init
-	Message(uint8_t* buffer, uint16_t len) : fBuffer(buffer, buffer + len) {}; // copy buf
-	Message(std::vector<uint8_t>&& buffer) : fBuffer(std::move(buffer)) {}; // move buf
+	Message(std::initializer_list<uint8_t> buffer) : fBuffer(buffer) { _initMessageFromBuffer(); }; // inplace init
+	Message(uint8_t* buffer, uint16_t len) : fBuffer(buffer, buffer + len) { _initMessageFromBuffer(); }; // copy buf
+	Message(std::vector<uint8_t>&& buffer) : fBuffer(std::move(buffer)) { _initMessageFromBuffer(); }; // move buf
 
 	/*
 	- Return length of buffer
@@ -84,6 +84,9 @@ public:
    uint8_t operator[](uint16_t index);
 
 private:
+
+	void _initMessageFromBuffer();
+
 	std::vector<uint8_t>   fBuffer;
 	Type	fType = Uninitialised;
 	uint8_t fSlaveID = 0;

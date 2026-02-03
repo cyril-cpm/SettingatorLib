@@ -86,6 +86,7 @@ void CTRBridge::Update()
 			Serial.println("A message has been read");
 #elif defined(ESP_PLATFORM)
 			ESP_LOGI("CRTBridge", "A message has been read");
+			ESP_LOG_BUFFER_HEX("CTRBridge", msg->GetBufPtr(), msg->GetLength());
 #endif
 			switch (msg->GetType())
 			{
@@ -134,16 +135,22 @@ void CTRBridge::Update()
 
 					else if (msg->GetType() == Message::Type::InitRequest && !slavesWaitingForID.empty())
 					{
+						ESP_LOGI("CTRBridge", "Init Request received");
 						Slave* slave = slavesWaitingForID.front();
 						if (slave)
 						{
+							ESP_LOGI("CTRBridge", "Slave waiting for ID found");
 							if (slave->GetID() == 0)
 							{
+								ESP_LOGI("CTRBridge", "Has no ID, push it in slaves vector");
 								slave->SetID(msg->GetSlaveID());
 								slaves.push_back(slave);
 							}
 							else
+							{
+								ESP_LOGI("CTRBridge", "Already has an ID, adding SubSlave");
 								slave->AddSubSlave(msg->GetSlaveID());
+							}
 							slavesWaitingForID.pop();
 							slaveCTR = slave->GetCTR();
 
@@ -218,21 +225,23 @@ void CTRBridge::Update()
 	//ESP_LOGI("CTRBridge", "slaves done");
 
 	// TRAITEMENT DES NOUVEAUX SLAVES (assignation ID et initRequest) //
-	if (masterCTR.index() && !newSlavesCTR.empty())
+	newSlavesCTRMutex.lock();
+	if (masterCTR.index())
 	{
 		while (!newSlavesCTR.empty())
 		{
+			ESP_LOGI("CTRBridge", "ewSlavesCTR detected");
 			ICTR_t ctr = std::move(newSlavesCTR.front());
 			newSlavesCTR.pop();
 
 			bool ctrIsUsed = false;
 			uint8_t slaveID = 0;
 
-			std::visit([](auto&& ctr) {
-					using T = std::decay_t<decltype(ctr)>;
+			std::visit([](auto&& mCtr) {
+					using T = std::decay_t<decltype(mCtr)>;
 
 					if constexpr (!std::is_same_v<T, std::monostate>)
-						ctr.Write(Message::BuildSlaveIDRequestMessage());
+						mCtr.Write(Message::BuildSlaveIDRequestMessage());
 
 				}, masterCTR);
 
@@ -255,6 +264,7 @@ void CTRBridge::Update()
 			}
 		}
 	}
+	newSlavesCTRMutex.unlock();
 
 	//ESP_LOGI("CTRBridge", "new CTR done");
 	

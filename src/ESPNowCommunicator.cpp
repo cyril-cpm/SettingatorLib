@@ -115,14 +115,19 @@ void ESPNowCore::receiveCallback(const esp_now_recv_info* info, const uint8_t* d
 			// newSlavesCTR.push(newCTR);
 
 			ESPNowCTR*	existingCTR = ESPNowCTR::GetCTRForMac(info->src_addr);
+			
 			if (existingCTR)
 				newSubSlavesCTR.push(existingCTR);
 			else
-				newSlavesCTR.emplace(ESPNowCTR::CreateInstanceWithMac(info->src_addr, true));
+			{
+				newSlavesCTRMutex.lock();
+				 newSlavesCTR.push(ESPNowCTR::CreateInstanceWithMac(info->src_addr, true));
+				newSlavesCTRMutex.unlock();
+			}
 		}
 		else
 		{
-			if (masterCTR.index())
+			if (!masterCTR.index())
 				masterCTR = ESPNowCTR::CreateInstanceWithMac(info->src_addr);
 
 			espNowMsgListMutex.lock();

@@ -5,6 +5,8 @@
 #include "UARTCommunicator.h"
 #include <variant>
 
+std::mutex newSlavesCTRMutex;
+
 bool initEspNowBroadcasted = false;
 
 void ICTR::_receive(Message* msg)

@@ -5,6 +5,9 @@
 #include <queue>
 #include <variant>
 #include "Message.h"
+#include <mutex>
+
+extern std::mutex newSlavesCTRMutex;
 
 class ICTR
 {

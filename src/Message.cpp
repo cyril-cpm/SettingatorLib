@@ -62,6 +62,15 @@ uint8_t* Message::GetBufPtr()
 		return nullptr;
 }
 
+void Message::_initMessageFromBuffer()
+{
+	if (fBuffer.size() < 4)
+		return;
+
+	fType = (Type)fBuffer[4];
+	fSlaveID = fBuffer[3];
+}
+
 uint16_t Message::ExtractSettingUpdate(uint8_t &ref, uint8_t &newValueLen, uint8_t **newValue, uint16_t settingIndex)
 {
 	//Serial.println("Extracting Setting Update message");
