@@ -16,7 +16,7 @@ HardwareSerialCTR::HardwareSerialCTR(int baudrate)
         size_t messageLen = fSerial->available();
         uint8_t* buffer = (uint8_t*)malloc(messageLen * sizeof(uint8_t));
         fSerial->readBytes(buffer, messageLen);
-        _receive(new Message(buffer, messageLen));
+        _receive(Message(buffer, messageLen));
         free(buffer);
     }, true);*/
 
@@ -76,7 +76,7 @@ void HardwareSerialCTR::Update()
             if (fSerialBuffer[msgSize - 1] == Message::Frame::End)
             {
                 //Serial.println("LOG Valid message");
-                _receive(new Message(fSerialBuffer, msgSize));
+                _receive(Message(fSerialBuffer, msgSize));
                 _removeBufferBeginBytes(msgSize);
 
             }

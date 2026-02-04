@@ -77,7 +77,7 @@ void UARTCTR::UpdateImpl()
 
             if (fUartBufferSize >= msgSize)
             {
-                _receive(new Message(fUartBuffer, msgSize));
+                _receive(Message(fUartBuffer, msgSize));
                 _removeBufferBeginBytes(msgSize);
             }
         }

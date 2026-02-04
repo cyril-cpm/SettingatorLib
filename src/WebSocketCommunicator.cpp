@@ -30,7 +30,7 @@ WebSocketCTR::WebSocketCTR(int port)
         {
             case (WStype_BIN):
             {
-                _receive(new Message(payload, len));
+                _receive(Message(payload, len));
                 break;
             }
         }

@@ -350,7 +350,7 @@ void ESPNowCTR::_bufferizeMessage(espNowMsg* msg)
 
 	if (msgSize <= fMessageBufferSize && fMessageBuffer[msgSize-1] == Message::Frame::End)
 	{
-		_receive(new Message(fMessageBuffer, fMessageBufferSize));
+		_receive(Message(fMessageBuffer, fMessageBufferSize));
 		fMessageBufferSize = 0;
 		delete fMessageBuffer;
 	}
@@ -392,19 +392,17 @@ void ESPNowCTR::UpdateImpl()
 				_bufferizeMessage(msg);
 			else
 			{
-				Message* newMessage = new Message(msg->data, msg->len);
+				Message newMessage = Message(msg->data, msg->len);
  
-				if (newMessage)
+				if (newMessage.GetType() == Message::Type::EspNowPong)
 				{
-					if (newMessage->GetType() == Message::Type::EspNowPong)
-					{
-						fPeerLastMsgRssi = newMessage->GetBufPtr()[5];
-						fPeerLastMsgNoiseFloor = newMessage->GetBufPtr()[6];
-						memcpy(&fPeerLastMsgDeltastamp, newMessage->GetBufPtr() + 7, 4);
-					}
-					else
-						SendPong();						   
+					fPeerLastMsgRssi = newMessage.GetBufPtr()[5];
+					fPeerLastMsgNoiseFloor = newMessage.GetBufPtr()[6];
+					memcpy(&fPeerLastMsgDeltastamp, newMessage.GetBufPtr() + 7, 4);
 				}
+				else
+					SendPong();
+
 				_receive(newMessage);
 			}
 

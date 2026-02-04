@@ -14,7 +14,7 @@ Slave::Slave(ICTR_t&& ctr) : fCTR(std::move(ctr))
 
 ICTR_t* Slave::GetSlaveCTR(uint8_t slaveID)
 {
-    for (const auto& slave : slaves)
+    for (auto& slave : slaves)
     {
         if (slave.fSlaveID == slaveID || slave.HasSubSlave(slaveID))
             return &slave.fCTR;
@@ -25,10 +25,10 @@ ICTR_t* Slave::GetSlaveCTR(uint8_t slaveID)
 
 Slave* Slave::GetSlaveForMac(const uint8_t *mac)
 {
-	for (const auto& slave : slaves)
+	for (auto& slave : slaves)
 	{
-		if (compareMac(mac, ESPNOWCTR_GET_MAC(*(slave->GetCTR()))))
-			return slave;
+		if (compareMac(mac, ESPNOWCTR_GET_MAC(*(slave.GetCTR()))))
+			return &slave;
 	}
 
 	// for (const auto& slave : slavesWaitingForID)

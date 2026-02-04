@@ -10,7 +10,7 @@ std::mutex reconnectedSlavesMutex;
 
 bool initEspNowBroadcasted = false;
 
-void ICTR::_receive(Message* msg)
+void ICTR::_receive(Message msg)
 {
 	fReceivedMessage.push(msg);
 }
@@ -46,9 +46,7 @@ uint8_t ICTR::GetBoxSize() const
 
 Message* ICTR::Read()
 {
-	if (GetBoxSize())
-		return fReceivedMessage.front();
-	return nullptr;
+	return &fReceivedMessage.front();
 }
 
 void ICTR::Flush()

@@ -79,9 +79,9 @@ class ICTR
 	
 	ICTR() = default;
 
-	void _receive(Message* msg);
+	void _receive(Message msg);
 
-	std::queue<Message*> fReceivedMessage;
+	std::queue<Message> fReceivedMessage;
 
 };
 

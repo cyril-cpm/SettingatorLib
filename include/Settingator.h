@@ -73,12 +73,12 @@ class Settingator
     std::vector<Setting>    fSettingVector;
     
     void        _sendInitMessage();
-    void        _treatSettingUpdateMessage(Message* msg);
-    void        _configEspNowDirectNotif(Message* msg);
-    void        _configEspNowDirectSettingUpdate(Message* msg);
-    void        _treatNotifMessage(Message* msg);
-    void        _removeDirectNotifConfig(Message* msg);
-    void        _removeDirectSettingUpdateConfig(Message* msg);
+    void        _treatSettingUpdateMessage(Message& msg);
+    void        _configEspNowDirectNotif(Message& msg);
+    void        _configEspNowDirectSettingUpdate(Message& msg);
+    void        _treatNotifMessage(Message& msg);
+    void        _removeDirectNotifConfig(Message& msg);
+    void        _removeDirectSettingUpdateConfig(Message& msg);
 
     Message    _buildSettingInitMessage();
     

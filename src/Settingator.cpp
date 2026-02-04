@@ -187,96 +187,62 @@ void Settingator::Update()
 {
 	if (masterCTR.index())
 	{
-
-		Message* msg = std::visit([](auto&& ctr) -> Message* {
-
-				using T = std::decay_t<decltype(ctr)>;
-
-				if constexpr (!std::is_same_v<T, std::monostate>)
-				{
-					if (ctr.Available())
-						return ctr.Read();
-
-					else
-						return nullptr;
-				}
-				else
-					return nullptr;
-			}, masterCTR);
-
-		if (msg)
-#if defined(ARDUINO)
-			Serial.println("Message Read");
-#elif defined(ESP_PLATFORM)
-#endif
-
-		if (!fSlaveID && msg && msg->GetType() == Message::Type::InitRequest)
-			_createSlaveID(msg->GetSlaveID());
-
-		if (fSlaveID && msg && *fSlaveID == msg->GetSlaveID())
+		if (ICTR_T_AVAILABLE(masterCTR))
 		{
-			auto msgType = msg->GetType();
+			Message* msg = ICTR_T_READ(masterCTR);
 
-			switch (msgType)
+			if (!fSlaveID && msg && msg->GetType() == Message::Type::InitRequest)
+				_createSlaveID(msg->GetSlaveID());
+
+			if (fSlaveID && msg && *fSlaveID == msg->GetSlaveID())
 			{
-			case Message::Type::InitRequest:
-				_sendInitMessage();
-				break;
+				auto msgType = msg->GetType();
+	
+				switch (msgType)
+				{
+				case Message::Type::InitRequest:
+					_sendInitMessage();
+					break;
+	
+				case Message::Type::SettingUpdate:
+					_treatSettingUpdateMessage(*msg);
+					break;
+	
+				case Message::Type::ConfigEspNowDirectNotif:
+					_configEspNowDirectNotif(*msg);
+					break;
+	
+				case Message::Type::ConfigEspNowDirectSettingUpdate:
+					_configEspNowDirectSettingUpdate(*msg);
+					break;
+	
+				case Message::Type::Notif:
+					_treatNotifMessage(*msg);
+					break;
+	
+				case Message::Type::RemoveDirectNotifConfig:
+					_removeDirectNotifConfig(*msg);
+					break;
+	
+				case Message::Type::RemoveDirectSettingUpdateConfig:
+					_removeDirectSettingUpdateConfig(*msg);
+					break;
+	
+				/*case Message::Type::Command:
+					_treatCommandMessage(*msg);
+					break;*/
+				default:
+					break;
+				}
 
-			case Message::Type::SettingUpdate:
-				_treatSettingUpdateMessage(msg);
-				break;
-
-			case Message::Type::ConfigEspNowDirectNotif:
-				_configEspNowDirectNotif(msg);
-				break;
-
-			case Message::Type::ConfigEspNowDirectSettingUpdate:
-				_configEspNowDirectSettingUpdate(msg);
-				break;
-
-			case Message::Type::Notif:
-				_treatNotifMessage(msg);
-				break;
-
-			case Message::Type::RemoveDirectNotifConfig:
-				_removeDirectNotifConfig(msg);
-				break;
-
-			case Message::Type::RemoveDirectSettingUpdateConfig:
-				_removeDirectSettingUpdateConfig(msg);
-				break;
-
-			/*case Message::Type::Command:
-				_treatCommandMessage(msg);
-				break;*/
-			default:
-				break;
+				ICTR_T_FLUSH(masterCTR);
 			}
-
-			std::visit([](auto&& ctr) {
-
-					using T = std::decay_t<decltype(ctr)>;
-
-					if constexpr (!std::is_same_v<T,std::monostate>)
-						ctr.Flush();
-
-				}, masterCTR);
-		}
-		else
-		{
-			if (fBridge)
-				fBridge->Update();
 			else
 			{
-				std::visit([](auto&& ctr) {
-
-						using T = std::decay_t<decltype(ctr)>;
-
-						if constexpr (!std::is_same_v<T,std::monostate>)
-							ctr.Flush();
-
-					}, masterCTR);
+				if (fBridge)
+					fBridge->Update();
+				else
+					ICTR_T_FLUSH(masterCTR);
 			}
 		}
 	}
@@ -565,11 +531,8 @@ void Settingator::_sendInitMessage()
 		}, masterCTR);
 }
 
-void Settingator::_treatSettingUpdateMessage(Message* msg)
+void Settingator::_treatSettingUpdateMessage(Message& msg)
 {
-	if (!msg)
-		return;
-
 	uint8_t* value;
 	uint8_t ref;
 	uint8_t valueLen;
@@ -578,7 +541,7 @@ void Settingator::_treatSettingUpdateMessage(Message* msg)
 
 	do
 	{
-		nextSettingIndex = msg->ExtractSettingUpdate(ref, valueLen, &value, nextSettingIndex);
+		nextSettingIndex = msg.ExtractSettingUpdate(ref, valueLen, &value, nextSettingIndex);
 
 		Setting *setting = GetSettingByRef(ref);
 	
@@ -602,44 +565,41 @@ void Settingator::_treatSettingUpdateMessage(Message* msg)
 		if (setting)
 			setting->callback();
 
-	} while (msg->GetLength() > nextSettingIndex + 1);
+	} while (msg.GetLength() > nextSettingIndex + 1);
 
 }
 
-void Settingator::_configEspNowDirectNotif(Message* msg)
+void Settingator::_configEspNowDirectNotif(Message& msg)
 {
-	std::visit([msg](auto&& ctr) {
+	std::visit([&msg](auto&& ctr) {
 
 			using T = std::decay_t<decltype(ctr)>;
 
 			if constexpr (!std::is_same_v<T, std::monostate>)
 			{
-				auto buffer = msg->GetBufPtr();
+				uint8_t* buffer = msg.GetBufPtr();
 				ctr.ConfigEspNowDirectNotif(&buffer[6], buffer[16], buffer[5]);
 			}
 		}, masterCTR);
 }
 
-void Settingator::_configEspNowDirectSettingUpdate(Message* msg)
+void Settingator::_configEspNowDirectSettingUpdate(Message& msg)
 {
-	std::visit([msg](auto&& ctr) {
+	std::visit([&msg](auto&& ctr) {
 
 			using T = std::decay_t<decltype(ctr)>;
 
 			if constexpr (!std::is_same_v<T, std::monostate>)
 			{
-				auto buffer = msg->GetBufPtr();
+				uint8_t* buffer = msg.GetBufPtr();
 				ctr.ConfigEspNowDirectSettingUpdate(&buffer[6], buffer[12], buffer[13], buffer[5]);
 			}
 		}, masterCTR);
 }
 
-void Settingator::_treatNotifMessage(Message* msg)
+void Settingator::_treatNotifMessage(Message& msg)
 {
-	if (!msg)
-		return;
-
-	auto buffer = msg->GetBufPtr();
+	auto buffer = msg.GetBufPtr();
 	auto notifByte = buffer[5];
 
 	for (notifCallback* cb : fNotifCallback)
@@ -649,41 +609,35 @@ void Settingator::_treatNotifMessage(Message* msg)
 	}
 }
 
-void Settingator::_removeDirectNotifConfig(Message* msg)
+void Settingator::_removeDirectNotifConfig(Message& msg)
 {
-	std::visit([msg](auto&& ctr) {
+	std::visit([&msg](auto&& ctr) {
 
 			using T = std::decay_t<decltype(ctr)>;
 
 			if constexpr (!std::is_same_v<T, std::monostate>)
 			{
-				if (msg)
-				{
-					auto buffer = msg->GetBufPtr();
-					ctr.RemoveDirectNotifConfig(buffer[5], buffer[6]);
-				}
+				auto buffer = msg.GetBufPtr();
+				ctr.RemoveDirectNotifConfig(buffer[5], buffer[6]);
 			}
 		}, masterCTR);
 }
 
-void Settingator::_removeDirectSettingUpdateConfig(Message* msg)
+void Settingator::_removeDirectSettingUpdateConfig(Message& msg)
 {
-	std::visit([msg](auto&& ctr) {
+	std::visit([&msg](auto&& ctr) {
 
 			using T = std::decay_t<decltype(ctr)>;
 
 			if constexpr (!std::is_same_v<T, std::monostate>)
 			{
-				if (msg)
-				{
-					auto buffer = msg->GetBufPtr();
-					ctr.RemoveDirectSettingUpdateConfig(buffer[5], buffer[6]);
-				}
+				auto buffer = msg.GetBufPtr();
+				ctr.RemoveDirectSettingUpdateConfig(buffer[5], buffer[6]);
 			}
 		}, masterCTR);
 }
 
-/*void Settingator::_treatCommandMessage(Message *msg)
+/*void Settingator::_treatCommandMessage(Message msg)
 {
 	if (!msg || !masterCTR)
 		return;
