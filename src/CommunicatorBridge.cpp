@@ -97,19 +97,19 @@ void CTRBridge::Update()
 				break;
 
 			case Message::Type::EspNowConfigDirectNotif:
-				_configDirectNotif(msg);
+				_configDirectNotif(*msg);
 				break;
 
 			case Message::Type::EspNowConfigDirectSettingUpdate:
-				_configDirectSettingUpdate(msg);
+				_configDirectSettingUpdate(*msg);
 				break;
 
 			case Message::Type::EspNowRemoveDirectNotifConfig:
-				_removeDirectMessageConfig(msg, Message::Type::RemoveDirectNotifConfig);
+				_removeDirectMessageConfig(*msg, Message::Type::RemoveDirectNotifConfig);
 				break;
 
 			case Message::Type::EspNowRemoveDirectSettingUpdateConfig:
-				_removeDirectMessageConfig(msg, Message::Type::RemoveDirectSettingUpdateConfig);
+				_removeDirectMessageConfig(*msg, Message::Type::RemoveDirectSettingUpdateConfig);
 				break;
 
 			case Message::Type::BridgeReinitSlaves:
@@ -133,30 +133,28 @@ void CTRBridge::Update()
 
 					else if (msg->GetType() == Message::Type::InitRequest && !slavesWaitingForID.empty())
 					{
-						Slave* slave = slavesWaitingForID.front();
-						if (slave)
+						Slave slave = std::move(slavesWaitingForID.front());
+
+						if (slave.GetID() == 0)
 						{
-							if (slave->GetID() == 0)
-							{
-								slave->SetID(msg->GetSlaveID());
-								slaves.push_back(slave);
-							}
-							else
-							{
-								slave->AddSubSlave(msg->GetSlaveID());
-							}
-							slavesWaitingForID.pop();
-							slaveCTR = slave->GetCTR();
+							slave.SetID(msg->GetSlaveID());
+							slaves.push_back(slave);
+						}
+						else
+						{
+							slave.AddSubSlave(msg->GetSlaveID());
+						}
+						slavesWaitingForID.pop();
+						slaveCTR = slave.GetCTR();
 
-							if (slaveCTR)
-							{
-								std::visit([msg](auto&& ctr) {
-										using T = std::decay_t<decltype(ctr)>;
+						if (slaveCTR)
+						{
+							std::visit([msg](auto&& ctr) {
+									using T = std::decay_t<decltype(ctr)>;
 
-										if constexpr (!std::is_same_v<T, std::monostate>)
-											ctr.Write(*msg);
-									}, *slaveCTR);
-							}
+									if constexpr (!std::is_same_v<T, std::monostate>)
+										ctr.Write(*msg);
+								}, *slaveCTR);
 						}
 					}
 				}
@@ -177,9 +175,9 @@ void CTRBridge::Update()
 	// TRAITEMENT DES SLAVES //
 	if (masterCTR.index())
 	{
-		for (const auto& slave : slaves)
+		for (auto& slave : slaves)
 		{
-			ICTR_t* slaveCTR = slave->GetCTR();
+			ICTR_t* slaveCTR = slave.GetCTR();
 
 			// LECTURE DES MESSAGES DES SLAVES //
 			if (slaveCTR && ICTR_T_AVAILABLE(*slaveCTR))
@@ -237,8 +235,7 @@ void CTRBridge::Update()
 
 				}, masterCTR);
 
-			Slave* newSlave = new Slave(std::move(ctr));
-			slavesWaitingForID.push(newSlave);
+			slavesWaitingForID.emplace(Slave(std::move(ctr)));
 		}
 		newSlavesCTRMutex.unlock();
 
@@ -275,7 +272,7 @@ void CTRBridge::StopEspNowInitBroadcasted()
 	initEspNowBroadcasted = false;
 }
 
-void CTRBridge::_configDirectNotif(Message* msg)
+void CTRBridge::_configDirectNotif(Message& msg)
 {
 	/*if (!msg)
 		return;
@@ -314,7 +311,7 @@ void CTRBridge::_configDirectNotif(Message* msg)
 	delete configMsg;*/
 }
 
-void CTRBridge::_configDirectSettingUpdate(Message* msg)
+void CTRBridge::_configDirectSettingUpdate(Message& msg)
 {
 	/*if (!msg)
 		return;
@@ -354,7 +351,7 @@ void CTRBridge::_configDirectSettingUpdate(Message* msg)
 	delete configMsg;*/
 }
 
-void CTRBridge::_removeDirectMessageConfig(Message* msg, uint8_t messageType)
+void CTRBridge::_removeDirectMessageConfig(Message& msg, uint8_t messageType)
 {
 	uint8_t* buffer = nullptr;
 
@@ -403,18 +400,15 @@ void CTRBridge::_reinitSlaves()
 	}
 }
 
-void CTRBridge::_treatSettingInit(Message* msg, Slave *slave)
+void CTRBridge::_treatSettingInit(Message& msg, const Slave& slave)
 {
-	if (!msg || !slave)
+	uint8_t msgSlaveID = msg.GetSlaveID();
+
+	if (msgSlaveID == slave.GetID())
 		return;
 
-	uint8_t msgSlaveID = msg->GetSlaveID();
-
-	if (msgSlaveID == slave->GetID())
-		return;
-
-	if (!slave->HasSubSlave(msgSlaveID))
-		slave->AddSubSlave(msgSlaveID);
+	if (!slave.HasSubSlave(msgSlaveID))
+		slave.AddSubSlave(msgSlaveID);
 }
 
 void CTRBridge::HandleLinkInfo()

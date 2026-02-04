@@ -28,11 +28,11 @@ class CTRBridge
 	private:
 
 	void			_addEspNowSlaveWithSSD(char* SSD, uint8_t slaveID);
-	void			_configDirectNotif(Message* msg);
-	void			_configDirectSettingUpdate(Message* msg);
-	void			_removeDirectMessageConfig(Message* msg, uint8_t messageType);
+	void			_configDirectNotif(Message& msg);
+	void			_configDirectSettingUpdate(Message& msg);
+	void			_removeDirectMessageConfig(Message& msg, uint8_t messageType);
 	void			_reinitSlaves();
-	void			_treatSettingInit(Message* msg, Slave* slave);
+	void			_treatSettingInit(Message& msg, Slave& slave);
 
 	bool			fShouldSendLinkInfo = false;
 	TimerHandle_t	fLinkInfoTimer = nullptr;

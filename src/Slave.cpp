@@ -2,10 +2,10 @@
 #include "ESPNowCommunicator.h"
 #include <variant>
 
-std::vector<Slave*> slaves;
+std::vector<Slave> slaves;
 std::queue<ICTR_t> newSlavesCTR;
 std::queue<Slave*> reconnectedSlaves;
-std::queue<Slave*> slavesWaitingForID;
+std::queue<Slave> slavesWaitingForID;
 ICTR_t masterCTR;
 
 
@@ -16,8 +16,8 @@ ICTR_t* Slave::GetSlaveCTR(uint8_t slaveID)
 {
     for (const auto& slave : slaves)
     {
-        if (slave->fSlaveID == slaveID || slave->HasSubSlave(slaveID))
-            return &slave->fCTR;
+        if (slave.fSlaveID == slaveID || slave.HasSubSlave(slaveID))
+            return &slave.fCTR;
     }
 
     return nullptr;
