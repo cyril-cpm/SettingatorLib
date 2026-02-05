@@ -9,15 +9,8 @@
 #include <nvs_flash.h>
 #include <esp_mac.h>
 #include <mutex>
-
-#if defined(ARDUINO)
-
-#elif defined(ESP_PLATFORM)
 #include <cstring>
 #include <esp_log.h>
-#endif
-
-ESPNowCore* espNowCore = nullptr;
 
 std::mutex espNowMsgListMutex;
 
@@ -71,49 +64,12 @@ static bool isBroadcastMac(uint8_t* dstMac)
 	return isBroadcastMac;
 }
 
-#if defined(ARDUINO)
-static void receiveCallback(const uint8_t* mac, const uint8_t* data, int len)
-{
-	if (mac)
-	{
-		if (initEspNowBroadcasted && len == 1 && data && *data == 0x42)
-		{
-			ICTR_t newCTR = ESPNowCTR::CreateInstanceWithMac(mac);
-
-			newSlavesCTR.push(newCTR);
-		}
-		else
-		{
-			if (!masterCTR) //A changer
-				masterCTR = ESPNowCTR::CreateInstanceWithMac(mac);
-
-			espNowMsgListMutex.lock();
-
-			auto list = findQueueForMac(mac);
-
-			if (list)
-				list->push(new espNowMsg(data, len));
-
-			espNowMsgListMutex.unlock();
-		}
-	}
-}
-
-#elif defined(ESP_PLATFORM)
 void ESPNowCore::receiveCallback(const esp_now_recv_info* info, const uint8_t* data, int len)
 {
 	 if (info)
 	{
 		if (initEspNowBroadcasted && len == 1 && data && *data == 0x42 && isBroadcastMac(info->des_addr))
 		{
-			// ICTR_t newCTR = ESPNowCTR::FindCTRForMac(info->src_addr);
-			//
-			//
-			// if (!newCTR.index())
-			// 	newCTR = ESPNowCTR::CreateInstanceWithMac(info->src_addr, true);
-			//
-			// newSlavesCTR.push(newCTR);
-
 			Slave* existingSlave = Slave::GetSlaveForMac(info->src_addr);
 
 			if (existingSlave)
@@ -151,14 +107,10 @@ void ESPNowCore::receiveCallback(const esp_now_recv_info* info, const uint8_t* d
 	}
 }
 
-#endif
-
-ESPNowCore* ESPNowCore::CreateInstance()
+ESPNowCore& ESPNowCore::GetInstance()
 {
-	if (!espNowCore)
-		espNowCore = new ESPNowCore();
-
-	return espNowCore;
+	static ESPNowCore instance;
+	return instance;
 }
 
 ESPNowCore::ESPNowCore()
@@ -285,17 +237,14 @@ void pingTimerCallback(TimerHandle_t timer)
 
 ESPNowCTR::ESPNowCTR(const uint8_t* peerMac, const bool createTimer)
 {
-
-	fCore = ESPNowCore::CreateInstance();
-
-	//fCore->CreateLinkInfoTimer();
+	//ESPNowCore::GetInstance().CreateLinkInfoTimer();
 
 	if (peerMac != nullptr)
 	{
 		fMac = (uint8_t*)malloc(6 * sizeof(uint8_t));
 		memcpy(fMac, peerMac, 6 * sizeof(uint8_t));
 		
-		fCore->AddPeer(fMac);
+		ESPNowCore::GetInstance().AddPeer(fMac);
 
 		std::queue<espNowMsg*> msgList;
 
@@ -447,14 +396,14 @@ espNowDirectSettingUpdate::~espNowDirectSettingUpdate()
 
 void ESPNowCTR::ConfigEspNowDirectNotif(uint8_t* mac, uint8_t notifByte, uint8_t dstSlaveID)
 {
-	fCore->AddPeer(mac);
+	ESPNowCore::GetInstance().AddPeer(mac);
 
 	fDirectNotif.push_back(new espNowDirectNotif(mac, notifByte, dstSlaveID));
 }
 
 void ESPNowCTR::ConfigEspNowDirectSettingUpdate(uint8_t* mac, uint8_t settingRef, uint8_t settingValueLen, uint8_t dstSlaveID)
 {
-	fCore->AddPeer(mac);
+	ESPNowCore::GetInstance().AddPeer(mac);
 
 	fDirectSettingUpdate.push_back(new espNowDirectSettingUpdate(mac, settingRef, dstSlaveID, settingValueLen));
 }
@@ -489,7 +438,7 @@ void ESPNowCTR::SendDirectNotif(uint8_t notifByte)
 	{
 		if ((*i)->notifByte == notifByte)
 		{
-			fCore->Write(Message({
+			ESPNowCore::GetInstance().Write(Message({
 						Message::Frame::Start,
 						0,
 						7,
@@ -529,7 +478,7 @@ void ESPNowCTR::SendDirectSettingUpdate(uint8_t settingRef, uint8_t* value, uint
 			msgBuffer[msgSize-1] = Message::Frame::End;
 			
 
-			fCore->Write(Message(std::move(msgBuffer)), (*i)->mac);
+			ESPNowCore::GetInstance().Write(Message(std::move(msgBuffer)), (*i)->mac);
 		}
 	}
 }

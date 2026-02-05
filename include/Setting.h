@@ -1,16 +1,11 @@
 #ifndef _SETTING_
 #define _SETTING_
 
-#if defined(ARDUINO)
-#include <Arduino.h>
-#elif defined(ESP_PLATFORM)
 #include <esp_types.h>
 #include <string>
 #include <functional>
 
 typedef std::string String;
-
-#endif
 
 class Message;
 

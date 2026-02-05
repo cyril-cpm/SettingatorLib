@@ -1,16 +1,9 @@
 #include "Message.h"
 #include "MiscDef.h"
 #include <vector>
-
-#if defined(ARDUINO)
-#include <Arduino.h>
-
-#elif defined(ESP_PLATFORM)
 #include <stdlib.h>
 #include <esp_types.h>
 #include <cstring>
-
-#endif
 
 Message Message::BuildInitRequestMessage(uint8_t slaveID)
 {

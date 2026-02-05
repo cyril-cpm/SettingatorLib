@@ -41,8 +41,7 @@ struct espNowDirectSettingUpdate {
 class ESPNowCore
 {
     public:
-    static ESPNowCore*  CreateInstance();
-    ESPNowCore();
+    static ESPNowCore&  GetInstance();
 
     int     Write(Message&& buf, uint8_t* dstMac);
     void    Update();
@@ -56,12 +55,12 @@ class ESPNowCore
     static void         receiveCallback(const esp_now_recv_info* info, const uint8_t* data, int len);
 
     private:
+    ESPNowCore();
+
     uint8_t fMac[6];
     TimerHandle_t       fLinkInfoTimer = nullptr;
     uint32_t            fEspNowVersion = 0;
 };
-
-extern ESPNowCore* espNowCore;
 
 class ESPNowCTR: public ICTR
 {
@@ -123,8 +122,6 @@ class ESPNowCTR: public ICTR
     int8_t      fPeerLastMsgNoiseFloor = 0;
 
     TimerHandle_t   fPingTimer = nullptr;
-
-    ESPNowCore* fCore = nullptr;
 
     bool        fShouldSendPing = false;
 };

@@ -6,14 +6,7 @@
 #include <vector>
 #include <optional>
 
-#if defined(ARDUINO)
-#include <Arduino.h>
-
-#elif defined(ESP_PLATFORM)
 #include "Led.h"
-
-#endif
-
 #include "Setting.h"
 #include "CommunicatorBridge.h"
 
@@ -94,12 +87,8 @@ class Settingator
 
     uint8_t     fBroadcastButtonPin = 32;
     uint8_t     fBridgeActivationButtonPin = 33;
-#if (ARDUINO)
-    CRGB*       fInfoLED = nullptr;
-#elif (ESP_PLATFORM)
     RGB*        fInfoLED = nullptr;
     Strip*      fInfoLEDStrip = nullptr;
-#endif
 
     bool        fShouldStartEspNowInitBroadcasted = false;
     bool        fShouldStopEspNowInitBroadcasted = false;

@@ -10,37 +10,17 @@
 #include <type_traits>
 #include <variant>
 //#include "CommandHandler.h"
-
-#if defined(ARDUINO)
-#include <WiFi.h>
-#include <Preferences.h>
-#include <FastLED.h>
-
-#elif defined(ESP_PLATFORM)
 #include <cstring>
 #include <esp_log.h>
 #include "esp_task_wdt.h"
 #include "driver/gpio.h"
 #include "esp_timer.h"
 #include "Led.h"
-#endif
 
 
 void Settingator::StartWiFi()
 {
 
-#if defined(ARDUINO)
-	Serial.println("Begin WiFi");
-	WiFi.mode(WIFI_AP);
-
-	WiFi.softAPConfig(IPAddress(192,168,0,1), IPAddress(192,168,0,1), IPAddress(255,255,255,0));
-	WiFi.softAP("espTest", "123456789");
-	Serial.println(WiFi.softAPIP());
-
-#elif defined(ESP_PLATFORM)
-
-
-#endif
 }
 
 Settingator::Settingator(ICTR_t communicator)
@@ -51,20 +31,12 @@ Settingator::Settingator(ICTR_t communicator)
 Settingator::~Settingator()
 {
 
-#if defined(ARDUINO)
-	delete fPreferences;
-#endif
 }
 
 void Settingator::SetNetLed(uint8_t r, uint8_t g, uint8_t b)
 {
-#if defined(ARDUINO)
-	if (fInfoLED)
-		*fInfoLED = CRGB(r, g, b);
-#elif defined(ESP_PLATFORM)
 	if (fInfoLED)
 		*fInfoLED = RGB(r, g, b);
-#endif
 }
 
 void Settingator::ESPNowBroadcastPing()
@@ -72,7 +44,7 @@ void Settingator::ESPNowBroadcastPing()
 	if (xPortInIsrContext())
 		fShouldESPNowBroadcastPing = true;
 	else
-		ESPNowCore::CreateInstance()->BroadcastPing();
+		ESPNowCore::GetInstance().BroadcastPing();
 }
 
 #if defined(STR_BRIDGE_HID)
@@ -118,24 +90,6 @@ static void IRAM_ATTR bridgeActivationInterruptHandler(void* arg)
 void Settingator::InitNetworkHID()
 {
 #if defined(STR_BRIDGE_HID)
-#if defined (ARDUINO)
-	pinMode(fBridgeActivationButtonPin, INPUT_PULLDOWN);
-	attachInterrupt(fBridgeActivationButtonPin, [](){
-		if (initEspNowBroadcasted)
-		{
-			Serial.println("Stop");
-			STR.StopEspNowInitBroadcasted();
-			STR.SetNetLed(255, 0, 0);
-		}
-		else
-		{
-			STR.StartEspNowInitBroadcasted();
-			STR.SetNetLed(0, 255, 0);
-			Serial.println("Start");
-		}
-	}, RISING);
-	fInfoLED = led;
-#endif
 	// TIMER //
 	esp_timer_create_args_t timer_args = {
 		.callback = debounceTimerBroadcastCallback,
@@ -277,22 +231,6 @@ void Settingator::Update()
 void Settingator::AddSetting(Setting& setting)
 {
 	fSettingVector.push_back(setting);
-
-#if defined(ARDUINO)
-	if (setting.getType() != Setting::Type::Trigger)
-	{
-		const char * settingName = setting.getName().c_str();
-		void* buf = malloc(setting.getDataSize() * sizeof(uint8_t));
-	
-		if (fPreferences)
-		{
-			size_t len = fPreferences->getBytes(settingName, buf, setting.getDataSize());
-
-			if (len)
-				setting.update((uint8_t*)buf, len);
-		}
-	}
-#endif
 }
 
 uint8_t Settingator::AddSetting(Setting::Type type, void* data_ptr, size_t data_size, const char* name, std::function<void()> callback)
@@ -444,18 +382,6 @@ Setting* Settingator::GetSettingByRef(uint8_t ref)
 
 void Settingator::SavePreferences()
 {
-#if defined(ARDUINO)
-	if (fPreferences)
-	{
-		for (auto i = fSettingVector.begin(); i != fSettingVector.end(); i++)
-		{
-			if (i->getType() != Setting::Type::Trigger)
-			{
-				fPreferences->putBytes(i->getName().c_str(), i->getDataPtr(), i->getDataSize());
-			}
-		}
-	}
-#endif
 }
 
 void Settingator::StartEspNowInitBroadcasted()
@@ -495,19 +421,8 @@ void Settingator::StopEspNowInitBroadcasted()
 
 void Settingator::begin()
 {
-#if defined(ARDUINO)
-	if (fPreferences)
-		fPreferences->end();
-#endif
-
-#if defined(ARDUINO)
-	fPreferences = new Preferences();
-	//fPreferences->begin("settingator", false);
-
-#elif defined(ESP_PLATFORM)
 	if (esp_task_wdt_status(nullptr) == ESP_ERR_NOT_FOUND)
 		ESP_ERROR_CHECK(esp_task_wdt_add(nullptr));
-#endif
 
 	InitNetworkHID();
 }

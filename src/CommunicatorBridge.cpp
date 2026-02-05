@@ -6,17 +6,10 @@
 #include <type_traits>
 #include <variant>
 #include "MiscDef.h"
-
-#if defined(ARDUINO)
-#include <WiFi.h>
-
-#elif defined(ESP_PLATFORM)
 #include <stdlib.h>
 #include <cstring>
 #include <esp_log.h>
 #include "esp_task_wdt.h"
-
-#endif
 
 const char* tag("CTRBridge");
 
@@ -224,7 +217,7 @@ void CTRBridge::Update()
 
 void CTRBridge::StartEspNowInitBroadcasted()
 {
-	ESPNowCore::CreateInstance();
+	ESPNowCore::GetInstance();
 	initEspNowBroadcasted = true;
 }
 
@@ -373,9 +366,8 @@ void CTRBridge::_treatSettingInit(Message& msg, Slave& slave)
 
 void CTRBridge::HandleLinkInfo()
 {
-	if (!fShouldSendLinkInfo || !espNowCore || !masterCTR.index())
+	if (!fShouldSendLinkInfo || !masterCTR.index())
 		return;
-
 
 	uint8_t nbCTR = 0;
 
@@ -395,7 +387,7 @@ void CTRBridge::HandleLinkInfo()
 	msgBuffer[4] = Message::Type::LinkInfo;
 	msgBuffer[5] = nbCTR;
 
-	memcpy(msgBuffer + 6, espNowCore->GetMac(), 6);
+	// memcpy(msgBuffer + 6, ESPNowCore::GetInstance().GetMac(), 6);
 
 	uint16_t bufIndex = 12;
 	for (auto& slave : slaves)
