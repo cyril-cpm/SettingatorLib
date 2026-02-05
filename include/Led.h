@@ -75,7 +75,7 @@ class Led
 {
     private:
 
-    std::vector<Strip*> fStrip;
+    std::vector<Strip> fStrip;
 
     public:
     void addLeds(gpio_num_t ledPin, RGB* data, size_t dataSize);

@@ -23,9 +23,13 @@ void Settingator::StartWiFi()
 
 }
 
-Settingator::Settingator(ICTR_t communicator)
+Settingator::Settingator(ICTR_t&& communicator) :
+#if defined (STR_BRIDGE_HID)
+fInfoLED(0, 255, 0),
+fInfoLEDStrip(NET_HID_LED_PIN, &fInfoLED, 1)
+#endif
 {
-	masterCTR = communicator;
+	masterCTR = std::move(communicator);
 }
 
 Settingator::~Settingator()
@@ -35,8 +39,7 @@ Settingator::~Settingator()
 
 void Settingator::SetNetLed(uint8_t r, uint8_t g, uint8_t b)
 {
-	if (fInfoLED)
-		*fInfoLED = RGB(r, g, b);
+	fInfoLED = RGB(r, g, b);
 }
 
 void Settingator::ESPNowBroadcastPing()
@@ -127,8 +130,8 @@ void Settingator::InitNetworkHID()
 
 	ESP_ERROR_CHECK(gpio_isr_handler_add(BRIDGE_ACTIVATION_PIN, bridgeActivationInterruptHandler, NULL));
 	ESP_ERROR_CHECK(gpio_set_intr_type(BRIDGE_ACTIVATION_PIN, GPIO_INTR_POSEDGE));
-	fInfoLED = new RGB(0, 255, 0);
-	fInfoLEDStrip = new Strip(NET_HID_LED_PIN, fInfoLED, 1);
+	// fInfoLED =  RGB(0, 255, 0);
+	// fInfoLEDStrip = Strip(NET_HID_LED_PIN, &fInfoLED, 1);
 #endif
 }
 
@@ -148,7 +151,7 @@ void Settingator::Update()
 			if (!fSlaveID && msg && msg->GetType() == Message::Type::InitRequest)
 				_createSlaveID(msg->GetSlaveID());
 
-			if (fSlaveID && msg && *fSlaveID == msg->GetSlaveID())
+			if (msg && fSlaveID == msg->GetSlaveID())
 			{
 				auto msgType = msg->GetType();
 	
@@ -224,8 +227,9 @@ void Settingator::Update()
 		fShouldESPNowBroadcastPing = false;
 	}
 
-	if (fInfoLEDStrip)
-		fInfoLEDStrip->Show();
+#if defined(STR_BRIDGE_HID)
+	fInfoLEDStrip.Show();
+#endif
 }
 
 void Settingator::AddSetting(Setting& setting)
@@ -236,19 +240,6 @@ void Settingator::AddSetting(Setting& setting)
 uint8_t Settingator::AddSetting(Setting::Type type, void* data_ptr, size_t data_size, const char* name, std::function<void()> callback)
 {
 	fSettingVector.push_back(Setting(type, data_ptr, data_size, name, callback, fInternalRefCount++));
-
-	/*if (type != Setting::Type::Trigger)
-	{
-		void* buf = malloc(data_size * sizeof(uint8_t));
-		size_t len = fPreferences->getBytes(name, buf, data_size);
-
-		Setting* setting = GetSettingByRef(fInternalRefCount-1);
-
-		if (setting && len)
-		{
-			setting->update((uint8_t*)buf, len);
-		}
-	}*/
 
 	return(fInternalRefCount-1);
 }
@@ -299,7 +290,7 @@ void Settingator::SendNotif(uint8_t notifByte)
 						Message::Frame::Start,
 						0,
 						7,
-						*fSlaveID,
+						fSlaveID,
 						Message::Type::Notif,
 						notifByte,
 						Message::Frame::End
@@ -334,7 +325,7 @@ void Settingator::SendDirectSettingUpdate(uint8_t settingRef, uint8_t* value, ui
 
 void Settingator::AddNotifCallback(void(*callback)(), uint8_t notifByte)
 {
-	fNotifCallback.push_back(new notifCallback(callback, notifByte));
+	fNotifCallback.push_back(notifCallback(callback, notifByte));
 }
 
 Message Settingator::_buildSettingInitMessage()
@@ -350,7 +341,7 @@ Message Settingator::_buildSettingInitMessage()
 	requestBuffer[0] = Message::Frame::Start;
 	requestBuffer[1] = initRequestSize >> 8;
 	requestBuffer[2] = initRequestSize;
-	requestBuffer[3] = *fSlaveID;
+	requestBuffer[3] = fSlaveID;
 	requestBuffer[4] = Message::Type::SettingInit;
 	requestBuffer[5] = fSettingVector.size();
 
@@ -429,9 +420,7 @@ void Settingator::begin()
 
 void Settingator::_createSlaveID(uint8_t slaveID)
 {
-	fSlaveID = new uint8_t;
-	if (fSlaveID)
-		*fSlaveID = slaveID;
+	fSlaveID = slaveID;
 }
 
 void Settingator::_sendInitMessage()
@@ -514,13 +503,13 @@ void Settingator::_configEspNowDirectSettingUpdate(Message& msg)
 
 void Settingator::_treatNotifMessage(Message& msg)
 {
-	auto buffer = msg.GetBufPtr();
-	auto notifByte = buffer[5];
+	uint8_t* buffer = msg.GetBufPtr();
+	uint8_t notifByte = buffer[5];
 
-	for (notifCallback* cb : fNotifCallback)
+	for (notifCallback& cb : fNotifCallback)
 	{
-		if (cb->notifByte == notifByte)
-			cb->callback();
+		if (cb.notifByte == notifByte)
+			cb.callback();
 	}
 }
 

@@ -10,13 +10,12 @@ class Message;
 
 struct espNowMsg {
     espNowMsg(const uint8_t* inData, int inLen, uint32_t inTimestamp = 0, int8_t inNoiseFloor = 0, int8_t inRssi = 0);
-    ~espNowMsg();
 
-    uint8_t*    data = nullptr;
-    int         len = 0;
-    uint32_t    timestamp = 0;
-    int8_t      noiseFloor = 0;
-    int8_t      rssi = 0;
+	std::vector<uint8_t>	data;
+    int						len = 0;
+    uint32_t				timestamp = 0;
+    int8_t					noiseFloor = 0;
+    int8_t					rssi = 0;
 };
 
 struct espNowDirectNotif {
@@ -101,17 +100,19 @@ class ESPNowCTR: public ICTR
 
 	ESPNowCTR() = default;
 
-    void _bufferizeMessage(espNowMsg* msg);
+    void _bufferizeMessage(espNowMsg& msg);
 
-    uint8_t*    fMessageBuffer = nullptr;
-    uint16_t    fMessageBufferSize = 0;
+	std::vector<uint8_t>    fMessageBuffer;
+    uint16_t    			fMessageBufferSize = 0;
 
-    uint8_t*    fMac = nullptr;
+    uint8_t*    			fMac = nullptr;
 
-    std::vector<espNowDirectNotif*> fDirectNotif;
-    std::vector<espNowDirectSettingUpdate*> fDirectSettingUpdate;
+    std::vector<espNowDirectNotif> fDirectNotif;
+    std::vector<espNowDirectSettingUpdate> fDirectSettingUpdate;
 
     static std::vector<ESPNowCTR*>          fCTRList;
+
+	std::queue<espNowMsg>	fMsgList;
 
     uint32_t    fLastMsgTimestamp = 0;
     int8_t      fLastMsgRssi = 0;

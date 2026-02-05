@@ -66,7 +66,7 @@ size_t Setting::getInitRequestSize()
     return bufferSize;
 }
 
-Message Setting::buildUpdateMessage(uint8_t* slaveID)
+Message Setting::buildUpdateMessage(uint8_t slaveID)
 {
     size_t messageLength = 8 + fDataSize;
 
@@ -78,7 +78,7 @@ Message Setting::buildUpdateMessage(uint8_t* slaveID)
     buffer[2] = messageLength;
 
     if (slaveID)
-        buffer[3] = *slaveID;
+        buffer[3] = slaveID;
     else
         buffer[3] = 0;
 

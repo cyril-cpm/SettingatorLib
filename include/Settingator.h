@@ -33,7 +33,7 @@ class Settingator
 
     //static Settingator* CreateWSComWithHTTPServerWiFiSettingator();
 
-    Settingator(ICTR_t communicator);
+    Settingator(ICTR_t&& communicator);
     ~Settingator();
 
     void Update();
@@ -64,7 +64,7 @@ class Settingator
 
     uint8_t                 fInternalRefCount = 0;
     std::vector<Setting>    fSettingVector;
-    
+
     void        _sendInitMessage();
     void        _treatSettingUpdateMessage(Message& msg);
     void        _configEspNowDirectNotif(Message& msg);
@@ -74,21 +74,21 @@ class Settingator
     void        _removeDirectSettingUpdateConfig(Message& msg);
 
     Message    _buildSettingInitMessage();
-    
-    Preferences*            fPreferences;
 
-    uint8_t*                fSlaveID = nullptr;
+    uint8_t                fSlaveID = 0;
 
     void        _createSlaveID(uint8_t slaveID);
 
-    std::vector<notifCallback*> fNotifCallback;
+    std::vector<notifCallback> fNotifCallback;
 
 	std::optional<CTRBridge>  fBridge;
 
+#if defined(STR_BRIDGE_HID)
     uint8_t     fBroadcastButtonPin = 32;
-    uint8_t     fBridgeActivationButtonPin = 33;
-    RGB*        fInfoLED = nullptr;
-    Strip*      fInfoLEDStrip = nullptr;
+    uint8_t		fBridgeActivationButtonPin = 33;
+    RGB			fInfoLED;
+    Strip		fInfoLEDStrip;
+#endif
 
     bool        fShouldStartEspNowInitBroadcasted = false;
     bool        fShouldStopEspNowInitBroadcasted = false;
