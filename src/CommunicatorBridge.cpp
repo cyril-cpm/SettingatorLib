@@ -11,7 +11,7 @@
 #include <esp_log.h>
 #include "esp_task_wdt.h"
 
-const char* tag("CTRBridge");
+static const char* tag("CTRBridge");
 
 CTRBridge CTRBridge::CreateInstance(ICTR_t master)
 {
@@ -71,10 +71,12 @@ void CTRBridge::Update()
 	// LECTURE DES MESSAGES DU MASTER //
 	if (masterCTR.index() && ICTR_T_AVAILABLE(masterCTR))
 	{
+		LOG("Message Availlable from master");
 		Message* msg = ICTR_T_READ(masterCTR);
 
 		if (msg)
 		{
+			LOG("Message retreived");
 #if defined(ARDUINO)
 			Serial.println("A message has been read");
 #elif defined(ESP_PLATFORM)
@@ -119,20 +121,20 @@ void CTRBridge::Update()
 
 					else if (msg->GetType() == Message::Type::InitRequest && !slavesWaitingForID.empty())
 					{
+						LOG("InitRequest");
 						Slave slave = std::move(slavesWaitingForID.front());
 
 						if (slave.GetID() == 0)
 						{
+							LOG("Attributing ID %d to slave", msg->GetSlaveID());
 							slave.SetID(msg->GetSlaveID());
-							slaves.push_back(slave);
+							slaves.push_back(std::move(slave));
 						}
-						else
-						{
-							slave.AddSubSlave(msg->GetSlaveID());
-						}
+
 						slavesWaitingForID.pop();
 						slaveCTR = slave.GetCTR();
 
+						LOG("Transmitting Message");
 						if (slaveCTR)
 							ICTR_T_WRITE(*slaveCTR, msg, *msg);
 					}
@@ -164,13 +166,17 @@ void CTRBridge::Update()
 							break;
 
 						case Message::Type::SlaveIDRequest:
-							slavesWaitingForID.push(slave);
+							// slavesWaitingForID.push(slave); looks broken
 							break;
 						default:
 						break;
 						}
 					if (msg->GetType() != Message::Type::EspNowPong)
+					{
+						LOG("transmitting message to maste");
+						LOG_BUFFER_HEX(msg->GetBufPtr(), msg->GetLength());
 						ICTR_T_WRITE(masterCTR, msg, *msg);
+					}
 				}
 				ICTR_T_FLUSH(*slaveCTR);
 			}
@@ -217,6 +223,7 @@ void CTRBridge::Update()
 
 void CTRBridge::StartEspNowInitBroadcasted()
 {
+	LOG("StartEspNowInitBroadcasted");
 	ESPNowCore::GetInstance();
 	initEspNowBroadcasted = true;
 }
@@ -237,7 +244,7 @@ void CTRBridge::_configDirectNotif(Message& msg)
 
 	uint16_t configBufferLength = 14;
 
-	uint8_t* configBuffer = (uint8_t*)malloc(sizeof(uint8_t) * configBufferLength);
+	uint8_t* configBuffer = (uint8_t*)mlalloc(sizeof(uint8_t) * configBufferLength);
 
 	configBuffer[0] = Message::Frame::Start;
 	configBuffer[1] = 0;
@@ -276,7 +283,7 @@ void CTRBridge::_configDirectSettingUpdate(Message& msg)
 
 	uint16_t configBufferLength = 15;
 
-	uint8_t* configBuffer = (uint8_t*)malloc(sizeof(uint8_t) * configBufferLength);
+	uint8_t* configBuffer = (uint8_t*)mlalloc(sizeof(uint8_t) * configBufferLength);
 
 	configBuffer[0] = Message::Frame::Start;
 	configBuffer[1] = 0;
@@ -307,34 +314,8 @@ void CTRBridge::_configDirectSettingUpdate(Message& msg)
 
 void CTRBridge::_removeDirectMessageConfig(Message& msg, uint8_t messageType)
 {
-	uint8_t* buffer = nullptr;
-
-	if (!(buffer = msg.GetBufPtr()))
-		return;
-
-	uint8_t srcSlaveID = msg.GetSlaveID();
-	uint8_t dstSlaveID = buffer[5];
-	uint8_t configID = buffer[6];
-
-	uint16_t configBufferLength = 8;
-
-	uint8_t* configBuffer = (uint8_t*) malloc(sizeof(uint8_t) * configBufferLength);
-
-	configBuffer[0] = Message::Frame::Start;
-	configBuffer[1] = 0;
-	configBuffer[2] = configBufferLength;
-	configBuffer[3] = srcSlaveID;
-	configBuffer[4] = messageType;
-	configBuffer[5] = dstSlaveID;
-	configBuffer[6] = configID;
-	configBuffer[7] = Message::Frame::End;
-
-	Message configMsg = Message(configBuffer, configBufferLength);
-
-	if (Slave::GetSlaveCTR(srcSlaveID))
-		ICTR_T_WRITE(*Slave::GetSlaveCTR(srcSlaveID), &configMsg, configMsg);
-
-	free(configBuffer);
+	if (Slave::GetSlaveCTR(msg.GetSlaveID()))
+		ICTR_T_WRITE(*Slave::GetSlaveCTR(msg.GetSlaveID()), &msg, msg);
 }
 
 void CTRBridge::_reinitSlaves()
@@ -355,6 +336,7 @@ void CTRBridge::_reinitSlaves()
 
 void CTRBridge::_treatSettingInit(Message& msg, Slave& slave)
 {
+	LOG("Init Setting from slave %d:", msg.GetSlaveID());
 	uint8_t msgSlaveID = msg.GetSlaveID();
 
 	if (msgSlaveID == slave.GetID())

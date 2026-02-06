@@ -21,9 +21,7 @@ class UARTCTR: public ICTR
     UARTCTR(int baudrate);
 	UARTCTR() = default;
 
-    void            _removeBufferBeginBytes(size_t numberBytes);
-
-    uint8_t*        fUartBuffer = nullptr;
+	std::vector<uint8_t>	fUartBuffer;
     size_t          fUartBufferSize = 0;
     uart_port_t     fUartPort = UART_NUM_0;
 

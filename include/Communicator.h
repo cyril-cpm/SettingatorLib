@@ -5,10 +5,12 @@
 #include <queue>
 #include <variant>
 #include "Message.h"
+#include "MiscDef.h"
 #include <mutex>
 
 extern std::mutex newSlavesCTRMutex;
 extern std::mutex reconnectedSlavesMutex;
+
 
 class ICTR
 {
@@ -33,10 +35,16 @@ class ICTR
 	- Write Buffer to communicator
 	*/
 	int Write(this auto&& self, Message& buf) {
+		// static const char* tag("CTR");
+		// LOG("Write:");
+		// LOG_BUFFER_HEX(buf.GetBufPtr(), buf.GetLength())
 		return self.WriteImpl(buf);
 	}
 
 	int Write(this auto&& self, Message&& buf) {
+		// static const char* tag("CTR");
+		// LOG("Write:");
+		// LOG_BUFFER_HEX(buf.GetBufPtr(), buf.GetLength())
 		return self.WriteImpl(buf);
 	}
 
@@ -79,7 +87,7 @@ class ICTR
 	
 	ICTR() = default;
 
-	void _receive(Message msg);
+	void _receive(Message&& msg);
 
 	std::queue<Message> fReceivedMessage;
 

@@ -50,8 +50,11 @@ class Settingator
     void StartEspNowInitBroadcasted();
     void StopEspNowInitBroadcasted();
     void ESPNowBroadcastPing();
+
+#if defined(STR_BRIDGE_HID)
     void InitNetworkHID();
     void SetNetLed(uint8_t r, uint8_t g, uint8_t b);
+#endif
     
     Setting*    GetSettingByRef(uint8_t ref);
 

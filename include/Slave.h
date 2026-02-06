@@ -37,10 +37,9 @@ using ICTR_t = std::variant<std::monostate, UARTCTR, ESPNowCTR>;
 		OK \
 		KO
 
-#define ESPNOWCTR_GET_MAC(CTR) std::visit([](auto&& ctr) -> const uint8_t* { \
-		IS_TYPE_CHECK(ctr, ESPNowCTR, return ctr.GetMac();, return nullptr;) \
+#define ESPNOWCTR_GET_MAC(CTR) std::visit([](ESPNowCTR&& ctr) -> const std::array<uint8_t, 6>& { \
+		return ctr.GetMac(); \
 	}, CTR)
-
 
 class Slave
 {
@@ -48,7 +47,7 @@ class Slave
     Slave(ICTR_t&& ctr);
 
     static ICTR_t* GetSlaveCTR(uint8_t slaveID);
-	static Slave*	GetSlaveForMac(const uint8_t* mac);
+	static Slave*	GetSlaveForMac(const std::array<uint8_t, 6>& mac);
 
     ICTR_t*		GetCTR();
     uint8_t 	GetID();

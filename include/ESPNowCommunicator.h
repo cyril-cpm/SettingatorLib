@@ -5,6 +5,7 @@
 #include <esp_now.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/timers.h"
+#include <array>
 
 class Message;
 
@@ -19,19 +20,17 @@ struct espNowMsg {
 };
 
 struct espNowDirectNotif {
-    espNowDirectNotif(const uint8_t* inMac, uint8_t inNotifByte, uint8_t inDstSlaveID);
-    ~espNowDirectNotif();
+    espNowDirectNotif(const std::array<uint8_t, 6>& inMac, uint8_t inNotifByte, uint8_t inDstSlaveID);
 
-    uint8_t*    mac = nullptr;
+	std::array<uint8_t, 6>    mac;
     uint8_t     notifByte = 0;
     uint8_t     dstSlaveID = 0;
 };
 
 struct espNowDirectSettingUpdate {
-    espNowDirectSettingUpdate(const uint8_t* inMac, uint8_t inSettingRef, uint8_t inDstSlaveID, uint8_t inValueLen);
-    ~espNowDirectSettingUpdate();
+    espNowDirectSettingUpdate(const std::array<uint8_t, 6>& inMac, uint8_t inSettingRef, uint8_t inDstSlaveID, uint8_t inValueLen);
 
-    uint8_t*    mac = nullptr;
+	std::array<uint8_t, 6>    mac;
     uint8_t     settingRef = 0;
     uint8_t     dstSlaveID = 0;
     uint8_t     valueLen = 0;
@@ -42,11 +41,11 @@ class ESPNowCore
     public:
     static ESPNowCore&  GetInstance();
 
-    int     Write(Message&& buf, uint8_t* dstMac);
+    int     Write(Message&& buf, const std::array<uint8_t, 6>& dstMac);
     void    Update();
-    void    AddPeer(uint8_t* peerMac);
+    void    AddPeer(const std::array<uint8_t, 6>& peerMac);
     void    BroadcastPing();
-    const uint8_t*    GetMac() const;
+    const std::array<uint8_t, 6>&    GetMac() const;
     void    CreateLinkInfoTimer();
     void    HandleLinkInfo();
     void    shouldsendlinkinfo(bool should = true);
@@ -56,23 +55,23 @@ class ESPNowCore
     private:
     ESPNowCore();
 
-    uint8_t fMac[6];
-    TimerHandle_t       fLinkInfoTimer = nullptr;
-    uint32_t            fEspNowVersion = 0;
+	std::array<uint8_t, 6>	fMac;
+    TimerHandle_t			fLinkInfoTimer = nullptr;
+    uint32_t				fEspNowVersion = 0;
 };
 
 class ESPNowCTR: public ICTR
 {
     public:
 
-    static ESPNowCTR   CreateInstanceWithMac(const uint8_t* mac, const bool createTimer = false);
+    static ESPNowCTR   CreateInstanceWithMac(const std::array<uint8_t, 6>& mac, const bool createTimer = false);
 
     int         WriteImpl(Message& buf);
     void        UpdateImpl();
 
-    void ConfigEspNowDirectNotif(uint8_t* mac, uint8_t notifByte, uint8_t dstSlaveID);
+    void ConfigEspNowDirectNotif(const std::array<uint8_t, 6>& mac, uint8_t notifByte, uint8_t dstSlaveID);
 
-    void ConfigEspNowDirectSettingUpdate(uint8_t* mac, uint8_t settingRef, uint8_t settingValueLen, uint8_t dstSlaveID);
+    void ConfigEspNowDirectSettingUpdate(const std::array<uint8_t, 6>& mac, uint8_t settingRef, uint8_t settingValueLen, uint8_t dstSlaveID);
  
     void RemoveDirectNotifConfig(uint8_t dstSlaveID, uint8_t notifByte);
 
@@ -82,7 +81,7 @@ class ESPNowCTR: public ICTR
 
     void SendDirectSettingUpdate(uint8_t settingRef, uint8_t* value, uint8_t valueLen);
 
-	static ESPNowCTR*	GetCTRForMac(const uint8_t* mac);
+	static ESPNowCTR*	GetCTRForMac(const std::array<uint8_t, 6>& mac);
 
 	uint16_t	GetLinkInfoSize() const;
 
@@ -91,28 +90,21 @@ class ESPNowCTR: public ICTR
     void        SendPing();
     void        SendPong();
 
-    const uint8_t*  GetMac() const;
+    const std::array<uint8_t, 6>&  GetMac() const;
 
     void            ShouldSendPing(bool should = true);
 
     private:
-    ESPNowCTR(const uint8_t* mac = nullptr, const bool createTimer = false);
+    ESPNowCTR(const std::array<uint8_t, 6>& mac, const bool createTimer = false);
 
 	ESPNowCTR() = default;
 
-    void _bufferizeMessage(espNowMsg& msg);
-
-	std::vector<uint8_t>    fMessageBuffer;
-    uint16_t    			fMessageBufferSize = 0;
-
-    uint8_t*    			fMac = nullptr;
+	std::array<uint8_t, 6>	fMac;
 
     std::vector<espNowDirectNotif> fDirectNotif;
     std::vector<espNowDirectSettingUpdate> fDirectSettingUpdate;
 
     static std::vector<ESPNowCTR*>          fCTRList;
-
-	std::queue<espNowMsg>	fMsgList;
 
     uint32_t    fLastMsgTimestamp = 0;
     int8_t      fLastMsgRssi = 0;

@@ -23,19 +23,15 @@ ICTR_t* Slave::GetSlaveCTR(uint8_t slaveID)
     return nullptr;
 }
 
-Slave* Slave::GetSlaveForMac(const uint8_t *mac)
+Slave* Slave::GetSlaveForMac(const std::array<uint8_t, 6>& mac)
 {
 	for (auto& slave : slaves)
 	{
-		if (compareMac(mac, ESPNOWCTR_GET_MAC(*(slave.GetCTR()))))
+		ESPNowCTR* ctr = std::get_if<ESPNowCTR>(slave.GetCTR());
+		if (ctr && mac == ctr->GetMac())
 			return &slave;
 	}
 
-	// for (const auto& slave : slavesWaitingForID)
-	// {
-	// 	if (compareMac(mac, EPSNOWCTR_GET_MAC(*(slave->GetCTR()))))
-	// 		return slave;
-	// }
 	return nullptr;
 }
 

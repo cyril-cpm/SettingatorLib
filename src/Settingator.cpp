@@ -23,8 +23,9 @@ void Settingator::StartWiFi()
 
 }
 
-Settingator::Settingator(ICTR_t&& communicator) :
+Settingator::Settingator(ICTR_t&& communicator)
 #if defined (STR_BRIDGE_HID)
+	:
 fInfoLED(0, 255, 0),
 fInfoLEDStrip(NET_HID_LED_PIN, &fInfoLED, 1)
 #endif
@@ -37,10 +38,12 @@ Settingator::~Settingator()
 
 }
 
+#if (STR_BDRIDGE_HID)
 void Settingator::SetNetLed(uint8_t r, uint8_t g, uint8_t b)
 {
 	fInfoLED = RGB(r, g, b);
 }
+#endif
 
 void Settingator::ESPNowBroadcastPing()
 {
@@ -90,9 +93,9 @@ static void IRAM_ATTR bridgeActivationInterruptHandler(void* arg)
 #pragma message("No Bridge HID")
 #endif
 
+#if defined(STR_BRIDGE_HID)
 void Settingator::InitNetworkHID()
 {
-#if defined(STR_BRIDGE_HID)
 	// TIMER //
 	esp_timer_create_args_t timer_args = {
 		.callback = debounceTimerBroadcastCallback,
@@ -132,8 +135,8 @@ void Settingator::InitNetworkHID()
 	ESP_ERROR_CHECK(gpio_set_intr_type(BRIDGE_ACTIVATION_PIN, GPIO_INTR_POSEDGE));
 	// fInfoLED =  RGB(0, 255, 0);
 	// fInfoLEDStrip = Strip(NET_HID_LED_PIN, &fInfoLED, 1);
-#endif
 }
+#endif
 
 void Settingator::SetCommunicator(ICTR_t communicator)
 {
@@ -389,7 +392,9 @@ void Settingator::StartEspNowInitBroadcasted()
 		if (fBridge)
 		{
 			fBridge->StartEspNowInitBroadcasted();
+#if defined(STR_BRIDGE_HID)
 			SetNetLed(0, 0, 255);
+#endif
 		}
 	}
 }
@@ -405,7 +410,9 @@ void Settingator::StopEspNowInitBroadcasted()
 		if (fBridge)
 		{
 			fBridge->StopEspNowInitBroadcasted();
+#if defined(STR_BRIDGE_HID)
 			SetNetLed(0, 255, 0);
+#endif
 		}
 	}
 }
@@ -415,7 +422,9 @@ void Settingator::begin()
 	if (esp_task_wdt_status(nullptr) == ESP_ERR_NOT_FOUND)
 		ESP_ERROR_CHECK(esp_task_wdt_add(nullptr));
 
+#if defined(STR_BRIDGE_HID)
 	InitNetworkHID();
+#endif
 }
 
 void Settingator::_createSlaveID(uint8_t slaveID)
@@ -475,30 +484,30 @@ void Settingator::_treatSettingUpdateMessage(Message& msg)
 
 void Settingator::_configEspNowDirectNotif(Message& msg)
 {
-	std::visit([&msg](auto&& ctr) {
-
-			using T = std::decay_t<decltype(ctr)>;
-
-			if constexpr (!std::is_same_v<T, std::monostate>)
-			{
-				uint8_t* buffer = msg.GetBufPtr();
-				ctr.ConfigEspNowDirectNotif(&buffer[6], buffer[16], buffer[5]);
-			}
-		}, masterCTR);
+	// std::visit([&msg](auto&& ctr) {
+	//
+	// 		using T = std::decay_t<decltype(ctr)>;
+	//
+	// 		if constexpr (!std::is_same_v<T, std::monostate>)
+	// 		{
+	// 			uint8_t* buffer = msg.GetBufPtr();
+	// 			ctr.ConfigEspNowDirectNotif(&buffer[6], msg[16], msg[5]);
+	// 		}
+	// 	}, masterCTR);
 }
 
 void Settingator::_configEspNowDirectSettingUpdate(Message& msg)
 {
-	std::visit([&msg](auto&& ctr) {
-
-			using T = std::decay_t<decltype(ctr)>;
-
-			if constexpr (!std::is_same_v<T, std::monostate>)
-			{
-				uint8_t* buffer = msg.GetBufPtr();
-				ctr.ConfigEspNowDirectSettingUpdate(&buffer[6], buffer[12], buffer[13], buffer[5]);
-			}
-		}, masterCTR);
+	// std::visit([&msg](auto&& ctr) {
+	//
+	// 		using T = std::decay_t<decltype(ctr)>;
+	//
+	// 		if constexpr (!std::is_same_v<T, std::monostate>)
+	// 		{
+	// 			uint8_t* buffer = msg.GetBufPtr();
+	// 			ctr.ConfigEspNowDirectSettingUpdate(&buffer[6], buffer[12], buffer[13], buffer[5]);
+	// 		}
+	// 	}, masterCTR);
 }
 
 void Settingator::_treatNotifMessage(Message& msg)

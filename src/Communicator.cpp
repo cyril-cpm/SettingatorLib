@@ -10,9 +10,9 @@ std::mutex reconnectedSlavesMutex;
 
 bool initEspNowBroadcasted = false;
 
-void ICTR::_receive(Message msg)
+void ICTR::_receive(Message&& msg)
 {
-	fReceivedMessage.push(msg);
+	fReceivedMessage.push(std::move(msg));
 }
 
 void ICTR::ConfigEspNowDirectNotif(uint8_t* mac, uint8_t notifByte, uint8_t dstSlaveID)
