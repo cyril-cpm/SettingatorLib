@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Message.h"
+#include <initializer_list>
 #include <sys/_stdint.h>
 #include <queue>
 #include <variant>
@@ -23,6 +24,8 @@ class ICTR
 		UNKNOWN = 0xFF
 	};
 
+	ICTR(CORE_t& core) : fCore(core) {}
+
 	/*
 	- return true if there is bytes available to read
 	*/
@@ -34,18 +37,18 @@ class ICTR
 	/*
 	- Write Buffer to communicator
 	*/
-	int Write(this auto&& self, Message& buf) {
+	int Write(std::initializer_list<uint8_t> message) {
 		// static const char* tag("CTR");
 		// LOG("Write:");
 		// LOG_BUFFER_HEX(buf.GetBufPtr(), buf.GetLength())
-		return self.WriteImpl(buf);
+		return fCore.Write(message);
 	}
 
-	int Write(this auto&& self, Message&& buf) {
+	int Write() {
 		// static const char* tag("CTR");
 		// LOG("Write:");
 		// LOG_BUFFER_HEX(buf.GetBufPtr(), buf.GetLength())
-		return self.WriteImpl(buf);
+		return fCore.Write();
 	}
 
 	/*
@@ -85,11 +88,13 @@ class ICTR
 
 	protected:
 	
-	ICTR() = default;
+	ICTR() = delete;
 
 	void _receive(Message&& msg);
 
 	std::queue<Message> fReceivedMessage;
+
+	CORE_t&		fCore;
 
 };
 

@@ -9,44 +9,6 @@
 
 static const char* tag("UARTCTR");
 
-UARTCTR UARTCTR::CreateInstance(int baudrate)
-{
-	return UARTCTR(baudrate);
-}
-
-UARTCTR::UARTCTR(int baudrate)
-{
-	uart_config_t uartConfig = {
-		.baud_rate = baudrate,
-		.data_bits = UART_DATA_8_BITS,
-		.parity = UART_PARITY_DISABLE,
-		.stop_bits = UART_STOP_BITS_1,
-		.flow_ctrl = UART_HW_FLOWCTRL_DISABLE,
-		.rx_flow_ctrl_thresh = 0,
-	};
-
-	auto err = uart_set_pin(fUartPort, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE,
-		UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
-
-	// if (err != ESP_OK)
-
-	ESP_ERROR_CHECK(uart_param_config(fUartPort, &uartConfig));
-
-	ESP_ERROR_CHECK(uart_driver_install(fUartPort, fRxBufferSize, fTxBufferSize,
-										0, nullptr, 0));
-}
-
-int UARTCTR::WriteImpl(Message& buf)
-{
-	esp_err_t err = uart_write_bytes(fUartPort, buf.GetBufPtr(), buf.GetLength());
-
-	if (err == ESP_FAIL)
-	{
-	}
-
-	return 0;
-}
-
 void UARTCTR::UpdateImpl()
 {
 	size_t bufferDataLen = 0;

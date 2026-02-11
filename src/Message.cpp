@@ -42,28 +42,6 @@ Message Message::BuildReInitSlaveMessage()
 	});
 }
 
-uint16_t Message::GetLength()
-{
-	return fBuffer.size();
-}
-
-uint8_t* Message::GetBufPtr()
-{
-	if (fBuffer.size())
-		return fBuffer.data();
-	else
-		return nullptr;
-}
-
-void Message::_initMessageFromBuffer()
-{
-	if (fBuffer.size() < 4)
-		return;
-
-	fType = (Type)fBuffer[4];
-	fSlaveID = fBuffer[3];
-}
-
 uint16_t Message::ExtractSettingUpdate(uint8_t &ref, uint8_t &newValueLen, uint8_t **newValue, uint16_t settingIndex)
 {
 	//Serial.println("Extracting Setting Update message");
@@ -86,15 +64,3 @@ uint16_t Message::ExtractSettingUpdate(uint8_t &ref, uint8_t &newValueLen, uint8
 	return (fLength - 1);
 }
 
-char* Message::ExtractSSD()
-{
-	return (char*)(fBuffer.data() + 5);
-}
-
-uint8_t Message::operator[](uint16_t index)
-{
-	if (index >= fLength)
-		index = fLength - 1;
-
-	return fBuffer[index];
-}

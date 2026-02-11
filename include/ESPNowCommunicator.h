@@ -6,6 +6,8 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/timers.h"
 #include <array>
+#include <initializer_list>
+#include "Buffer.h"
 
 class Message;
 
@@ -36,35 +38,12 @@ struct espNowDirectSettingUpdate {
     uint8_t     valueLen = 0;
 };
 
-class ESPNowCore
-{
-    public:
-    static ESPNowCore&  GetInstance();
-
-    int     Write(Message&& buf, const std::array<uint8_t, 6>& dstMac);
-    void    Update();
-    void    AddPeer(const std::array<uint8_t, 6>& peerMac);
-    void    BroadcastPing();
-    const std::array<uint8_t, 6>&    GetMac() const;
-    void    CreateLinkInfoTimer();
-    void    HandleLinkInfo();
-    void    shouldsendlinkinfo(bool should = true);
-
-    static void         receiveCallback(const esp_now_recv_info* info, const uint8_t* data, int len);
-
-    private:
-    ESPNowCore();
-
-	std::array<uint8_t, 6>	fMac;
-    TimerHandle_t			fLinkInfoTimer = nullptr;
-    uint32_t				fEspNowVersion = 0;
-};
 
 class ESPNowCTR: public ICTR
 {
     public:
 
-    static ESPNowCTR   CreateInstanceWithMac(const std::array<uint8_t, 6>& mac, const bool createTimer = false);
+    ESPNowCTR(CORE_t& core, const std::array<uint8_t, 6>& mac, const bool createTimer = false);
 
     int         WriteImpl(Message& buf);
     void        UpdateImpl();
@@ -87,17 +66,49 @@ class ESPNowCTR: public ICTR
 
 	void		WriteLinkInfoToBuffer(uint8_t* buffer) const;
 
-    void        SendPing();
-    void        SendPong();
+    void        SendPong() {
+		uint32_t deltaMs = pdTICKS_TO_MS(xTaskGetTickCount()) - fLastMsgTimestamp;
 
-    const std::array<uint8_t, 6>&  GetMac() const;
+		fCore.Write({
+			Message::Frame::Start,
+			0x00,
+			0x0C,
+			0,
+			Message::Type::EspNowPong,
+			(uint8_t)fLastMsgRssi,
+			(uint8_t)fLastMsgNoiseFloor,
+			(uint8_t)(deltaMs >> 24),
+			(uint8_t)(deltaMs >> 16),
+			(uint8_t)(deltaMs >> 8),
+			(uint8_t)(deltaMs),
+			Message::Frame::End
+		});
+	}
+
+    void        SendPing() {
+		fCore.Write({
+			Message::Frame::Start,
+			0x00,
+			0x06,
+			0,
+			Message::Type::EspNowPing,
+			Message::Frame::End
+		});
+
+		if (fPingTimer)
+			xTimerChangePeriod(fPingTimer, pdMS_TO_TICKS(2000), 0);
+	}
+
+
+    const std::array<uint8_t, 6>&  GetMac() const { return fMac; }
 
     void            ShouldSendPing(bool should = true);
 
     private:
-    ESPNowCTR(const std::array<uint8_t, 6>& mac, const bool createTimer = false);
 
 	ESPNowCTR() = default;
+
+	CORE_t&	fCore;
 
 	std::array<uint8_t, 6>	fMac;
 
