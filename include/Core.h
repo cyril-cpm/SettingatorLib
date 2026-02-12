@@ -2,6 +2,7 @@
 
 #include "Buffer.h"
 #include <cstdint>
+#include <variant>
 
 class ICore
 {
@@ -9,11 +10,15 @@ class ICore
 
 		bool		FetchNewMessage();
 
-		uint8_t		GetSlaveID() const { return fBuf[3]; }
-		uint8_t		GetMessageType() const { return fBuf[4]; }
+		uint8_t		GetSrcSlaveID() const { return fBuf[3]; }
+		uint8_t		GetDstSlaveID() const { return fBuf[4]; }
+		uint8_t		GetMessageType() const { return fBuf[5]; }
 
 	protected:
 
 		CircularBuffer fBuf;
 
 };
+
+
+

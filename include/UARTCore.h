@@ -11,6 +11,16 @@ class UARTCore : public ICore
 {
 	public:
 
+		static UARTCore& GetDefaultUARTInstance()
+		{
+			static UARTCore	instance(UART_NUM_0,
+				UART_PIN_NO_CHANGE,
+				UART_PIN_NO_CHANGE,
+				115200);
+
+			return instance;
+		}
+
 		UARTCore(uart_port_t port, int tx, int rx, int baudrate);
 
 		void Write(std::initializer_list<uint8_t> message) const {
@@ -25,13 +35,3 @@ class UARTCore : public ICore
 
 		uart_port_t		fUartPort;
 };
-
-UARTCore& GetDefaultUARTInstance()
-{
-	static UARTCore	instance(UART_NUM_0,
-			UART_PIN_NO_CHANGE,
-			UART_PIN_NO_CHANGE,
-			115200);
-
-	return instance;
-}

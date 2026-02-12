@@ -37,4 +37,5 @@ class MessageBuffer
 
 		uint16_t	fLen = 0;
 };
+
 extern MessageBuffer messageBuffer;

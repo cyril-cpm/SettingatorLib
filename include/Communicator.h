@@ -4,14 +4,18 @@
 #include <initializer_list>
 #include <sys/_stdint.h>
 #include <queue>
+#include <type_traits>
 #include <variant>
 #include "Message.h"
 #include "MiscDef.h"
+#include "UARTCore.h"
+#include "ESPNowCore.h"
 #include <mutex>
 
 extern std::mutex newSlavesCTRMutex;
 extern std::mutex reconnectedSlavesMutex;
 
+using CORE_t = std::variant<std::monostate, UARTCore, ESPNowCore>;
 
 class ICTR
 {
@@ -41,14 +45,28 @@ class ICTR
 		// static const char* tag("CTR");
 		// LOG("Write:");
 		// LOG_BUFFER_HEX(buf.GetBufPtr(), buf.GetLength())
-		return fCore.Write(message);
+		return std::visit([&message](auto&& core) -> int {
+
+				using T = std::decay_t<decltype(core)>;
+
+				if constexpr (!std::is_same_v<T, std::monostate>)
+					return core.Write(message);
+				return 0;
+			}, fCore);
 	}
 
 	int Write() {
 		// static const char* tag("CTR");
 		// LOG("Write:");
 		// LOG_BUFFER_HEX(buf.GetBufPtr(), buf.GetLength())
-		return fCore.Write();
+		return std::visit([](auto&& core) -> int {
+
+				using T = std::decay_t<decltype(core)>;
+
+				if constexpr (!std::is_same_v<T, std::monostate>)
+					return core.Write();
+				return 0;
+			}, fCore);
 	}
 
 	/*

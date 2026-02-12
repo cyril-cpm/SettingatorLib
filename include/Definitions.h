@@ -16,9 +16,10 @@
 # define UART_TX_BUFFER_SIZE 1024
 #endif
 
-
 #ifndef NB_SLAVE
 # define NB_SLAVE 10
 #endif
 
-
+#ifndef NB_CORE
+# define NB_CORE 4
+#endif

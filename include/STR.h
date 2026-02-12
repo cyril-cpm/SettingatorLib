@@ -1,23 +1,9 @@
-#ifndef _STR_
-#define _STR_
+#pragma once
 
-/**************** HELPER ********************/
+#include <variant>
+#include "ESPNowCore.h"
+#include "UARTCore.h"
 
-
-#include "Settingator.h"
-#include "WebSocketCommunicator.h"
-#include "HTTPServer.h"
+using CORE_t = std::variant<std::monostate, UARTCore, ESPNowCore>;
 
 
-#define Settingator_HELPER(X)                       X
-
-#define INIT_WS_WIFI_HTTPSERVER_SETTINGATOR()       Settingator::StartWiFi();\
-                                                    HTTPServer* Settingator_HTTPServer = new HTTPServer(8080);\
-                                                    STR.SetCommunicator(WebSocketCTR::CreateInstance());
-
-#define INIT_WS_WIFI_SETTINGATOR()                  Settingator::StartWiFi();\
-                                                    STR.SetCommunicator(WebSocketCTR::CreateInstance());
-
-#define INIT_DEFAULT_SETTINGATOR()                  INIT_WS_WIFI_HTTPSERVER_SETTINGATOR()
-
-#endif
