@@ -1,6 +1,8 @@
 #pragma once
 
 #include "Definitions.h"
+#include "esp_err.h"
+#include <cstdint>
 
 #if STR_HAS_UART
 #include <driver/uart.h>
@@ -68,6 +70,54 @@ class UARTCore : public ICore
 
 		int Write() const {
 			return uart_write_bytes(fUartPort, messageBuffer.data(), messageBuffer.len());
+		}
+
+		void Read() {
+			size_t size;
+
+			ESP_ERROR_CHECK(uart_get_buffered_data_len(fUartPort, &size));
+
+			if (!size)
+				return;
+
+			ESP_LOGI("UART", "data received");
+
+			uint16_t remaining = fBuf.GetRemainingLength();
+			uint16_t contingousRemaining = fBuf.GetContingousRemainingLength();
+
+			ESP_LOGI("UART", "%d size", size);
+			ESP_LOGI("UART", "%d remaining", remaining);
+			ESP_LOGI("UART", "%d contingous", contingousRemaining);
+
+			if (size > remaining)
+				size = remaining;
+
+			if (size <= contingousRemaining)
+			{
+				int read = uart_read_bytes(fUartPort,
+											fBuf.GetTail(),
+											size,
+											0);
+				ESP_LOGI("UARTCore", "%d bits read", read);
+				if (read >= 0)
+				{
+					fBuf.OffsetTail(read);
+					fBuf.LogContent();
+				}
+			}
+			else
+			{
+				ESP_ERROR_CHECK(uart_read_bytes(fUartPort,
+												fBuf.GetAfterTail(),
+												contingousRemaining,
+												0));
+				fBuf.OffsetTail(contingousRemaining);
+				ESP_ERROR_CHECK(uart_read_bytes(fUartPort,
+												fBuf.GetAfterTail(),
+												size - contingousRemaining,
+												0));
+				fBuf.OffsetTail(size - contingousRemaining);
+			}
 		}
 
 		void	Init();

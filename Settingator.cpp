@@ -151,7 +151,7 @@ void Settingator::Update()
 {
 	for (ICore& core : coreArray)
 	{
-		if (core.FetchNextMessage())
+		if (core.FetchMessage())
 		{
 			if (core.GetSrcSlaveID() == 0)
 			{
@@ -181,6 +181,7 @@ void Settingator::Update()
 					//bridge handling
 				}
 			}
+			core.ThrowMessage();
 		}
 
 	}

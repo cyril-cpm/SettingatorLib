@@ -57,13 +57,15 @@ void CTRBridge::Update()
 {
 	for (ICore& core : coreArray)
 	{
-		if (core.FetchNextMessage())
+		if (core.FetchMessage())
 		{
+			LOG("MSG FETCHED");
 			if (core.GetSrcSlaveID() == 0)
 			{
 				switch (core.GetMessageType())
 				{
 				case Message::Type::EspNowStartInitBroadcastedSlave:
+					LOG("START ESPNOW StartEspNowInitBroadcasted");
 					StartEspNowInitBroadcasted();
 					break;
 
@@ -132,6 +134,7 @@ void CTRBridge::Update()
 					master.Write();
 				}
 			}
+			core.ThrowMessage();
 		}
 	}
 
@@ -156,7 +159,20 @@ void CTRBridge::Update()
 						});
 		}
 	}
+
 	HandleLinkInfo();
+
+#if CONFIG_STR_UART0
+	UARTCore::GetUART0Instance().Read();
+#endif
+
+#if CONFIG_STR_UART1
+	UARTCore::GetUART1Instance().Read();
+#endif
+
+#if CONFIG_STR_UART2
+	UARTCore::GetUART2Instance().Read();
+#endif
 
 	ESP_ERROR_CHECK(esp_task_wdt_reset());
 	vTaskDelay(1);

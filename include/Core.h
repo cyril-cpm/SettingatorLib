@@ -2,6 +2,7 @@
 
 #include <esp_log.h>
 #include "Buffer.h"
+#include "Message.h"
 #include <cstdint>
 #include <type_traits>
 #include <utility>
@@ -11,9 +12,43 @@ class ICore
 {
 	public:
 
-		bool		FetchNextMessage() {
+		bool		FetchMessage() {
 			
+			uint16_t c = fBuf.GetContentLength();
+			uint16_t i = 0;
+
+			for (; i <= c && fBuf[i] != Message::Frame::Start; i++);
+
+			fBuf.OffsetHead(i);
+
+			if (i + 2 >= c)
+				return false;
+
+			uint16_t msgLength = (fBuf[1] << 8) + fBuf[2];
+
+			if (msgLength > c) 
+				return false;
+
+			if (fBuf[msgLength] != Message::Frame::End)
+			{
+				for (; i <= c && fBuf[i] != Message::Frame::Start; i++);
+
+				fBuf.OffsetHead(i);
+
+				return false;
+			}
+
+
 			return true;
+		}
+
+		void		ThrowMessage() {
+			ESP_LOGI("CORE", "ThrowMessage");
+
+			uint16_t msgLength = (fBuf[1] << 8) + fBuf[2];
+
+			fBuf.OffsetHead(msgLength);
+
 		}
 
 		uint8_t		GetSrcSlaveID() const { return fBuf[3]; }
