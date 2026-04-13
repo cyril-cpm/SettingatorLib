@@ -1,0 +1,183 @@
+menu "Settingator Config"
+
+	config STR_HAS_BRIDGE
+		bool "Has a bridge"
+		default n
+		help
+			Has a bridge
+
+	config STR_NB_SETTINGS
+		int "Number of Settings"
+		default 1
+		help
+			Number of settings
+
+	config STR_RMT_MEM_BLOCK_SYMBOLS
+		int "RMT mem block symbols"
+		default 48
+		help
+			Définit la taille des symbols RMT
+
+	config BRIDGE_TEST
+		bool "BridgeTest"
+		default n
+		help
+			Active le test du bridge
+	
+	config STR_UART0
+		bool "UART0 enabled"
+		default n
+		help
+			Enable UART0
+
+	config STR_UART0_TX_PIN
+		int "UART0 TX Pin"
+		default -1
+		help
+			TX Pin for UART0
+
+	config STR_UART0_RX_PIN
+		int "UART0 RX Pin"
+		default -1
+		help
+			RX Pin for UART0
+
+	config STR_UART0_BAUDRATE
+		int "STR_UART0_BAUDRATE"
+		default 115200
+		help
+			UART0 Baudrate
+
+	config STR_UART1
+		bool "UART1 enabled"
+		default n
+		help
+			Enable UART1
+
+	config STR_UART1_TX_PIN
+		int "UART1 TX Pin"
+		default -1
+		help
+			TX Pin for UART1
+
+	config STR_UART1_RX_PIN
+		int "UART1 RX Pin"
+		default -1
+		help
+			RX Pin for UART1
+
+	config STR_UART1_BAUDRATE
+		int "UART1 Baudrate"
+		default 115200
+		help
+			UART1 Baudrate
+
+	config STR_UART2
+		bool "UART2 enabled"
+		default n
+		help
+			Enable UART2
+
+	config STR_UART2_TX_PIN
+		int "UART2 TX Pin"
+		default -1
+		help
+			TX Pin for UART2
+
+	config STR_UART2_RX_PIN
+		int "UART2 RX Pin"
+		default -1
+		help
+			RX Pin for UART2
+
+	config STR_UART2_BAUDRATE
+		int "UART2 Baudrate"
+		default 115200
+		help
+			UART2 Baudrate
+
+	config STR_ESPNOW
+		bool "ESPNOW enabled"
+		default n
+		help
+			Enable ESPNOW
+
+	config STR_ESPNOW_CHANNEL
+		int "ESPNOW Channel"
+		default 0
+		help
+			Channel for ESPNOW
+
+	config STR_MESSAGE_BUFFER_SIZE
+		int "Message Buffer Size"
+		default 250
+		help
+			"Message Buffer Size"
+
+	config STR_CIRCULAR_BUFFER_SIZE
+		int "Circular Buffer Size"
+		default 1024
+		help
+			Circular buffer size
+
+	config STR_NB_SLAVE
+		int "Number of Slave"
+		default 10
+		help
+			Number of Slave
+
+	config STR_SLAVE_ESPNOW
+		bool "Use ESPNOW CTR in Slave"
+		default n
+		help
+			Use ESPNOW CTR in Slave
+
+	config STR_SLAVE_UART0
+		bool "Use UART0 CTR in Slave"
+		default n
+		help
+			Use UART0 CTR in Slave
+
+	config STR_SLAVE_UART1
+		bool "Use UART1 CTR in Slave"
+		default n
+		help
+			Use UART1 CTR in Slave
+
+	config STR_SLAVE_UART2
+		bool "Use UART2 CTR in Slave"
+		default n
+		help
+			Use UART2 CTR in Slave
+
+		config STR_MASTER_ESPNOW
+		bool "Use ESPNOW CTR in Master"
+		default n
+		help
+			Use ESPNOW CTR in Master
+
+	config STR_MASTER_UART0
+		bool "Use UART0 CTR in Master"
+		default n
+		help
+			Use UART0 CTR in Master
+
+	config STR_MASTER_UART1
+		bool "Use UART1 CTR in Master"
+		default n
+		help
+			Use UART1 CTR in Master
+
+	config STR_MASTER_UART2
+		bool "Use UART2 CTR in Master"
+		default n
+		help
+			Use UART2 CTR in Master
+
+config STR_NB_SUBSLAVE
+		int "Max number of subslave per Slave"
+		default 0
+		help
+			Max number of subslaves per Slave
+
+endmenu
