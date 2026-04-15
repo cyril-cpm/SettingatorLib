@@ -83,44 +83,41 @@ class CircularBuffer
 		void			CrunchGarbage() { fHead = fTail; }
 
 		void			OffsetHead(uint16_t offset) {
-			if ((fHead + offset) % CONFIG_STR_CIRCULAR_BUFFER_SIZE <= fTail)
-				fHead = (fHead + offset) % CONFIG_STR_CIRCULAR_BUFFER_SIZE;
-			else
-				fHead = fTail;
+			fHead = (fHead + offset) % CONFIG_STR_CIRCULAR_BUFFER_SIZE;
 		}
 
 		void			OffsetTail(uint16_t offset) {
-			uint16_t res = (fTail + offset) % CONFIG_STR_CIRCULAR_BUFFER_SIZE;
-
-			if (res > GetRemainingLength())
-				fTail = fHead;
-			else
-				fTail = res;
-
-			ESP_LOGI("BUFFER", "offseting tail of %d", offset);
-			ESP_LOGI("BUFFER", "new tail: %d", fTail);
+			fTail = (fTail + offset) % CONFIG_STR_CIRCULAR_BUFFER_SIZE;
 		}
 
 		uint16_t		GetRemainingLength() const {
 			if (fHead > fTail)
 				return fHead - fTail;
 
-			return fHead + CONFIG_STR_CIRCULAR_BUFFER_SIZE - fTail;
+			return fHead + CONFIG_STR_CIRCULAR_BUFFER_SIZE - fTail - 1;
 		}
 
 		uint16_t		GetContingousRemainingLength() const {
 			if (fTail < fHead)
 				return fHead - fTail;
 
-			return CONFIG_STR_CIRCULAR_BUFFER_SIZE - fTail;
+			return CONFIG_STR_CIRCULAR_BUFFER_SIZE - fTail - (fHead ? 0 : 1);
 		}
 
-		uint8_t*		GetHead() { return &fBuf[fHead]; }
-		uint8_t*		GetTail() { return fBuf.data() + fTail; }
+		uint8_t*		GetHeadPtr() { return &fBuf[fHead]; }
+		uint8_t*		GetTailPtr() { return &fBuf[fTail]; }
+
+		uint16_t		GetHeadPos() const { return fHead; }
+		uint16_t		GetTailPos() const { return fTail; }
+
 		uint8_t*		GetAfterTail() { return &fBuf[fTail+1]; }
 
 		void			LogContent() const {
 			ESP_LOG_BUFFER_HEX("BUFFER", &fBuf[fHead], fTail - fHead);
+		}
+
+		void			LogWholeBuffer() const {
+			ESP_LOG_BUFFER_HEX("BUFFER", fBuf.data(), fBuf.size());
 		}
 
 	private:

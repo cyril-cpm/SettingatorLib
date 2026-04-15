@@ -15,6 +15,10 @@ class ICore
 		bool		FetchMessage() {
 			
 			uint16_t c = fBuf.GetContentLength();
+
+			if (!c)
+				return false;
+
 			uint16_t i = 0;
 
 			for (; i <= c && fBuf[i] != Message::Frame::Start; i++);
@@ -22,22 +26,31 @@ class ICore
 			fBuf.OffsetHead(i);
 
 			if (i + 2 >= c)
+			{
+				ESP_LOGI("CORE", "Not enough content %d", c);
 				return false;
+			}
 
 			uint16_t msgLength = (fBuf[1] << 8) + fBuf[2];
 
 			if (msgLength > c) 
+			{
+				ESP_LOGI("CORE", "msgLength %d > content %d", msgLength, c);
+				ESP_LOGI("CORE", "head: %d, tail: %d", fBuf.GetHeadPos(), fBuf.GetTailPos());
+				fBuf.LogWholeBuffer();
 				return false;
+			}
 
 			if (fBuf[msgLength] != Message::Frame::End)
 			{
+				ESP_LOGI("CORE", "End Frame not found at fBuf[msgLength] %d", fBuf[msgLength]);
+
 				for (; i <= c && fBuf[i] != Message::Frame::Start; i++);
 
 				fBuf.OffsetHead(i);
 
 				return false;
 			}
-
 
 			return true;
 		}

@@ -2,6 +2,7 @@
 
 #include "Definitions.h"
 #include "esp_err.h"
+#include "sdkconfig.h"
 #include <cstdint>
 
 #if STR_HAS_UART
@@ -80,44 +81,50 @@ class UARTCore : public ICore
 			if (!size)
 				return;
 
-			ESP_LOGI("UART", "data received");
-
-			uint16_t remaining = fBuf.GetRemainingLength();
+			if (size > fBuf.GetRemainingLength())
+				size = fBuf.GetRemainingLength();
+			
 			uint16_t contingousRemaining = fBuf.GetContingousRemainingLength();
 
-			ESP_LOGI("UART", "%d size", size);
-			ESP_LOGI("UART", "%d remaining", remaining);
-			ESP_LOGI("UART", "%d contingous", contingousRemaining);
-
-			if (size > remaining)
-				size = remaining;
-
-			if (size <= contingousRemaining)
+			if (size > contingousRemaining)
 			{
-				int read = uart_read_bytes(fUartPort,
-											fBuf.GetTail(),
-											size,
-											0);
-				ESP_LOGI("UARTCore", "%d bits read", read);
+				uint16_t overflow = size - contingousRemaining;
+
+				if (overflow >= fBuf.GetHeadPos())
+				{
+					ESP_LOGI("UARTCore", "UARTCore::Read()");
+					ESP_LOGI("UARTCore", "Not enough space left in CircularBuffer (%d)",
+							fBuf.GetRemainingLength());
+
+					fBuf.LogWholeBuffer();
+					ESP_LOGI("UARTCore", "fHead: %t\tfTail: %d",
+							fBuf.GetHeadPos(),
+							fBuf.GetTailPos());
+					return;
+				}
+
+				uint16_t read = uart_read_bytes(fUartPort,
+												fBuf.GetTailPtr(),
+												contingousRemaining,
+												0);
 				if (read >= 0)
 				{
 					fBuf.OffsetTail(read);
-					fBuf.LogContent();
+
+					read = uart_read_bytes(fUartPort, fBuf.GetTailPtr(), overflow, 0);
+					
+					if (read >= 0)
+						fBuf.OffsetTail(read);
 				}
 			}
 			else
 			{
-				ESP_ERROR_CHECK(uart_read_bytes(fUartPort,
-												fBuf.GetAfterTail(),
-												contingousRemaining,
-												0));
-				fBuf.OffsetTail(contingousRemaining);
-				ESP_ERROR_CHECK(uart_read_bytes(fUartPort,
-												fBuf.GetAfterTail(),
-												size - contingousRemaining,
-												0));
-				fBuf.OffsetTail(size - contingousRemaining);
+				uint16_t read = uart_read_bytes(fUartPort, fBuf.GetTailPtr(), size, 0);
+				
+				if (read >=0)
+					fBuf.OffsetTail(read);
 			}
+
 		}
 
 		void	Init();
