@@ -103,7 +103,7 @@ class UARTCore : public ICore
 					return;
 				}
 
-				uint16_t read = uart_read_bytes(fUartPort,
+				int read = uart_read_bytes(fUartPort,
 												fBuf.GetTailPtr(),
 												contingousRemaining,
 												0);
@@ -119,7 +119,7 @@ class UARTCore : public ICore
 			}
 			else
 			{
-				uint16_t read = uart_read_bytes(fUartPort, fBuf.GetTailPtr(), size, 0);
+				int read = uart_read_bytes(fUartPort, fBuf.GetTailPtr(), size, 0);
 				
 				if (read >=0)
 					fBuf.OffsetTail(read);

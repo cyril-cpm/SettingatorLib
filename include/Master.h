@@ -36,6 +36,7 @@ class Master
 		}
 
 		void		InitCTR(ICTR_t&& ctr, MasterCTREnum type) {
+			ESP_LOGI("MASTER", "Initalizing CTR %d", type);
 			fCTRArray[type].emplace(std::move(ctr));
 		}
 
@@ -51,10 +52,14 @@ class Master
 		}
 
 		void		Write(std::initializer_list<uint8_t> message) const {
+			ESP_LOGI("MASTER", "Attemping to send msg to master");
 			const auto& ctrToUse = fCTRArray[fCTRToUse];
 
 			if (ctrToUse)
+			{
+				ESP_LOGI("MASTER", "CTR FOUND");
 				ICTR_T_WRITE(*ctrToUse, message, message);
+			}
 		}
 
 	private:

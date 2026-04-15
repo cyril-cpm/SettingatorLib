@@ -34,7 +34,10 @@ void ESPNowCore::receiveCallback(const esp_now_recv_info* info, const uint8_t* d
 		if (info->src_addr)
 			std::copy(info->src_addr, info->src_addr + 6, src_addrArr.begin());
 
-		if (initEspNowBroadcasted && len == 6 && data
+		LOG("len: %d", len);
+		LOG("data: %d", *data);
+
+		if (initEspNowBroadcasted && len == 1 && data && *data == 0x42
 				&& isBroadcastMac(des_addrArr))
 		{
 #if CONFIG_STR_SLAVE_ESPNOW
@@ -42,8 +45,10 @@ void ESPNowCore::receiveCallback(const esp_now_recv_info* info, const uint8_t* d
 
 			if (!slave)
 			{
+				LOG("Slave not found");
 				if (nbInitialisedSlave < CONFIG_STR_NB_SLAVE)
 				{
+					LOG("There is room dfor a slave");
 					slaveArray[nbInitialisedSlave].emplace(Slave());
 					slaveArray[nbInitialisedSlave]->SetEMac({data[0], data[1],
 															data[2], data[3],
@@ -59,6 +64,7 @@ void ESPNowCore::receiveCallback(const esp_now_recv_info* info, const uint8_t* d
 			{
 				if (!slave->get().HasCTR(SlaveCTREnum::CTR_ESPNOW))
 				{
+					LOG("Creating CTR");
 					slave->get().InitCTR(ESPNowCTR(ESPNowCore::GetInstance(),
 													src_addrArr,
 													true)
@@ -71,6 +77,7 @@ void ESPNowCore::receiveCallback(const esp_now_recv_info* info, const uint8_t* d
 
 		else
 		{
+			LOG("Not broadcasted Ping");
 #if CONFIG_STR_MASTER_ESPNOW
 			if (!master.HasCTR(MasterCTREnum::MASTER_CTR_ESPNOW))
 			{

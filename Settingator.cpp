@@ -175,9 +175,11 @@ void Settingator::Update()
 						default:
 							break;
 					}
+					core.ThrowMessage();
 				}
 				else
 				{
+					core.ThrowMessage();
 					//bridge handling
 				}
 			}

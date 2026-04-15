@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdlib>
 #include <esp_log.h>
 #include "Buffer.h"
 #include "Message.h"
@@ -27,7 +28,7 @@ class ICore
 
 			if (i + 2 >= c)
 			{
-				ESP_LOGI("CORE", "Not enough content %d", c);
+				// ESP_LOGI("CORE", "Not enough content %d", c);
 				return false;
 			}
 
@@ -45,10 +46,17 @@ class ICore
 			{
 				ESP_LOGI("CORE", "End Frame not found at fBuf[msgLength] %d", fBuf[msgLength]);
 
+				ESP_LOGI("CORE", "head: %d\ttail: %d", fBuf.GetHeadPos(), fBuf.GetTailPos());
+				fBuf.LogContent();
+				fBuf.LogWholeBuffer();
+
+
 				for (; i <= c && fBuf[i] != Message::Frame::Start; i++);
 
 				fBuf.OffsetHead(i);
 
+				ESP_LOGI("CORE", "head offseted of %d, result is %d", i, fBuf.GetHeadPos());
+				abort();
 				return false;
 			}
 
@@ -60,7 +68,9 @@ class ICore
 
 			uint16_t msgLength = (fBuf[1] << 8) + fBuf[2];
 
+			ESP_LOGI("CORE", "Offseting Head from %d of %d", fBuf.GetHeadPos(), msgLength);
 			fBuf.OffsetHead(msgLength);
+			ESP_LOGI("CORE", "res: %d", fBuf.GetHeadPos());
 
 		}
 

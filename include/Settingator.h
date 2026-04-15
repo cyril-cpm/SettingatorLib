@@ -21,8 +21,10 @@ class CRGB;
 
 struct notifCallback
 {
-	notifCallback();
-    notifCallback(void(*inCallback)(), uint8_t inNotifByte);
+	notifCallback() {}
+    notifCallback(void(*inCallback)(), uint8_t inNotifByte) : callback(inCallback),
+																notifByte(inNotifByte)
+	{}
     
     void(*callback)() = nullptr;
     uint8_t notifByte = 0;
@@ -31,6 +33,11 @@ struct notifCallback
 class Settingator
 {
     public:
+
+	static Settingator& GetInstance() {
+		static Settingator instance;
+		return instance;
+	}
 
     static void StartWiFi();
 
@@ -48,7 +55,6 @@ class Settingator
     void SendDirectNotif(uint8_t notifByte);
     void SendDirectSettingUpdate(uint8_t settingRef, uint8_t* value = nullptr, uint8_t valueLen = 0);
     void AddNotifCallback(void(*callback)(), uint8_t notifByte);
-    void SetCommunicator(ICTR_t communicator);
     void StartEspNowInitBroadcasted();
     void StopEspNowInitBroadcasted();
     void ESPNowBroadcastPing();
@@ -100,6 +106,3 @@ class Settingator
     bool        fShouldStopEspNowInitBroadcasted = false;
     bool        fShouldESPNowBroadcastPing = false;
 };
-
-extern Settingator STR;
-

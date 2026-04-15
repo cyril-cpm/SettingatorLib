@@ -1,5 +1,8 @@
 #include "CommunicatorBridge.h"
+#include "Master.h"
+#include "UARTCommunicator.h"
 #include "esp_attr.h"
+#include "esp_log_buffer.h"
 
 #if CONFIG_STR_HAS_BRIDGE
 
@@ -51,6 +54,23 @@ void CTRBridge::begin()
 		ESP_ERROR_CHECK(esp_task_wdt_add(nullptr));
 
 	// CreateLinkInfoTimer();
+	
+#if CONFIG_STR_MASTER_UART0
+	if (!master.HasCTR(MASTER_CTR_UART0))
+		master.InitCTR(UARTCTR(UARTCore::GetUART0Instance()), MASTER_CTR_UART0);
+
+#endif
+
+#if CONFIG_STR_MASTER_UART1
+	if (!master.HasCTR(MASTER_CTR_UART1))
+		master.InitCTR(UARTCTR(UARTCore::GetUART1Instance()), MASTER_CTR_UART1);
+#endif
+
+#if CONFIG_STR_MASTER_UART2
+	if (!master.HasCTR(MASTER_CTR_UART2))
+		master.InitCTR(UARTCTR(UARTCore::GetUART0Instance()), MASTER_CTR_UART2);
+#endif
+
 }
 
 void CTRBridge::Update()
@@ -107,6 +127,7 @@ void CTRBridge::Update()
 
 								if (slave->IsWaitingForID())
 								{
+									LOG("Setting id %d to slave", core.GetDstSlaveID());
 									slave->SetID(core.GetDstSlaveID());
 									slave->SetWaitingForID(false);
 									break;
@@ -117,6 +138,9 @@ void CTRBridge::Update()
 
 						if (slave)
 						{
+							LOG("transmitting msg to slave %d", slave->get().GetID());
+							ESP_LOG_BUFFER_HEX("CTRBridge", slave->get().GetEMac().data(),
+												slave->get().GetEMac().size());
 							core.CopyMessageToGlobalBuffer();
 							slave->get().Write();
 						}
@@ -140,12 +164,12 @@ void CTRBridge::Update()
 
 	for (auto& slave : slaveArray)
 	{
-		LOG("treating slave");
 		if (!slave.has_value())
 			break;
 		
-		if (!slave->GetID())
+		if (!slave->GetID() && !slave->IsWaitingForID())
 		{
+			LOG("Slave without ID found, requesting one");
 			slave->SetWaitingForID(true);
 			// Send ID request trhough master
 			master.Write({

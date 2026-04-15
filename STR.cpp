@@ -1,5 +1,8 @@
 #include "STR.h"
 #include "Slave.h"
+#include "esp_log_buffer.h"
+
+static const char* tag = "STR";
 
 std::array<std::reference_wrapper<ICore>, CORE_MAX> coreArray {
 
@@ -43,6 +46,9 @@ OptSlaveRef GetSlaveForID(const uint8_t id)
 
 OptSlaveRef GetSlaveForEMac(const std::array<uint8_t, 6> &eMac)
 {
+	LOG("Looking for slave with EMac");
+	ESP_LOG_BUFFER_HEX(tag, eMac.data(), eMac.size());
+
 	for (auto& slave : slaveArray)
 	{
 		if (!slave)
