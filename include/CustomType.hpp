@@ -4,6 +4,8 @@
 #include "Settingator.h"
 #include "Setting.h"
 
+extern Settingator& STR;
+
 template <typename T>
 class STR_Type
 {

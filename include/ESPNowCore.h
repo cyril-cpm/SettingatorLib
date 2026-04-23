@@ -21,12 +21,14 @@ class ESPNowCore : public ICore
 
 		int	 Write(std::initializer_list<uint8_t>message,
 				const std::array<uint8_t, 6>& dstMac) {
-			esp_now_send(dstMac.data(), message.begin(), message.size());
+			ESP_ERROR_CHECK_WITHOUT_ABORT(esp_now_send(dstMac.data(), message.begin(), message.size()));
 			return 0;
 		}
 
 		int	Write(const std::array<uint8_t, 6>& dstMac) {
-			esp_now_send(dstMac.data(), messageBuffer.data(), messageBuffer.len());
+			ESP_LOGI("ESPNowCore", "sending");
+			ESP_ERROR_CHECK_WITHOUT_ABORT(esp_now_send(dstMac.data(), messageBuffer.data(), messageBuffer.len()));
+			ESP_LOGI("ESPNowCore", "done");
 			return 0;
 		}
 

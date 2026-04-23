@@ -1,3 +1,4 @@
+#include "Buffer.h"
 #include "Definitions.h"
 
 #include "Settingator.h"
@@ -163,6 +164,7 @@ void Settingator::Update()
 					switch (core.GetMessageType())
 					{
 						case Message::Type::InitRequest:
+							LOG("InitRequest");
 							_sendInitMessage();
 							break;
 
@@ -173,6 +175,7 @@ void Settingator::Update()
 						// Direct Msg/Notif and notif addressed to Slave
 
 						default:
+							LOG("Unknown Message");
 							break;
 					}
 					core.ThrowMessage();
@@ -183,7 +186,6 @@ void Settingator::Update()
 					//bridge handling
 				}
 			}
-			core.ThrowMessage();
 		}
 
 	}
@@ -373,7 +375,7 @@ void Settingator::SendNotif(uint8_t notifByte)
 	master.Write({
 			Message::Frame::Start,
 			0,
-			7,
+			8,
 			fSlaveID,
 			0,
 			Message::Type::Notif,
@@ -518,6 +520,7 @@ void Settingator::_sendInitMessage()
 
 	messageBuffer[initRequestSize - 1] = Message::Frame::End;
 
+	messageBuffer.SetLen(initRequestSize);
 
 	master.Write();
 }

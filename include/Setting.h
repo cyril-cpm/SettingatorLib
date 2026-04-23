@@ -1,6 +1,7 @@
 #ifndef _SETTING_
 #define _SETTING_
 
+#include <cstdint>
 #include <esp_types.h>
 #include <string>
 #include <functional>
@@ -63,6 +64,7 @@ private:
     uint8_t* fDataPtr = nullptr;
     size_t fDataSize = 0;
 	std::array<uint8_t, 16> fName;
+	uint8_t					fNameLength = 0;
     setting_ref fRef = 0;
     //void    (*fCallback)();
     std::function<void()>    fCallback;

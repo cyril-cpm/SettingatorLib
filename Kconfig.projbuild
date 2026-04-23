@@ -174,10 +174,36 @@ menu "Settingator Config"
 		help
 			Use UART2 CTR in Master
 
-config STR_NB_SUBSLAVE
+	config STR_NB_SUBSLAVE
 		int "Max number of subslave per Slave"
 		default 0
 		help
 			Max number of subslaves per Slave
+
+	config STR_HAS_LED_STRIP_0
+		bool "Has LED Strip 0"
+		default false
+		help
+			Has Led Strip 0
+
+	config STR_HAS_LED_STRIP_1
+		bool "Has LED Strip 1"
+		default false
+		help
+			Has Led Strip 1
+
+	config STR_HAS_LED_STRIP_2
+		bool "Has LED Strip 2"
+		default false
+		help
+			Has Led Strip 2
+
+	config STR_HAS_LED_STRIP_3
+		bool "Has LED Strip 3"
+		default false
+		help
+			Has Led Strip 3
+
+	
 
 endmenu

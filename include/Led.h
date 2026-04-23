@@ -1,8 +1,11 @@
 #pragma once
 
 #include "Definitions.h"
+
+#if HAS_LED_STRIP
+
 #include "driver/rmt_tx.h"
-#include "vector"
+#include <array>
 
 static const rmt_tx_channel_config_t ws2812bTxChannelConfig = {
     .gpio_num = GPIO_NUM_0,
@@ -72,11 +75,15 @@ class Strip
 
 };
 
+enum LedStripEnum {
+	LED_STRIP_MAX
+};
+
 class Led
 {
     private:
 
-    // std::vector<Strip> fStrip;
+    std::array<Strip, LED_STRIP_MAX> fStrip;
 
     public:
     void addLeds(gpio_num_t ledPin, RGB* data, size_t dataSize);
@@ -85,3 +92,5 @@ class Led
 };
 
 static Led FLed;
+
+#endif

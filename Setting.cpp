@@ -8,7 +8,7 @@
 #include <cstring>
 
 Setting::Setting(Type type, void* dataPtr, size_t dataSize, const char* name, std::function<void()> callback, setting_ref ref)
-: fType(type), fDataPtr((uint8_t*)dataPtr), fDataSize(dataSize), /*fName(name),*/ fRef(ref), fCallback(callback)
+: fType(type), fDataPtr((uint8_t*)dataPtr), fDataSize(dataSize),  fRef(ref), fCallback(callback)
 {
 #if SERIAL_DEBUG
     /*Serial.println("New Setting:");
@@ -24,6 +24,10 @@ Setting::Setting(Type type, void* dataPtr, size_t dataSize, const char* name, st
     Serial.print("\tname\t\t: ");
     Serial.println(name);*/
 #endif
+	uint8_t nameLen = strlen(name);
+
+	for (; fNameLength < 16 && fNameLength < nameLen; fNameLength++)
+		fName[fNameLength] = name[fNameLength];
 }
 
 bool Setting::update(uint8_t* newValuePtr, size_t newValueSize)
@@ -41,10 +45,10 @@ void Setting::getInitRequest(uint16_t index) const
     messageBuffer[index + 1] = fType;
     messageBuffer[index + 2] = fDataSize;
     memcpy(messageBuffer.data() + index + 3, fDataPtr, fDataSize);
-    // messageBuffer[index + 3 + fDataSize] = fName.length();
+    messageBuffer[index + 3 + fDataSize] = fNameLength;
     uint8_t nameIndex = index + 4 + fDataSize;
 
-    // memcpy(messageBuffer.data() + nameIndex, fName.data(), fName.length());
+    memcpy(messageBuffer.data() + nameIndex, fName.data(), fNameLength);
 }
 
 uint16_t Setting::getInitRequestSize() const
@@ -52,7 +56,7 @@ uint16_t Setting::getInitRequestSize() const
     size_t bufferSize = 0;
 
     bufferSize += 4;
-    // bufferSize += fName.length();
+    bufferSize += fNameLength;
     bufferSize += fDataSize;
 
     return bufferSize;

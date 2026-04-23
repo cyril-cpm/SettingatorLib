@@ -8,3 +8,4 @@ sdkconfig*
 .cache
 .smart_pio
 .clangd
+build

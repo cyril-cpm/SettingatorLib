@@ -8,6 +8,7 @@ idf_component_register(SRCS "Buffer.cpp"
 							"CommunicatorBridge.cpp"
 							"Setting.cpp"
 							"Settingator.cpp"
+							"Led.cpp"
                     INCLUDE_DIRS "include"
 					REQUIRES driver esp_wifi nvs_flash esp_timer log freertos esp_system
 				)
