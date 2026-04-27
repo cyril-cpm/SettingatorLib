@@ -6,6 +6,7 @@
 
 #include "driver/rmt_tx.h"
 #include <array>
+#include <variant>
 
 static const rmt_tx_channel_config_t ws2812bTxChannelConfig = {
     .gpio_num = GPIO_NUM_0,
@@ -57,40 +58,127 @@ struct RGB
     RGB(uint8_t ir, uint8_t ig, uint8_t ib) : g(ig), r(ir), b(ib) {}
 };
 
+template <int STRIP_PIN, uint16_t DATA_LEN>
 class Strip
 {
     private:
-    Strip();
 
-    gpio_num_t  fLedPin = GPIO_NUM_0;
-    RGB*        fData = nullptr;
-    size_t      fDataSize = 0;
+	std::array<RGB, DATA_LEN> fData;
 
     rmt_channel_handle_t fTxHandle = nullptr;
     rmt_encoder_handle_t fEncoderHandler = nullptr;
 
     public:
-    Strip(gpio_num_t ledPin, RGB* data, size_t dataSize);
-    void Show();
 
-};
+    Strip() {
+	    rmt_tx_channel_config_t config = ws2812bTxChannelConfig;
 
-enum LedStripEnum {
-	LED_STRIP_MAX
+	    config.gpio_num = (gpio_num_t)STRIP_PIN;
+
+	    rmt_new_bytes_encoder(&ws2812bEncoder, &fEncoderHandler);
+
+	    ESP_ERROR_CHECK(rmt_new_tx_channel(&config, &fTxHandle));
+
+	    rmt_enable(fTxHandle);
+	};
+
+    void Show() {
+	    auto rawDataSize = fData.size() * 3;
+	    uint8_t rawData[rawDataSize];
+
+	    int j = 0;
+	    for (auto i  = 0; i < fData.size(); i++)
+	    {
+	        rawData[j] = fData[i].g;
+	        j++;
+	        rawData[j] = fData[i].r;
+	        j++;
+			rawData[j] = fData[i].b;
+        	j++;
+    	}
+
+    	rmt_transmit(fTxHandle, fEncoderHandler, rawData, rawDataSize, &tx_cfg);
+    	rmt_tx_wait_all_done(fTxHandle, 10);
+	};
+
+	auto&	GetData() { return fData; };
+
+
 };
 
 class Led
 {
     private:
 
-    std::array<Strip, LED_STRIP_MAX> fStrip;
+#if CONFIG_STR_HAS_LED_STRIP_0
+	Strip<LS_0_PIN, LS_0_LEN> fStrip0;
+#endif
+
+#if CONFIG_STR_HAS_LED_STRIP_1
+	Strip<LS_1_PIN, LS_1_LEN> fStrip1;
+#endif
+
+#if CONFIG_STR_HAS_LED_STRIP_2
+	Strip<LS_2_PIN, LS_2_LEN> fStrip2;
+#endif
+
+#if CONFIG_STR_HAS_LED_STRIP_3
+	Strip<LS_3_PIN, LS_3_LEN> fStrip3;
+#endif
 
     public:
-    void addLeds(gpio_num_t ledPin, RGB* data, size_t dataSize);
-    void show();
+	Led() {};
+
+    void Show() {
+
+#if CONFIG_STR_HAS_LED_STRIP_0
+		fStrip0.Show();
+#endif
+
+#if CONFIG_STR_HAS_LED_STRIP_1
+		fStrip1.Show();
+#endif
+
+#if CONFIG_STR_HAS_LED_STRIP_2
+		fStrip2.Show();
+#endif
+
+#if CONFIG_STR_HAS_LED_STRIP_3
+		fStrip3.Show();
+#endif
+
+	};
+
+	static Led&	GetInstance() {
+		static Led instance;
+
+		return instance;
+	};
+
+#if CONFIG_STR_HAS_LED_STRIP_0
+	auto&		Strip0() {
+		return fStrip0.GetData();
+	}
+#endif
+
+#if CONFIG_STR_HAS_LED_STRIP_1
+	auto&		Strip1() {
+		return fStrip1.GetData();
+	}
+#endif
+
+#if CONFIG_STR_HAS_LED_STRIP_2
+	auto&		Strip2() {
+		return fStrip2.GetData();
+	}
+#endif
+
+#if CONFIG_STR_HAS_LED_STRIP_3
+	auto&		Strip3() {
+		return fStrip3.GetData();
+	}
+#endif
 
 };
-
-static Led FLed;
 
 #endif

@@ -204,6 +204,56 @@ menu "Settingator Config"
 		help
 			Has Led Strip 3
 
+	config STR_LED_STRIP_0_PIN
+		int	"GPIO Pin for led stip 0"
+		default 0
+		help
+			GPIO Pin for led strip 0
 	
+	config STR_LED_STRIP_0_DATA_LEN
+		int "DATA Len for led strip 0"
+		default 8
+		help
+			DATA Len for led strip 0
+
+
+	config STR_LED_STRIP_1_PIN
+		int	"GPIO Pin for led stip 1"
+		default 1
+		help
+			GPIO Pin for led strip 1
+	
+	config STR_LED_STRIP_1_DATA_LEN
+		int "DATA Len for led strip 1"
+		default 8
+		help
+			DATA Len for led strip 1
+
+
+	config STR_LED_STRIP_2_PIN
+		int	"GPIO Pin for led stip 2"
+		default 2
+		help
+			GPIO Pin for led strip 2
+	
+	config STR_LED_STRIP_2_DATA_LEN
+		int "DATA Len for led strip 2"
+		default 8
+		help
+			DATA Len for led strip 2
+
+
+	config STR_LED_STRIP_3_PIN
+		int	"GPIO Pin for led stip 3"
+		default 3
+		help
+			GPIO Pin for led strip 3
+	
+	config STR_LED_STRIP_3_DATA_LEN
+		int "DATA Len for led strip 3"
+		default 8
+		help
+			DATA Len for led strip 3
+
 
 endmenu
