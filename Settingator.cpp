@@ -531,7 +531,7 @@ void Settingator::_treatSettingUpdateMessage(const ICore& core)
 	uint8_t ref;
 	uint8_t valueLen;
 
-	uint16_t settingIndex = 5;
+	uint16_t settingIndex = 6;
 
 	do
 	{
