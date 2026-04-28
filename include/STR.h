@@ -37,7 +37,7 @@ enum CoreEnum {
 
 extern std::array<std::reference_wrapper<ICore>, CORE_MAX> coreArray;
 
-extern std::array<std::optional<Slave>, CONFIG_STR_NB_SLAVE> slaveArray;
+extern std::array<Slave, CONFIG_STR_NB_SLAVE> slaveArray;
 extern uint8_t nbInitialisedSlave;
 
 extern Master master;

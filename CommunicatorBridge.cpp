@@ -53,7 +53,7 @@ void CTRBridge::begin()
 	if (esp_task_wdt_status(nullptr) == ESP_ERR_NOT_FOUND)
 		ESP_ERROR_CHECK(esp_task_wdt_add(nullptr));
 
-	// CreateLinkInfoTimer();
+	CreateLinkInfoTimer();
 	
 #if CONFIG_STR_MASTER_UART0
 	if (!master.HasCTR(MASTER_CTR_UART0))
@@ -122,14 +122,14 @@ void CTRBridge::Update()
 							
 							for (auto& slave : slaveArray)
 							{
-								if (!slave.has_value())
+								if (!slave)
 									break;
 
-								if (slave->IsWaitingForID())
+								if (slave.IsWaitingForID())
 								{
 									LOG("Setting id %d to slave", core.GetDstSlaveID());
-									slave->SetID(core.GetDstSlaveID());
-									slave->SetWaitingForID(false);
+									slave.SetID(core.GetDstSlaveID());
+									slave.SetWaitingForID(false);
 									break;
 								}
 							}
@@ -164,13 +164,13 @@ void CTRBridge::Update()
 
 	for (auto& slave : slaveArray)
 	{
-		if (!slave.has_value())
+		if (!slave)
 			break;
 		
-		if (!slave->GetID() && !slave->IsWaitingForID())
+		if (!slave.GetID() && !slave.IsWaitingForID())
 		{
 			LOG("Slave without ID found, requesting one");
-			slave->SetWaitingForID(true);
+			slave.SetWaitingForID(true);
 			// Send ID request trhough master
 			master.Write({
 							Message::Frame::Start,
@@ -182,6 +182,8 @@ void CTRBridge::Update()
 							Message::Frame::End
 						});
 		}
+		
+		slave.HandleSendInitRequest();
 	}
 
 	HandleLinkInfo();
@@ -412,39 +414,44 @@ void CTRBridge::HandleLinkInfo()
 	if (!fShouldSendLinkInfo)
 		return;
 
+	ESP_LOGI("BRIDGE", "HandleLinkInfo");
+
 	uint8_t nbCTR = 0;
 
-	uint16_t msgSize = 13;
-	for (auto& slave : slaveArray)
-	{
-		msgSize += slave->GetLinkInfoSize();
-		nbCTR++;
-	}
-
+	uint16_t msgSize = 14;
 	if (msgSize > CONFIG_STR_MESSAGE_BUFFER_SIZE)
 	{
 		LOG("LinkInfoSize > CONFIG_STR_MESSAGE_BUFFER_SIZE");
 		return;
 	}
-	
+
+	for (auto& slave : slaveArray)
+	{
+		if (!slave)
+			break;
+		LOG("Slave found");
+		if (msgSize + slave.GetLinkInfoSize() > CONFIG_STR_MESSAGE_BUFFER_SIZE)
+		{
+			LOG("LinkInfoSize > CONFIG_STR_MESSAGE_BUFFER_SIZE");
+			return;
+		}
+		slave.WriteLinkInfoToBuffer(msgSize - 1);
+		msgSize += slave.GetLinkInfoSize();
+		nbCTR++;
+	}
+
 	messageBuffer[0] = Message::Frame::Start;
 	messageBuffer[1] = msgSize >> 8;
 	messageBuffer[2] = msgSize;
 	messageBuffer[3] = 0;
-	messageBuffer[4] = Message::Type::LinkInfo;
-	messageBuffer[5] = nbCTR;
+	messageBuffer[4] = 0;
+	messageBuffer[5] = Message::Type::LinkInfo;
+	messageBuffer[6] = nbCTR;
+	memcpy(messageBuffer.data() + 7, ESPNowCore::GetInstance().GetMac().data(), 6);
+	messageBuffer[msgSize-1] = Message::Frame::End;
+	messageBuffer.SetLen(msgSize);
 
-	// memcpy(messageBuffer.data() + 6, ESPNowCore::GetInstance().GetMac(), 6);
-
-	uint16_t bufIndex = 12;
-	for (auto& slave : slaveArray)
-	{
-		slave->WriteLinkInfoToBuffer(bufIndex);
-		bufIndex += slave->GetLinkInfoSize();
-	}
-
-	messageBuffer[bufIndex] = Message::Frame::End;
-
+	ESP_LOG_BUFFER_HEX("BRIDGE", messageBuffer.data(), msgSize);
 	master.Write();
 
 	fShouldSendLinkInfo = false;

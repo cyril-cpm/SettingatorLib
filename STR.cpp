@@ -24,7 +24,7 @@ std::array<std::reference_wrapper<ICore>, CORE_MAX> coreArray {
 
 };
 
-std::array<std::optional<Slave>, CONFIG_STR_NB_SLAVE> slaveArray;
+std::array<Slave, CONFIG_STR_NB_SLAVE> slaveArray;
 uint8_t nbInitialisedSlave = 0;
 
 Master master;
@@ -37,8 +37,8 @@ OptSlaveRef GetSlaveForID(const uint8_t id)
 		if (!slave)
 			break;
 
-		if (slave->GetID() == id || slave->HasSubSlave(id))
-			return *slave;
+		if (slave.GetID() == id || slave.HasSubSlave(id))
+			return slave;
 	}
 
 	return std::nullopt;
@@ -54,8 +54,8 @@ OptSlaveRef GetSlaveForEMac(const std::array<uint8_t, 6> &eMac)
 		if (!slave)
 			break;
 
-		if (eMac == slave->GetEMac())
-			return *slave;
+		if (eMac == slave.GetEMac())
+			return slave;
 	}
 
 	return std::nullopt;

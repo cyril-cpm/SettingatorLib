@@ -37,23 +37,20 @@ void ESPNowCore::receiveCallback(const esp_now_recv_info* info, const uint8_t* d
 		LOG("len: %d", len);
 		LOG("data: %d", *data);
 
-		if (initEspNowBroadcasted && len == 1 && data && *data == 0x42
-				&& isBroadcastMac(des_addrArr))
+		if (len == 6 && data && isBroadcastMac(des_addrArr))
 		{
 #if CONFIG_STR_SLAVE_ESPNOW
 			OptSlaveRef slave = GetSlaveForEMac({data[0], data[1], data[2], data[3], data[4], data[5]});
 
-			if (!slave)
+			if (initEspNowBroadcasted && !slave)
 			{
 				LOG("Slave not found");
 				if (nbInitialisedSlave < CONFIG_STR_NB_SLAVE)
 				{
 					LOG("There is room dfor a slave");
-					slaveArray[nbInitialisedSlave].emplace(Slave());
-					slaveArray[nbInitialisedSlave]->SetEMac({data[0], data[1],
-															data[2], data[3],
-															data[4], data[5]});
-					slave = slaveArray[nbInitialisedSlave].value();
+					slave = slaveArray[nbInitialisedSlave];
+					slave->get().SetEMac({data[0], data[1], data[2], data[3], data[4], data[5]});
+					slave->get().Activate();
 					nbInitialisedSlave++;
 				}
 				else
@@ -70,6 +67,8 @@ void ESPNowCore::receiveCallback(const esp_now_recv_info* info, const uint8_t* d
 													true)
 										, SlaveCTREnum::CTR_ESPNOW);
 				}
+				else
+					slave->get().PlanifySendInitRequest();
 			}
 			LOG("broadcast data");
 #endif
@@ -144,10 +143,14 @@ void ESPNowCore::AddPeer(const std::array<uint8_t, 6>& peerMac)
 void ESPNowCore::BroadcastPing()
 {
 	std::array<uint8_t, 6> dstMac = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
-	uint8_t data = 0x42;
+
+	std::array<uint8_t, 6> eMac;
+
+	ESP_ERROR_CHECK(esp_efuse_mac_get_default(eMac.data()));
+
 
 	AddPeer(dstMac);
 
-	ESP_ERROR_CHECK(esp_now_send(dstMac.data(), &data, sizeof(data)));
+	ESP_ERROR_CHECK(esp_now_send(dstMac.data(), eMac.data(), eMac.size()));
 }
 #endif

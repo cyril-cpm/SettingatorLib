@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Buffer.h"
 #include "Definitions.h"
 
 #include <array>
@@ -7,8 +8,10 @@
 #include <functional>
 #include <optional>
 #include <variant>
+#include <stdatomic.h>
 #include "Communicator.h"
 #include "ESPNowCommunicator.h"
+#include "Message.h"
 #include "UARTCommunicator.h"
 
 using ICTR_t = std::variant<std::monostate
@@ -137,6 +140,34 @@ class Slave
 			ICTR_T_WRITE(*ctrToUse, , );
 	}
 
+	void		PlanifySendInitRequest() {
+		atomic_store(&fShouldSendInitRequest, true);
+	}
+
+	void		HandleSendInitRequest() {
+		if (atomic_exchange(&fShouldSendInitRequest, false))
+			SendInitRequest();
+	}
+
+	void		SendInitRequest() {
+		messageBuffer[0] = Message::Frame::Start;
+		messageBuffer[1] = 0;
+		messageBuffer[2] = 0x08;
+		messageBuffer[3] = 0;
+		messageBuffer[4] = fSlaveID;
+		messageBuffer[5] = Message::Type::InitRequest;
+		messageBuffer[6] = 0;
+		messageBuffer[7] = Message::Frame::End;
+
+		messageBuffer.SetLen(0x08);
+
+		Write();
+	}
+
+	void		Activate() { fActivated = true; }
+
+	constexpr explicit operator bool() const noexcept { return fActivated; }
+
     private:
     uint8_t     			fSlaveID = 0;
 	
@@ -145,6 +176,10 @@ class Slave
 
 	bool					fWaitingForID = false;
 	std::array<uint8_t, 6>	fEMac;
+
+	bool					fActivated = false;
+
+	std::atomic_bool					fShouldSendInitRequest = false;
 
 #if CONFIG_STR_NB_SUBSLAVE
     std::array<uint8_t, CONFIG_STR_NB_SUBSLAVE> fSubSlave;
