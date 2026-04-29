@@ -451,7 +451,6 @@ void CTRBridge::HandleLinkInfo()
 	messageBuffer[msgSize-1] = Message::Frame::End;
 	messageBuffer.SetLen(msgSize);
 
-	ESP_LOG_BUFFER_HEX("BRIDGE", messageBuffer.data(), msgSize);
 	master.Write();
 
 	fShouldSendLinkInfo = false;

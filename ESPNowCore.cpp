@@ -66,6 +66,12 @@ void ESPNowCore::receiveCallback(const esp_now_recv_info* info, const uint8_t* d
 													src_addrArr,
 													true)
 										, SlaveCTREnum::CTR_ESPNOW);
+					
+					if (registeredEspNowCtr < NB_ESPNOW_CTR)
+					{
+						espNowCtrArray[registeredEspNowCtr] = slave->get().GetESPNowCTR();
+						registeredEspNowCtr++;
+					}
 				}
 				else
 					slave->get().PlanifySendInitRequest();
@@ -88,6 +94,21 @@ void ESPNowCore::receiveCallback(const esp_now_recv_info* info, const uint8_t* d
 			LOG("Message received");
 #endif
 			ESPNowCore::GetInstance().WriteToBuffer(data, len);
+
+			if (info->rx_ctrl)
+			{
+				ESP_LOGI("ESPNOWCORE", "registering linkinfo");
+				std::optional<std::reference_wrapper<ESPNowCTR>> ctr = GetESPNowCommunicatorByMac(src_addrArr);
+
+				if (ctr)
+				{
+					ESP_LOGI("ESPNOWCORE", "registering linkinfo");
+					ctr->get().SetLinkInfo(info->rx_ctrl->rssi,
+											info->rx_ctrl->noise_floor,
+											info->rx_ctrl->timestamp);
+				}
+			}
+
 		}
 	}
 }

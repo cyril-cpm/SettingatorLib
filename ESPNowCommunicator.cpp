@@ -1,4 +1,5 @@
 #include "ESPNowCommunicator.h"
+#include "Definitions.h"
 
 #if STR_HAS_ESPNOW
 
@@ -17,6 +18,10 @@
 #include <esp_log.h>
 #include <queue>
 #include <vector>
+#include <optional>
+
+std::array<std::optional<std::reference_wrapper<ESPNowCTR>>, NB_ESPNOW_CTR> espNowCtrArray;
+uint8_t registeredEspNowCtr = 0;
 
 static const char* tag("ESPNOWCTR");
 
@@ -39,8 +44,6 @@ ESPNowCTR::ESPNowCTR(ESPNowCore& core, const std::array<uint8_t, 6>& peerMac, co
 		fCore(core),
 		fMac(peerMac)
 {
-	//ESPNowCore::GetInstance().CreateLinkInfoTimer();
-
 	fCore.AddPeer(fMac);
 
 	if (createTimer)
@@ -57,7 +60,7 @@ ESPNowCTR::ESPNowCTR(ESPNowCore& core, const std::array<uint8_t, 6>& peerMac, co
 	}
 
 	// fCTRList.push_back(this);
-
+	
 }
 
 void ESPNowCTR::ShouldSendPing(bool should)
@@ -247,6 +250,19 @@ void ESPNowCTR::WriteLinkInfoToBufferImpl(uint16_t index) const
 	memcpy(messageBuffer.data() + index + 15, (uint8_t*)&(fPeerLastMsgDeltastamp), 4);
 
 	return;
+}
+
+std::optional<std::reference_wrapper<ESPNowCTR>> GetESPNowCommunicatorByMac(const std::array<uint8_t, 6>& mac)
+{
+	for (auto& ctr : espNowCtrArray)
+	{
+		if (!ctr)
+			break;
+
+		if (mac == ctr->get().GetMac())
+			return *ctr;
+	}
+	return std::nullopt;
 }
 
 #endif

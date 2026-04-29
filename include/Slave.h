@@ -125,6 +125,10 @@ class Slave
 		fCTR[type].emplace(std::move(ctr));
 	}
 
+#if CONFIG_STR_SLAVE_ESPNOW
+	ESPNowCTR&	GetESPNowCTR() { return std::get<ESPNowCTR>(*fCTR[CTR_ESPNOW]); }
+#endif
+
 	void		SetWaitingForID(const bool value = true) {
 		fWaitingForID = value;
 	}

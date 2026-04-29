@@ -12,6 +12,7 @@
 #include <array>
 #include <initializer_list>
 #include "Buffer.h"
+#include <optional>
 
 class Message;
 
@@ -87,6 +88,12 @@ class ESPNowCTR: public ICTR
 
     void            ShouldSendPing(bool should = true);
 
+	void			SetLinkInfo(uint8_t rssi, uint8_t noiseFloor, uint32_t timestamp) {
+		fLastMsgRssi = rssi;
+		fLastMsgNoiseFloor = noiseFloor;
+		fLastMsgTimestamp = timestamp;
+	}
+
     private:
 
 	ESPNowCTR() = delete;
@@ -110,4 +117,8 @@ class ESPNowCTR: public ICTR
 
 bool compareMac(const uint8_t* mac1, const uint8_t* mac2);
 
+extern std::array<std::optional<std::reference_wrapper<ESPNowCTR>>, NB_ESPNOW_CTR> espNowCtrArray;
+extern uint8_t registeredEspNowCtr;
+
+std::optional<std::reference_wrapper<ESPNowCTR>> GetESPNowCommunicatorByMac(const std::array<uint8_t, 6>& mac);
 #endif

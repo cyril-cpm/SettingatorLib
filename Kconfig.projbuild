@@ -150,7 +150,7 @@ menu "Settingator Config"
 		help
 			Use UART2 CTR in Slave
 
-		config STR_MASTER_ESPNOW
+	config STR_MASTER_ESPNOW
 		bool "Use ESPNOW CTR in Master"
 		default n
 		help
