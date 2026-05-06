@@ -58,8 +58,6 @@ ESPNowCTR::ESPNowCTR(ESPNowCore& core, const std::array<uint8_t, 6>& peerMac, co
 
 		 xTimerStart(fPingTimer, 0);
 	}
-
-	// fCTRList.push_back(this);
 	
 }
 
