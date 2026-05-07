@@ -53,16 +53,6 @@ void Settingator::SetNetLed(uint8_t r, uint8_t g, uint8_t b)
 }
 #endif
 
-void Settingator::ESPNowBroadcastPing()
-{
-#if STR_HAS_ESPNOW
-	if (xPortInIsrContext())
-		fShouldESPNowBroadcastPing = true;
-	else
-		ESPNowCore::GetInstance().BroadcastPing();
-#endif
-}
-
 #if defined(STR_BRIDGE_HID)
 #define DEBOUNCE_TIME_MS 250
 
@@ -207,7 +197,7 @@ void Settingator::Update()
 
 	if (fShouldESPNowBroadcastPing)
 	{
-		ESPNowBroadcastPing();
+		// ESPNowBroadcastPing();
 		fShouldESPNowBroadcastPing = false;
 	}
 

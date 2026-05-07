@@ -57,7 +57,6 @@ class Settingator
     void AddNotifCallback(void(*callback)(), uint8_t notifByte);
     void StartEspNowInitBroadcasted();
     void StopEspNowInitBroadcasted();
-    void ESPNowBroadcastPing();
 
 #if defined(STR_BRIDGE_HID)
     void InitNetworkHID();

@@ -45,6 +45,7 @@ void ESPNowCore::receiveCallback(const esp_now_recv_info* info, const uint8_t* d
 #if CONFIG_STR_SLAVE_ESPNOW
 			if (*data == SLAVE_BROADCAST_PING)
 			{
+				ESP_LOGI(tag, "SLAVE_BROADCAST_PING");
 				OptSlaveRef slave = GetSlaveForEMac({data[1],
 													data[2],
 													data[3],
@@ -86,7 +87,6 @@ void ESPNowCore::receiveCallback(const esp_now_recv_info* info, const uint8_t* d
 					else
 						slave->get().PlanifySendInitRequest();
 				}
-				LOG("broadcast data");
 			}
 #endif
 		}
