@@ -71,6 +71,10 @@ void CTRBridge::begin()
 		master.InitCTR(UARTCTR(UARTCore::GetUART0Instance()), MASTER_CTR_UART2);
 #endif
 
+#if CONFIG_STR_SLAVE_ESPNOW
+	ESPNowCore::GetInstance().BroadcastBridgePing();
+#endif
+
 }
 
 void CTRBridge::Update()

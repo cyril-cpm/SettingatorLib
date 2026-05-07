@@ -471,6 +471,14 @@ void Settingator::begin()
 #if defined(STR_BRIDGE_HID)
 	InitNetworkHID();
 #endif
+
+#if CONFIG_STR_MASTER_ESPNOW
+	ESPNowCore::GetInstance().BroadcastSlavePing();
+#endif
+
+#if CONFIG_STR_HAS_BRIDGE
+	CTRBridge::GetInstance().begin();
+#endif
 }
 
 void Settingator::_createSlaveID(uint8_t slaveID)

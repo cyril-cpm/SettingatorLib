@@ -9,6 +9,11 @@
 #include <utility>
 #include <variant>
 
+#define SLAVE_BROADCAST_PING 0x01
+#define BRIDGE_BROADCAST_PING 0x02
+#define LINK_PING 0x03
+#define LINK_PONG 0x04
+
 class ICore
 {
 	public:

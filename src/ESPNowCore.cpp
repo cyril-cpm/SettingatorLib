@@ -1,3 +1,4 @@
+#include "Core.h"
 #include "Definitions.h"
 
 #if STR_HAS_ESPNOW
@@ -37,46 +38,56 @@ void ESPNowCore::receiveCallback(const esp_now_recv_info* info, const uint8_t* d
 		LOG("len: %d", len);
 		LOG("data: %d", *data);
 
-		if (len == 6 && data && isBroadcastMac(des_addrArr))
+		if (len == 7 &&
+				data &&
+				isBroadcastMac(des_addrArr))
 		{
 #if CONFIG_STR_SLAVE_ESPNOW
-			OptSlaveRef slave = GetSlaveForEMac({data[0], data[1], data[2], data[3], data[4], data[5]});
-
-			if (initEspNowBroadcasted && !slave)
+			if (*data == SLAVE_BROADCAST_PING)
 			{
-				LOG("Slave not found");
-				if (nbInitialisedSlave < CONFIG_STR_NB_SLAVE)
-				{
-					LOG("There is room dfor a slave");
-					slave = slaveArray[nbInitialisedSlave];
-					slave->get().SetEMac({data[0], data[1], data[2], data[3], data[4], data[5]});
-					slave->get().Activate();
-					nbInitialisedSlave++;
-				}
-				else
-					LOG("To much slave initialised: %d", nbInitialisedSlave);
-			}
+				OptSlaveRef slave = GetSlaveForEMac({data[1],
+													data[2],
+													data[3],
+													data[4],
+													data[5],
+													data[6]});
 
-			if (slave)
-			{
-				if (!slave->get().HasCTR(SlaveCTREnum::CTR_ESPNOW))
+				if (initEspNowBroadcasted && !slave)
 				{
-					LOG("Creating CTR");
-					slave->get().InitCTR(ESPNowCTR(ESPNowCore::GetInstance(),
-													src_addrArr,
-													true)
-										, SlaveCTREnum::CTR_ESPNOW);
-					
-					if (registeredEspNowCtr < NB_ESPNOW_CTR)
+					LOG("Slave not found");
+					if (nbInitialisedSlave < CONFIG_STR_NB_SLAVE)
 					{
-						espNowCtrArray[registeredEspNowCtr] = slave->get().GetESPNowCTR();
-						registeredEspNowCtr++;
+						LOG("There is room dfor a slave");
+						slave = slaveArray[nbInitialisedSlave];
+						slave->get().SetEMac({data[0], data[1], data[2], data[3], data[4], data[5]});
+						slave->get().Activate();
+						nbInitialisedSlave++;
 					}
+					else
+						LOG("To much slave initialised: %d", nbInitialisedSlave);
 				}
-				else
-					slave->get().PlanifySendInitRequest();
+
+				if (slave)
+				{
+					if (!slave->get().HasCTR(SlaveCTREnum::CTR_ESPNOW))
+					{
+						LOG("Creating CTR");
+						slave->get().InitCTR(ESPNowCTR(ESPNowCore::GetInstance(),
+														src_addrArr,
+														true)
+											, SlaveCTREnum::CTR_ESPNOW);
+						
+						if (registeredEspNowCtr < NB_ESPNOW_CTR)
+						{
+							espNowCtrArray[registeredEspNowCtr] = slave->get().GetESPNowCTR();
+							registeredEspNowCtr++;
+						}
+					}
+					else
+						slave->get().PlanifySendInitRequest();
+				}
+				LOG("broadcast data");
 			}
-			LOG("broadcast data");
 #endif
 		}
 
@@ -161,17 +172,4 @@ void ESPNowCore::AddPeer(const std::array<uint8_t, 6>& peerMac)
 	}
 }
 
-void ESPNowCore::BroadcastPing()
-{
-	std::array<uint8_t, 6> dstMac = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
-
-	std::array<uint8_t, 6> eMac;
-
-	ESP_ERROR_CHECK(esp_efuse_mac_get_default(eMac.data()));
-
-
-	AddPeer(dstMac);
-
-	ESP_ERROR_CHECK(esp_now_send(dstMac.data(), eMac.data(), eMac.size()));
-}
 #endif
