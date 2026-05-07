@@ -418,8 +418,6 @@ void CTRBridge::HandleLinkInfo()
 	if (!fShouldSendLinkInfo)
 		return;
 
-	ESP_LOGI("BRIDGE", "HandleLinkInfo");
-
 	uint8_t nbCTR = 0;
 
 	uint16_t msgSize = 14;
@@ -433,7 +431,6 @@ void CTRBridge::HandleLinkInfo()
 	{
 		if (!slave)
 			break;
-		LOG("Slave found");
 		if (msgSize + slave.GetLinkInfoSize() > CONFIG_STR_MESSAGE_BUFFER_SIZE)
 		{
 			LOG("LinkInfoSize > CONFIG_STR_MESSAGE_BUFFER_SIZE");

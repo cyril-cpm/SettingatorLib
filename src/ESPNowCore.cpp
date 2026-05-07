@@ -60,7 +60,12 @@ void ESPNowCore::receiveCallback(const esp_now_recv_info* info, const uint8_t* d
 					{
 						LOG("There is room dfor a slave");
 						slave = slaveArray[nbInitialisedSlave];
-						slave->get().SetEMac({data[0], data[1], data[2], data[3], data[4], data[5]});
+						slave->get().SetEMac({data[1],
+												data[2],
+												data[3],
+												data[4],
+												data[5],
+												data[6]});
 						slave->get().Activate();
 						nbInitialisedSlave++;
 					}
