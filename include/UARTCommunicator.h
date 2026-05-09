@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Definitions.h"
-#include <cstdint>
 
 #if STR_HAS_UART
 
@@ -11,6 +10,22 @@
 #include <driver/uart.h>
 #include <initializer_list>
 
+enum UartCTREnum {
+
+#if CONFIG_STR_MASTER_UART0
+	UART_CTR_UART0,
+#endif
+
+#if CONFIG_STR_MASTER_UART1
+	UART_CTR_UART1,
+#endif
+
+#if CONFIG_STR_MASTER_UART2
+	UART_CTR_UART2,
+#endif
+
+	UART_CTR_MAX
+};
 
 class Message;
 
@@ -18,9 +33,11 @@ class UARTCTR: public ICTR
 {
 	public:
 
-		UARTCTR(UARTCore& core) : fCore(core) {}
+		UARTCTR(UARTCore& core) : fCore(core) {
+			fActivated = true;
+		}
 
-		void	UpdateImpl() {
+		void	Update() {
 
 		}
 
@@ -41,4 +58,7 @@ class UARTCTR: public ICTR
 
 		UARTCore&	fCore;
 };
+
+extern std::array<UARTCTR, NB_UART_CTR> uartCtrArray;
+
 #endif

@@ -10,38 +10,81 @@
 #include <optional>
 #include <variant>
 #include <stdatomic.h>
+
 #include "Buffer.h"
 #include "Communicator.h"
-#include "ESPNowCommunicator.h"
 #include "Message.h"
+
+#if CONFIG_STR_SLAVE_ESPNOW
+#include "ESPNowCommunicator.h"
+#endif
+
+#if STR_SLAVE_HAS_UART
 #include "UARTCommunicator.h"
+#endif
 
 
 enum SlaveCTREnum {
 
 #if CONFIG_STR_SLAVE_ESPNOW
-	CTR_ESPNOW,
+	SLAVE_CTR_ESPNOW,
 #endif
 
 #if CONFIG_STR_SLAVE_UART0
-	CTR_UART0,
+	SLAVE_CTR_UART0,
 #endif
 
 #if CONFIG_STR_SLAVE_UART1
-	CTR_UART1,
+	SLAVE_CTR_UART1,
 #endif
 
 #if CONFIG_STR_SLAVE_UART2
-	CTR_UART2,
+	SLAVE_CTR_UART2,
 #endif
 
 	SLAVE_CTR_MAX
 };
 
+using SlaveCTR = CTRVariant<
+	STRIP_FIRST_COMMA(
+			dummy
+
+#if CONFIG_STR_SLAVE_ESPNOW
+			,std::reference_wrapper<ESPNowCTR>
+#endif
+
+#if STR_SLAVE_HAS_UART
+			,std::reference_wrapper<UARTCTR>
+#endif
+		)
+	>;
 
 class Slave
 {
     public:
+
+	Slave() : fCTRArray({
+				STRIP_FIRST_COMMA(
+						dummy
+
+#if CONFIG_STR_SLAVE_ESPNOW
+						,espNowCtrArray[registeredEspNowCtr++]
+#endif
+
+#if CONFIG_STR_SLAVE_UART0
+						,uartCtrArray[UartCTREnum::UART_CTR_UART0]
+#endif
+
+#if CONFIG_STR_SLAVE_UART1
+						,uartCtrArray[UartCTREnum::UART_CTR_UART1]
+#endif
+
+#if CONFIG_STR_SLAVE_UART2
+						,uartCtrArray[UartCTREnum::UART_CTR_UART2]
+#endif
+					)
+
+			})	{}
 
     uint8_t 	GetID();
     
@@ -76,15 +119,13 @@ class Slave
 	}
 
 	bool		HasCTR(SlaveCTREnum type) {
-		return fCTR[type].has_value();
-	}
-
-	void		InitCTR(ICTR_t&& ctr, SlaveCTREnum type) {
-		fCTR[type].emplace(std::move(ctr));
+		return (bool)fCTRArray[type];
 	}
 
 #if CONFIG_STR_SLAVE_ESPNOW
-	ESPNowCTR&	GetESPNowCTR() { return std::get<ESPNowCTR>(*fCTR[CTR_ESPNOW]); }
+	ESPNowCTR&	GetESPNowCTR() {
+		return std::get<SLAVE_CTR_ESPNOW>(fCTRArray[SLAVE_CTR_ESPNOW]);
+	}
 #endif
 
 	void		SetWaitingForID(const bool value = true) {
@@ -96,12 +137,20 @@ class Slave
 	}
 
 	void		Write() const {
-		const auto& ctrToUse = fCTR[fCTRToUse];
+		const auto& ctrToUse = fCTRArray[fCTRToUse];
 
 		if (ctrToUse)
-			ICTR_T_WRITE(*ctrToUse, , );
+			ctrToUse.Write();
 	}
 
+
+	void		Write(std::initializer_list<uint8_t> message) const {
+		const auto& ctrToUse = fCTRArray[fCTRToUse];
+
+		if (ctrToUse)
+			ctrToUse.Write(message);
+	}
+	
 	void		PlanifySendInitRequest() {
 		atomic_store(&fShouldSendInitRequest, true);
 	}
@@ -133,8 +182,8 @@ class Slave
     private:
     uint8_t     			fSlaveID = 0;
 	
-	std::array<std::optional<ICTR_t>, SlaveCTREnum::SLAVE_CTR_MAX>      fCTR;
-	uint8_t																fCTRToUse = 0;
+	std::array<SlaveCTR, SlaveCTREnum::SLAVE_CTR_MAX> 	fCTRArray;
+	uint8_t		fCTRToUse = 0;
 
 	bool					fWaitingForID = false;
 	std::array<uint8_t, 6>	fEMac;

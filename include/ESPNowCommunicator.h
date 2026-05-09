@@ -29,21 +29,9 @@ class ESPNowCTR: public ICTR
 
     ESPNowCTR(ESPNowCore& core, const std::array<uint8_t, 6>& mac, const bool createTimer = false);
 
-    void        UpdateImpl() {
+    void        Update() {
 
 	}
-
-    void ConfigEspNowDirectNotif(const std::array<uint8_t, 6>& mac, uint8_t notifByte, uint8_t dstSlaveID);
-
-    void ConfigEspNowDirectSettingUpdate(const std::array<uint8_t, 6>& mac, uint8_t settingRef, uint8_t settingValueLen, uint8_t dstSlaveID);
- 
-    void RemoveDirectNotifConfig(uint8_t dstSlaveID, uint8_t notifByte);
-
-    void RemoveDirectSettingUpdateConfig(uint8_t dstSlaveID, uint8_t settingRef);
-
-    void SendDirectNotif(uint8_t notifByte);
-
-    void SendDirectSettingUpdate(uint8_t settingRef, uint8_t* value, uint8_t valueLen);
 
 	static ESPNowCTR*	GetCTRForMac(const std::array<uint8_t, 6>& mac);
 
@@ -117,7 +105,7 @@ class ESPNowCTR: public ICTR
 		// {
 			messageBuffer[0] =  SLAVEID_TRANSMISSION;
 			ESP_ERROR_CHECK(esp_efuse_mac_get_default(messageBuffer.data() + 1));
-			messageBuffer[7] = Settingator::GetInstance().GetSlaveID();
+			// messageBuffer[7] = Settingator::GetInstance().GetSlaveID();
 			messageBuffer.SetLen(8);
 			Write();
 		// }

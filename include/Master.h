@@ -1,16 +1,23 @@
 #pragma once
 
 #include "Definitions.h"
-#include "ESPNowCore.h"
 
-#if CONFIG_STR_HAS_SETTINGATOR
-
-#include "Message.h"
-#include "ESPNowCommunicator.h"
 #include <cstdint>
 #include <functional>
 #include <initializer_list>
 #include <variant>
+
+#include "Message.h"
+
+#if CONFIG_STR_MASTER_ESPNOW
+#include "ESPNowCore.h"
+#include "ESPNowCommunicator.h"
+#endif
+
+#if STR_MASTER_HAS_UART
+#include "UARTCore.h"
+#include "UARTCommunicator.h"
+#endif
 
 enum MasterCTREnum {
 
@@ -33,50 +40,16 @@ enum MasterCTREnum {
 	MASTER_CTR_MAX
 };
 
-template <typename... Ts>
-class MasterCTRVariant : public std::variant<Ts ...>
-{
-	using std::variant<Ts ...>::variant;
-	using std::variant<Ts ...>::operator=;
 
-	public:
-
-	constexpr explicit operator bool() const {
-		return std::visit([](const auto& ctr) -> bool {
-				return (bool)ctr.get();
-			}, *this);
-	}
-
-	void Write(std::initializer_list<uint8_t> message) const {
-		std::visit([message](const auto& ctr) {
-				ctr.get().Write(message);
-			}, *this);
-	}
-
-	void Write() const {
-		std::visit([](const auto& ctr) {
-				ctr.get().Write();
-			}, *this);
-	}
-
-	void Update() {
-		std::visit([](auto& ctr) {
-				ctr.get().Update();
-			}, *this);
-	}
-};
-
-#define STRIP_FIRST_COMMA_HELPER(comma, ...) __VA_ARGS__
-
-using MasterCTR = MasterCTRVariant<
-	STRIP_FIRST_COMMA_HELPER(
+using MasterCTR = CTRVariant<
+	STRIP_FIRST_COMMA(
 			dummy
 
 #if CONFIG_STR_MASTER_ESPNOW
 			,std::reference_wrapper<ESPNowCTR>
 #endif
 
-#if CONFIG_STR_MASTER_UART0
+#if STR_MASTER_HAS_UART
 			,std::reference_wrapper<UARTCTR>
 #endif
 		)
@@ -92,7 +65,7 @@ class Master
 		}
 
 		Master() : fCTRArray({
-				STRIP_FIRST_COMMA_HELPER(
+				STRIP_FIRST_COMMA(
 						dummy
 
 #if CONFIG_STR_MASTER_ESPNOW
@@ -100,7 +73,15 @@ class Master
 #endif
 
 #if CONFIG_STR_MASTER_UART0
-						,UARTCTR(UART::GetUART0Instance())
+						,uartCtrArray[UartCTREnum::UART_CTR_UART0]
+#endif
+
+#if CONFIG_STR_MASTER_UART1
+						,uartCtrArray[UartCTREnum::UART_CTR_UART1]
+#endif
+
+#if CONFIG_STR_MASTER_UART2
+						,uartCtrArray[UartCTREnum::UART_CTR_UART2]
 #endif
 					)
 				}) {}
@@ -156,4 +137,3 @@ class Master
 		uint8_t		fCTRToUse = 0;
 };
 
-#endif

@@ -22,46 +22,7 @@ class ICTR
 		UNKNOWN = 0xFF
 	};
 
-	/*
-	- return true if there is bytes available to read
-	*/
-	bool Available(this auto&& self) {
-		self.Update();
-		return self.fReceivedMessage.size();
-	}
-
-	/*
-	- Read a message if avaible or return empty Message
-	 */
-	Message* Read();
-
-	/*
-	- Flush message after having executed
-	*/
-	void	Flush();
-
-	/*
-	- Update internal Buffer
-	*/
-	void Update(this auto&& self) {
-		self.UpdateImpl();
-	}
-
-	uint8_t GetBoxSize() const;
-
-	void ConfigEspNowDirectNotif(uint8_t* mac, uint8_t notifByte, uint8_t dstSlaveID);
-
-	void ConfigEspNowDirectSettingUpdate(uint8_t* mac, uint8_t settingRef, uint8_t settingValueLen, uint8_t dstSlaveID);
-
-	void SendDirectNotif(uint8_t notifByte);
-
-	void SendDirectSettingUpdate(uint8_t settingRef, uint8_t* value, uint8_t valueLen);
-
-	void RemoveDirectNotifConfig(uint8_t dstSlaveID, uint8_t notifByte);
-
-	void RemoveDirectSettingUpdateConfig(uint8_t dstSlaveID, uint8_t settingRef);
-
-	uint16_t	GetLinkInfoSize(this auto&& self) {
+uint16_t	GetLinkInfoSize(this auto&& self) {
 		return self.GetLinkInfoSizeImpl();
 	}
 
@@ -79,4 +40,36 @@ class ICTR
 
 };
 
+template <typename... Ts>
+class CTRVariant : public std::variant<Ts ...>
+{
+	using std::variant<Ts ...>::variant;
+	using std::variant<Ts ...>::operator=;
+
+	public:
+
+	constexpr explicit operator bool() const {
+		return std::visit([](const auto& ctr) -> bool {
+				return (bool)ctr.get();
+			}, *this);
+	}
+
+	void Write(std::initializer_list<uint8_t> message) const {
+		std::visit([message](const auto& ctr) {
+				ctr.get().Write(message);
+			}, *this);
+	}
+
+	void Write() const {
+		std::visit([](const auto& ctr) {
+				ctr.get().Write();
+			}, *this);
+	}
+
+	void Update() {
+		std::visit([](auto& ctr) {
+				ctr.get().Update();
+			}, *this);
+	}
+};
 

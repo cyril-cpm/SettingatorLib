@@ -32,20 +32,13 @@ void Slave::SetID(uint8_t id)
 
 uint16_t Slave::GetLinkInfoSize() const
 {
-	const auto& ctrToUse = fCTR[fCTRToUse];
+	const auto& ctrToUse = fCTRArray[fCTRToUse];
 
 	if (ctrToUse)
 	{
 		return std::visit([](auto&& ctr) -> uint16_t {
-
-				using T = std::decay_t<decltype(ctr)>;
-
-				if constexpr (!std::is_same_v<T, std::monostate>)
-					return ctr.GetLinkInfoSize() + 2;
-
-				else
-					return 0;
-			}, *ctrToUse);
+				return ctr.get().GetLinkInfoSize() + 2;
+			}, ctrToUse);
 	}
 
 	return 0;
@@ -53,7 +46,7 @@ uint16_t Slave::GetLinkInfoSize() const
 
 void Slave::WriteLinkInfoToBuffer(uint16_t index) const
 {
-	const auto& ctrToUse = fCTR[fCTRToUse];
+	const auto& ctrToUse = fCTRArray[fCTRToUse];
 
 	if (ctrToUse)
 	{
@@ -62,12 +55,9 @@ void Slave::WriteLinkInfoToBuffer(uint16_t index) const
 
 		std::visit([index](auto&& ctr) {
 
-				using T = std::decay_t<decltype(ctr)>;
-
-				if constexpr (!std::is_same_v<T, std::monostate>)
-					ctr.WriteLinkInfoToBuffer(index + 2);
+				ctr.get().WriteLinkInfoToBuffer(index + 2);
 			
-			}, *ctrToUse);
+			}, ctrToUse);
 	}
 }
 

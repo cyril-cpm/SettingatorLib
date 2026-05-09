@@ -29,7 +29,6 @@ class CTRBridge
 	void			HandleLinkInfo();
     void			ShouldSendLinkInfo(bool should = true);
 	void			CreateLinkInfoTimer();
-	void			SetMaster(ICTR_t master);
 
 	private:
 

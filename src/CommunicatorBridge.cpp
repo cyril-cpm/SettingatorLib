@@ -22,6 +22,8 @@
 
 static const char* tag("CTRBridge");
 
+static Master& master = Master::GetInstance();
+
 void CTRBridge::ShouldSendLinkInfo(bool should)
 {
 	fShouldSendLinkInfo = should;
@@ -54,22 +56,6 @@ void CTRBridge::begin()
 		ESP_ERROR_CHECK(esp_task_wdt_add(nullptr));
 
 	CreateLinkInfoTimer();
-	
-#if CONFIG_STR_MASTER_UART0
-	if (!master.HasCTR(MASTER_CTR_UART0))
-		master.InitCTR(UARTCTR(UARTCore::GetUART0Instance()), MASTER_CTR_UART0);
-
-#endif
-
-#if CONFIG_STR_MASTER_UART1
-	if (!master.HasCTR(MASTER_CTR_UART1))
-		master.InitCTR(UARTCTR(UARTCore::GetUART1Instance()), MASTER_CTR_UART1);
-#endif
-
-#if CONFIG_STR_MASTER_UART2
-	if (!master.HasCTR(MASTER_CTR_UART2))
-		master.InitCTR(UARTCTR(UARTCore::GetUART0Instance()), MASTER_CTR_UART2);
-#endif
 
 #if CONFIG_STR_SLAVE_ESPNOW
 	ESPNowCore::GetInstance().BroadcastBridgePing();
@@ -187,8 +173,8 @@ void CTRBridge::Update()
 						});
 		}
 		
-		slave.Update();
-		// slave.HandleSendInitRequest();
+		// slave.Update();
+		slave.HandleSendInitRequest();
 	}
 
 	HandleLinkInfo();
