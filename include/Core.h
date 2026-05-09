@@ -13,6 +13,7 @@
 #define BRIDGE_BROADCAST_PING 0x02
 #define LINK_PING 0x03
 #define LINK_PONG 0x04
+#define SLAVEID_TRANSMISSION 0x05
 
 class ICore
 {

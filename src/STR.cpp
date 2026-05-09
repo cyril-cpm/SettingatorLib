@@ -27,9 +27,6 @@ std::array<std::reference_wrapper<ICore>, CORE_MAX> coreArray {
 std::array<Slave, CONFIG_STR_NB_SLAVE> slaveArray;
 uint8_t nbInitialisedSlave = 0;
 
-Master master;
-
-
 OptSlaveRef GetSlaveForID(const uint8_t id)
 {
 	for (auto& slave : slaveArray)

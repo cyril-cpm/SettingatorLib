@@ -20,7 +20,9 @@ class UARTCTR: public ICTR
 
 		UARTCTR(UARTCore& core) : fCore(core) {}
 
-		void	UpdateImpl();
+		void	UpdateImpl() {
+
+		}
 
 		int		Write(std::initializer_list<uint8_t> message) const {
 			return fCore.Write(message);

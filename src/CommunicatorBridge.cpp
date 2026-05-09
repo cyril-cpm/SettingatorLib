@@ -187,7 +187,8 @@ void CTRBridge::Update()
 						});
 		}
 		
-		slave.HandleSendInitRequest();
+		slave.Update();
+		// slave.HandleSendInitRequest();
 	}
 
 	HandleLinkInfo();

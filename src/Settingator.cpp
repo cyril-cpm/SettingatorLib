@@ -1,5 +1,7 @@
-#include "Buffer.h"
 #include "Definitions.h"
+
+#if CONFIG_STR_HAS_SETTINGATOR
+#include "Buffer.h"
 
 #include "Settingator.h"
 #include "STR.h"
@@ -26,6 +28,8 @@
 #include "sdkconfig.h"
 
 static const char* tag = "STR";
+
+static Master& master = Master::GetInstance();
 
 void Settingator::StartWiFi()
 {
@@ -200,6 +204,8 @@ void Settingator::Update()
 		// ESPNowBroadcastPing();
 		fShouldESPNowBroadcastPing = false;
 	}
+
+	master.Update();
 
 #if defined(STR_BRIDGE_HID)
 	fInfoLEDStrip.Show();
@@ -655,4 +661,4 @@ setting_ref Settingator::settingRefCount()
 	return fInternalRefCount++;
 }
 
-//Settingator STR(nullptr);
+#endif

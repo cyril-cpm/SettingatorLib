@@ -66,52 +66,6 @@ void ESPNowCTR::ShouldSendPing(bool should)
 	fShouldSendPing = should;
 }
 
-void ESPNowCTR::UpdateImpl()
-{
-	// if (fShouldSendPing)
-	// {
-	// 	SendPing();
-	// 	fShouldSendPing = false;
-	// }
-	//
-	// if (espNowMsgListMutex.try_lock())
-	// {
-	// 	std::queue<espNowMsg>* msgList = findQueueForMac(fMac);
-	// 	while (msgList && msgList->size())
-	// 	{
-	// 		LOG("Message Availlable");
-	// 		espNowMsg msg = std::move(msgList->front());
-	// 		msgList->pop();
-	//
-	// 		if (!msgList->size())
-	// 		{
-	// 			fLastMsgTimestamp = pdTICKS_TO_MS(xTaskGetTickCount());
-	// 			fLastMsgRssi = msg.rssi;
-	// 			fLastMsgNoiseFloor = msg.noiseFloor;
-	//
-	// 			if (fPingTimer)
-	// 				xTimerChangePeriod(fPingTimer, pdMS_TO_TICKS(5000), 0);
-	// 		}
-	//
-	//
-	// 		Message newMessage = Message(std::move(msg.data));
-	//
-	// 		if (newMessage.GetType() == Message::Type::EspNowPong)
-	// 		{
-	// 			fPeerLastMsgRssi = newMessage.GetBufPtr()[5];
-	// 			fPeerLastMsgNoiseFloor = newMessage.GetBufPtr()[6];
-	// 			memcpy(&fPeerLastMsgDeltastamp, newMessage.GetBufPtr() + 7, 4);
-	// 		}
-	// 		else
-	// 			SendPong();
-	//
-	// 		LOG("Receive MSG");
-	// 		_receive(std::move(newMessage));
-	// 	}
-	// 	espNowMsgListMutex.unlock();
-	// }
-}
-
 // espNowDirectNotif::espNowDirectNotif(const std::array<uint8_t, 6>& inMac, uint8_t inNotifByte, uint8_t inDstSlaveID)
 // 	:
 // 		mac(inMac),

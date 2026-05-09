@@ -2,6 +2,7 @@
 
 #include "Definitions.h"
 
+#include <cstdint>
 #include <functional>
 #include <vector>
 #include <optional>
@@ -69,6 +70,10 @@ class Settingator
     void        begin();
 
     setting_ref settingRefCount();
+
+	uint8_t		GetSlaveID() const { return fSlaveID; }
+
+	// void		Planify
 
     private:
 

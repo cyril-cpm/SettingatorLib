@@ -4,6 +4,7 @@
 
 #if STR_HAS_ESPNOW
 #include "Communicator.h"
+#include <atomic>
 #include <cstdint>
 #include <esp_now.h>
 #include "ESPNowCore.h"
@@ -14,16 +15,23 @@
 #include "Buffer.h"
 #include <optional>
 
+#if CONFIG_STR_MASTER_ESPNOW
+#include "Settingator.h"
+#endif
+
 class Message;
 
 class ESPNowCTR: public ICTR
 {
     public:
 
+	ESPNowCTR() : fCore(ESPNowCore::GetInstance()) {}
+
     ESPNowCTR(ESPNowCore& core, const std::array<uint8_t, 6>& mac, const bool createTimer = false);
 
-    int         WriteImpl(Message& buf);
-    void        UpdateImpl();
+    void        UpdateImpl() {
+
+	}
 
     void ConfigEspNowDirectNotif(const std::array<uint8_t, 6>& mac, uint8_t notifByte, uint8_t dstSlaveID);
 
@@ -84,6 +92,11 @@ class ESPNowCTR: public ICTR
 		return fCore.Write(fMac);
 	}
 
+	void	SetMac(std::array<uint8_t, 6>& mac) {
+		fMac = mac;
+		fActivated = true;
+	}
+
     const std::array<uint8_t, 6>&  GetMac() const { return fMac; }
 
     void            ShouldSendPing(bool should = true);
@@ -94,9 +107,22 @@ class ESPNowCTR: public ICTR
 		fLastMsgTimestamp = timestamp;
 	}
 
-    private:
+	void			PlanifySlaveIDTransmission() {
+		// atomic_store(&fShouldTransmitSlaveID, true);
+	}
 
-	ESPNowCTR() = delete;
+	void			HandleSlaveIDTransmission() {
+		// if (atomic_exchange(&fShouldTransmitSlaveID, false))
+		// {
+			messageBuffer[0] =  SLAVEID_TRANSMISSION;
+			ESP_ERROR_CHECK(esp_efuse_mac_get_default(messageBuffer.data() + 1));
+			messageBuffer[7] = Settingator::GetInstance().GetSlaveID();
+			messageBuffer.SetLen(8);
+			Write();
+		// }
+	}
+
+    private:
 
 	ESPNowCore&	fCore;
 
@@ -113,11 +139,13 @@ class ESPNowCTR: public ICTR
     TimerHandle_t   fPingTimer = nullptr;
 
     bool        fShouldSendPing = false;
+
+	// std::atomic_bool	fShouldTransmitSlaveID = false;
 };
 
 bool compareMac(const uint8_t* mac1, const uint8_t* mac2);
 
-extern std::array<std::optional<std::reference_wrapper<ESPNowCTR>>, NB_ESPNOW_CTR> espNowCtrArray;
+extern std::array<ESPNowCTR, NB_ESPNOW_CTR> espNowCtrArray;
 extern uint8_t registeredEspNowCtr;
 
 std::optional<std::reference_wrapper<ESPNowCTR>> GetESPNowCommunicatorByMac(const std::array<uint8_t, 6>& mac);

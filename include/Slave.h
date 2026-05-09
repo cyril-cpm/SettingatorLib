@@ -1,7 +1,8 @@
 #pragma once
 
-#include "Buffer.h"
 #include "Definitions.h"
+
+#if CONFIG_STR_HAS_BRIDGE
 
 #include <array>
 #include <cstdint>
@@ -9,54 +10,12 @@
 #include <optional>
 #include <variant>
 #include <stdatomic.h>
+#include "Buffer.h"
 #include "Communicator.h"
 #include "ESPNowCommunicator.h"
 #include "Message.h"
 #include "UARTCommunicator.h"
 
-using ICTR_t = std::variant<std::monostate
-#if STR_HAS_UART
-	, UARTCTR
-#endif
-
-#if STR_HAS_ESPNOW
-	, ESPNowCTR
-#endif
->;
-
-#define NOT_MONOSTATE_CHECK(X, Y, Z) using T = std::decay_t<decltype(X)>; \
-		if constexpr (!std::is_same_v<T, std::monostate>) \
-		Y \
-		Z
-
-#define ICTR_T_AVAILABLE(X) std::visit([](auto&& ctr) -> bool { \
-		NOT_MONOSTATE_CHECK(ctr, return ctr.Available(); , return false;) \
-	}, X)
-
-#define ICTR_T_READ(X) std::visit([](auto&& ctr) -> Message* { \
-		NOT_MONOSTATE_CHECK(ctr, return ctr.Read(); , return nullptr;) \
-	}, X)
-
-#define ICTR_T_FLUSH(X) std::visit([](auto&& ctr) { \
-		NOT_MONOSTATE_CHECK(ctr, ctr.Flush(); ,) \
-	}, X)
-
-#define ICTR_T_WRITE(CTR, CAPT, MSG) std::visit([CAPT](auto&& ctr) -> int { \
-		NOT_MONOSTATE_CHECK(ctr, return ctr.Write(MSG); , return 0;) \
-	}, CTR)
-
-#define ICTR_T_GET_PTR(CTR) std::visit([](auto&& ctr) -> ICTR* { \
-		NOT_MONOSTATE_CHECK(ctr, return &ctr; , return nullptr); \
-	}, CTR)
-
-#define IS_TYPE_CHECK(CTR, TYPE, OK, KO) using T = std::decay_t<decltype(CTR)>; \
-		if constexpr (std::is_same_v<T, TYPE>) \
-		OK \
-		KO
-
-#define ESPNOWCTR_GET_MAC(CTR) std::visit([](ESPNowCTR&& ctr) -> const std::array<uint8_t, 6>& { \
-		return ctr.GetMac(); \
-	}, CTR)
 
 enum SlaveCTREnum {
 
@@ -84,7 +43,6 @@ class Slave
 {
     public:
 
-    ICTR_t*		GetCTR();
     uint8_t 	GetID();
     
 	bool    	HasSubSlave(uint8_t id) const {
@@ -193,6 +151,6 @@ class Slave
 
 using OptSlaveRef = std::optional<std::reference_wrapper<Slave>>;
 
-extern std::queue<Slave*> reconnectedSlaves;
-
 extern bool initEspNowBroadcasted;
+
+#endif

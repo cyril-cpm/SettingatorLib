@@ -3,15 +3,9 @@
 #include "ESPNowCommunicator.h"
 #include "STR.h"
 #include "sdkconfig.h"
-#include <cstddef>
 #include <variant>
 
 bool initEspNowBroadcasted = false;
-
-ICTR_t* Slave::GetCTR()
-{
-    return nullptr;//&fCTR;
-}
 
 uint8_t Slave::GetID()
 {

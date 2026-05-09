@@ -1,19 +1,26 @@
-#include "Core.h"
 #include "Definitions.h"
 
 #if STR_HAS_ESPNOW
-#include "ESPNowCommunicator.h"
-#include "Master.h"
-#include "STR.h"
-#include "Slave.h"
-#include "sdkconfig.h"
-#include <functional>
-
 #include "ESPNowCore.h"
+#include "ESPNowCommunicator.h"
+#include "STR.h"
 #include "MiscDef.h"
+
+#include <functional>
 #include <esp_wifi.h>
 #include <esp_mac.h>
 #include <nvs_flash.h>
+#include "Slave.h"
+
+#if CONFIG_STR_SLAVE_ESPNOW
+#endif
+
+#if CONFIG_STR_MASTER_ESPNOW
+#include "Master.h"
+#include "Settingator.h"
+
+static Master& master = Master::GetInstance();
+#endif
 
 static const char* tag("ESPNowCore");
 
@@ -94,6 +101,22 @@ void ESPNowCore::receiveCallback(const esp_now_recv_info* info, const uint8_t* d
 				}
 			}
 #endif
+
+#if CONFIG_STR_MASTER_ESPNOW
+			if (*data == BRIDGE_BROADCAST_PING)
+			{
+				if (master.HasCTR(MASTER_CTR_ESPNOW))
+				{
+					ESPNowCTR& ctr = master.GetESPNowCTR();
+
+					if (ctr.GetMac() == src_addrArr)
+					{
+						LOG("BRIDGE_BROADCAST_PING from Master");
+						ctr.PlanifySlaveIDTransmission();
+					}
+				}
+			}
+#endif
 		}
 
 		else
@@ -102,10 +125,17 @@ void ESPNowCore::receiveCallback(const esp_now_recv_info* info, const uint8_t* d
 #if CONFIG_STR_MASTER_ESPNOW
 			if (!master.HasCTR(MasterCTREnum::MASTER_CTR_ESPNOW))
 			{
-				master.InitCTR(ESPNowCTR(ESPNowCore::GetInstance(),
-											src_addrArr,
-											false)
-								, MasterCTREnum::MASTER_CTR_ESPNOW);
+				// master.InitCTR(ESPNowCTR(ESPNowCore::GetInstance(),
+				// 							src_addrArr,
+				// 							false)
+				// 				, MasterCTREnum::MASTER_CTR_ESPNOW);
+				//
+				master.GetESPNowCTR().SetMac(src_addrArr);
+				if (registeredEspNowCtr < NB_ESPNOW_CTR)
+				{
+					espNowCtrArray[registeredEspNowCtr] = master.GetESPNowCTR();
+					registeredEspNowCtr++;
+				}
 			}
 			LOG("Message received");
 #endif
@@ -113,7 +143,6 @@ void ESPNowCore::receiveCallback(const esp_now_recv_info* info, const uint8_t* d
 
 			if (info->rx_ctrl)
 			{
-				ESP_LOGI("ESPNOWCORE", "registering linkinfo");
 				std::optional<std::reference_wrapper<ESPNowCTR>> ctr = GetESPNowCommunicatorByMac(src_addrArr);
 
 				if (ctr)

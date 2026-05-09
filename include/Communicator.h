@@ -69,13 +69,14 @@ class ICTR
 		self.WriteLinkInfoToBufferImpl(index);
 	}
 
+	constexpr explicit operator bool() const { return fActivated; }
+
 	protected:
 	
 	ICTR() = default;
 
-	void _receive(Message&& msg);
+	bool fActivated = false;
 
-	std::queue<Message> fReceivedMessage;
 };
 
 

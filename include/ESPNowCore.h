@@ -35,7 +35,6 @@ class ESPNowCore : public ICore
 			return 0;
 		}
 
-		void	Update();
 		void	AddPeer(const std::array<uint8_t, 6>& peerMac);
 
 #if CONFIG_STR_MASTER_ESPNOW

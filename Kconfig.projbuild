@@ -1,5 +1,11 @@
 menu "Settingator Config"
 
+	config STR_HAS_SETTINGATOR
+		bool "Has a Settingator"
+		default y
+		help
+			Has a settingator
+
 	config STR_HAS_BRIDGE
 		bool "Has a bridge"
 		default n
@@ -18,12 +24,6 @@ menu "Settingator Config"
 		help
 			Définit la taille des symbols RMT
 
-	config BRIDGE_TEST
-		bool "BridgeTest"
-		default n
-		help
-			Active le test du bridge
-	
 	config STR_UART0
 		bool "UART0 enabled"
 		default n
