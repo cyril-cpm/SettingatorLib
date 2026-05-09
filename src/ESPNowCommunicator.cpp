@@ -20,7 +20,7 @@
 #include <vector>
 #include <optional>
 
-std::array<std::optional<std::reference_wrapper<ESPNowCTR>>, NB_ESPNOW_CTR> espNowCtrArray;
+std::array<ESPNowCTR, NB_ESPNOW_CTR> espNowCtrArray;
 uint8_t registeredEspNowCtr = 0;
 
 static const char* tag("ESPNOWCTR");
@@ -44,7 +44,6 @@ ESPNowCTR::ESPNowCTR(ESPNowCore& core, const std::array<uint8_t, 6>& peerMac, co
 		fCore(core),
 		fMac(peerMac)
 {
-	fCore.AddPeer(fMac);
 
 	if (createTimer)
 	{
@@ -211,8 +210,8 @@ std::optional<std::reference_wrapper<ESPNowCTR>> GetESPNowCommunicatorByMac(cons
 		if (!ctr)
 			break;
 
-		if (mac == ctr->get().GetMac())
-			return *ctr;
+		if (mac == ctr.GetMac())
+			return ctr;
 	}
 	return std::nullopt;
 }

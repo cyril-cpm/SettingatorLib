@@ -124,19 +124,8 @@ void ESPNowCore::receiveCallback(const esp_now_recv_info* info, const uint8_t* d
 			LOG("Not broadcasted Ping");
 #if CONFIG_STR_MASTER_ESPNOW
 			if (!master.HasCTR(MasterCTREnum::MASTER_CTR_ESPNOW))
-			{
-				// master.InitCTR(ESPNowCTR(ESPNowCore::GetInstance(),
-				// 							src_addrArr,
-				// 							false)
-				// 				, MasterCTREnum::MASTER_CTR_ESPNOW);
-				//
 				master.GetESPNowCTR().SetMac(src_addrArr);
-				if (registeredEspNowCtr < NB_ESPNOW_CTR)
-				{
-					espNowCtrArray[registeredEspNowCtr] = master.GetESPNowCTR();
-					registeredEspNowCtr++;
-				}
-			}
+
 			LOG("Message received");
 #endif
 			ESPNowCore::GetInstance().WriteToBuffer(data, len);
@@ -165,7 +154,11 @@ ESPNowCore::ESPNowCore()
 void ESPNowCore::Init()
 {
 	LOG("InitImpl");
+
+#if CONFIG_STR_SLAVE_ESPNOW
 	initEspNowBroadcasted = false;
+#endif
+
 	//NVS
 	esp_err_t ret = nvs_flash_init();
 	if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {

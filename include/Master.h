@@ -58,6 +58,12 @@ class MasterCTRVariant : public std::variant<Ts ...>
 				ctr.get().Write();
 			}, *this);
 	}
+
+	void Update() {
+		std::visit([](auto& ctr) {
+				ctr.get().Update();
+			}, *this);
+	}
 };
 
 #define STRIP_FIRST_COMMA_HELPER(comma, ...) __VA_ARGS__
@@ -105,7 +111,7 @@ class Master
 
 #if CONFIG_STR_MASTER_ESPNOW
 		ESPNowCTR&	GetESPNowCTR() {
-			return std::get<ESPNowCTR>(fCTRArray[MASTER_CTR_ESPNOW]);
+			return std::get<MASTER_CTR_ESPNOW>(fCTRArray[MASTER_CTR_ESPNOW]).get();
 		}
 #endif
 
@@ -139,15 +145,8 @@ class Master
 		void		Update() {
 			for (auto& ctr : fCTRArray)
 			{
-				if (ctr.index())
-				{
-					std::visit([](auto&& theCtr) {
-						using T = std::decay_t<decltype(theCtr)>;
-
-						if constexpr(!std::is_same_v<T, std::monostate>)
-							theCtr.Update();
-					}, ctr);
-				}
+				if (ctr)
+					ctr.Update();
 			}
 		}
 

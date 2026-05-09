@@ -1,7 +1,9 @@
+#include "Definitions.h"
+
+#if CONFIG_STR_HAS_BRIDGE
 #include "Slave.h"
 #include "Communicator.h"
 #include "ESPNowCommunicator.h"
-#include "STR.h"
 #include "sdkconfig.h"
 #include <variant>
 
@@ -68,3 +70,5 @@ void Slave::WriteLinkInfoToBuffer(uint16_t index) const
 			}, *ctrToUse);
 	}
 }
+
+#endif

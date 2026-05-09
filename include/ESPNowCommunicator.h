@@ -95,6 +95,7 @@ class ESPNowCTR: public ICTR
 	void	SetMac(std::array<uint8_t, 6>& mac) {
 		fMac = mac;
 		fActivated = true;
+		fCore.AddPeer(fMac);
 	}
 
     const std::array<uint8_t, 6>&  GetMac() const { return fMac; }
