@@ -103,7 +103,9 @@ class ESPNowCTR: public ICTR
 		{
 			messageBuffer[0] =  SLAVEID_TRANSMISSION;
 			ESP_ERROR_CHECK(esp_efuse_mac_get_default(messageBuffer.data() + 1));
+#if CONFIG_STR_MASTER_ESPNOW
 			messageBuffer[7] = Settingator::GetInstance().GetSlaveID();
+#endif
 			messageBuffer.SetLen(8);
 			Write();
 		}

@@ -1,3 +1,4 @@
+#include "Core.h"
 #include "Definitions.h"
 
 #if STR_HAS_ESPNOW
@@ -114,6 +115,54 @@ void ESPNowCore::receiveCallback(const esp_now_recv_info* info, const uint8_t* d
 				}
 			}
 #endif
+		}
+		else if (len == 8 &&
+				data &&
+				*data ==  SLAVEID_TRANSMISSION &&
+				!isBroadcastMac(des_addrArr))
+		{
+			ESP_LOGI("ESPNOWCORE", "SLAVEID_TRANSMISSION %d", data[7]);
+			OptSlaveRef slave = GetSlaveForEMac({data[1],
+												data[2],
+												data[3],
+												data[4],
+												data[5],
+												data[6]});
+
+			if (!slave)
+			{
+				LOG("Slave not found");
+				if (nbInitialisedSlave < CONFIG_STR_NB_SLAVE)
+				{
+					LOG("There is room dfor a slave");
+					slave = slaveArray[nbInitialisedSlave];
+					slave->get().SetEMac({data[1],
+											data[2],
+											data[3],
+											data[4],
+											data[5],
+											data[6]});
+					slave->get().Activate();
+					nbInitialisedSlave++;
+				}
+				else
+					LOG("To much slave initialised: %d", nbInitialisedSlave);
+			}
+
+			if (slave)
+			{
+				if (!slave->get().HasCTR(SlaveCTREnum::SLAVE_CTR_ESPNOW))
+				{
+					LOG("Creating CTR");
+					ESPNowCTR& ctr = std::get<SLAVE_CTR_ESPNOW>
+									(slave->get().GetCTRArray()[SLAVE_CTR_ESPNOW])
+									.get();
+
+					ctr.SetMac(src_addrArr);	
+				}
+				slave->get().SetID(data[7]);
+				slave->get().PlanifySendInitRequest();
+			}
 		}
 
 		else
