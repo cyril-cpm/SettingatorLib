@@ -9,6 +9,9 @@
 
 #include "Message.h"
 
+#include "Communicator.h"
+#include "CommunicatorHandler.h"
+
 #if CONFIG_STR_MASTER_ESPNOW
 #include "ESPNowCore.h"
 #include "ESPNowCommunicator.h"
@@ -55,7 +58,7 @@ using MasterCTR = CTRVariant<
 		)
 	>;
 
-class Master
+class Master : public CTRHandler<MasterCTR, MasterCTREnum::MASTER_CTR_MAX>
 {
 	public:
 
@@ -64,7 +67,7 @@ class Master
 			return instance;
 		}
 
-		Master() : fCTRArray({
+		Master() : CTRHandler<MasterCTR, MasterCTREnum::MASTER_CTR_MAX>({
 				STRIP_FIRST_COMMA(
 						dummy
 
@@ -86,54 +89,5 @@ class Master
 					)
 				}) {}
 
-		bool		HasCTR(MasterCTREnum type) {
-			return (bool)fCTRArray[type];
-		}
-
-#if CONFIG_STR_MASTER_ESPNOW
-		ESPNowCTR&	GetESPNowCTR() {
-			return std::get<MASTER_CTR_ESPNOW>(fCTRArray[MASTER_CTR_ESPNOW]).get();
-		}
-#endif
-
-		std::array<MasterCTR, MasterCTREnum::MASTER_CTR_MAX>& GetCTRArray() {
-			return fCTRArray;
-		}
-
-		void		InitCTR(MasterCTR&& ctr, MasterCTREnum type) {
-			ESP_LOGI("MASTER", "Initalizing CTR %d", type);
-			// fCTRArray[type].emplace(std::move(ctr));
-		}
-
-		void		SetCTRToUse(MasterCTREnum type) {
-			fCTRToUse = type;
-		}
-
-		void		Write() const {
-			const auto& ctrToUse = fCTRArray[fCTRToUse];
-
-			if (ctrToUse)
-				ctrToUse.Write();
-		}
-
-		void		Write(std::initializer_list<uint8_t> message) const {
-			const auto& ctrToUse = fCTRArray[fCTRToUse];
-
-			if (ctrToUse)
-				ctrToUse.Write(message);
-		}
-
-		void		Update() {
-			for (auto& ctr : fCTRArray)
-			{
-				if (ctr)
-					ctr.Update();
-			}
-		}
-
-	private:
-
-		std::array<MasterCTR, MasterCTREnum::MASTER_CTR_MAX> fCTRArray;
-		uint8_t		fCTRToUse = 0;
 };
 

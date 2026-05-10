@@ -5,14 +5,13 @@
 #if CONFIG_STR_HAS_BRIDGE
 
 #include <array>
-#include <cstdint>
 #include <functional>
-#include <optional>
 #include <variant>
 #include <stdatomic.h>
 
 #include "Buffer.h"
 #include "Communicator.h"
+#include "CommunicatorHandler.h"
 #include "Message.h"
 
 #if CONFIG_STR_SLAVE_ESPNOW
@@ -59,11 +58,11 @@ using SlaveCTR = CTRVariant<
 		)
 	>;
 
-class Slave
+class Slave : public CTRHandler<SlaveCTR, SlaveCTREnum::SLAVE_CTR_MAX>
 {
     public:
 
-	Slave() : fCTRArray({
+	Slave() : CTRHandler<SlaveCTR, SlaveCTREnum::SLAVE_CTR_MAX>({
 				STRIP_FIRST_COMMA(
 						dummy
 
@@ -118,37 +117,12 @@ class Slave
 		return fEMac;
 	}
 
-	bool		HasCTR(SlaveCTREnum type) {
-		return (bool)fCTRArray[type];
-	}
-
-#if CONFIG_STR_SLAVE_ESPNOW
-	ESPNowCTR&	GetESPNowCTR() {
-		return std::get<SLAVE_CTR_ESPNOW>(fCTRArray[SLAVE_CTR_ESPNOW]);
-	}
-#endif
-
 	void		SetWaitingForID(const bool value = true) {
 		fWaitingForID = value;
 	}
 
 	bool		IsWaitingForID() const {
 		return fWaitingForID;
-	}
-
-	void		Write() const {
-		const auto& ctrToUse = fCTRArray[fCTRToUse];
-
-		if (ctrToUse)
-			ctrToUse.Write();
-	}
-
-
-	void		Write(std::initializer_list<uint8_t> message) const {
-		const auto& ctrToUse = fCTRArray[fCTRToUse];
-
-		if (ctrToUse)
-			ctrToUse.Write(message);
 	}
 	
 	void		PlanifySendInitRequest() {
@@ -181,16 +155,13 @@ class Slave
 
     private:
     uint8_t     			fSlaveID = 0;
-	
-	std::array<SlaveCTR, SlaveCTREnum::SLAVE_CTR_MAX> 	fCTRArray;
-	uint8_t		fCTRToUse = 0;
 
 	bool					fWaitingForID = false;
 	std::array<uint8_t, 6>	fEMac;
 
 	bool					fActivated = false;
 
-	std::atomic_bool					fShouldSendInitRequest = false;
+	std::atomic_bool		fShouldSendInitRequest = false;
 
 #if CONFIG_STR_NB_SUBSLAVE
     std::array<uint8_t, CONFIG_STR_NB_SUBSLAVE> fSubSlave;

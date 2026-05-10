@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Definitions.h"
+
 #include "Message.h"
 #include <initializer_list>
 #include <sys/_stdint.h>
@@ -72,4 +74,4 @@ class CTRVariant : public std::variant<Ts ...>
 			}, *this);
 	}
 };
-
+;

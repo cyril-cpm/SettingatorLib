@@ -85,7 +85,11 @@ void ESPNowCore::receiveCallback(const esp_now_recv_info* info, const uint8_t* d
 					if (!slave->get().HasCTR(SlaveCTREnum::SLAVE_CTR_ESPNOW))
 					{
 						LOG("Creating CTR");
-						slave->get().GetESPNowCTR().SetMac(src_addrArr);	
+						ESPNowCTR& ctr = std::get<SLAVE_CTR_ESPNOW>
+										(slave->get().GetCTRArray()[SLAVE_CTR_ESPNOW])
+										.get();
+
+						ctr.SetMac(src_addrArr);	
 					}
 					else
 						slave->get().PlanifySendInitRequest();
@@ -98,7 +102,9 @@ void ESPNowCore::receiveCallback(const esp_now_recv_info* info, const uint8_t* d
 			{
 				if (master.HasCTR(MASTER_CTR_ESPNOW))
 				{
-					ESPNowCTR& ctr = master.GetESPNowCTR();
+					ESPNowCTR& ctr = std::get<MASTER_CTR_ESPNOW>
+									master.GetCTRArray()[MASTER_CTR_ESPNOW])
+									.get();
 
 					if (ctr.GetMac() == src_addrArr)
 					{
