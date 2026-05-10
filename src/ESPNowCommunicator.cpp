@@ -36,7 +36,6 @@ void pingTimerCallback(TimerHandle_t timer)
 {
 	ESPNowCTR* ctr = (ESPNowCTR*)pvTimerGetTimerID(timer);
 
-	ctr->ShouldSendPing();
 }
 
 ESPNowCTR::ESPNowCTR(ESPNowCore& core, const std::array<uint8_t, 6>& peerMac, const bool createTimer)
@@ -58,11 +57,6 @@ ESPNowCTR::ESPNowCTR(ESPNowCore& core, const std::array<uint8_t, 6>& peerMac, co
 		 xTimerStart(fPingTimer, 0);
 	}
 	
-}
-
-void ESPNowCTR::ShouldSendPing(bool should)
-{
-	fShouldSendPing = should;
 }
 
 // espNowDirectNotif::espNowDirectNotif(const std::array<uint8_t, 6>& inMac, uint8_t inNotifByte, uint8_t inDstSlaveID)

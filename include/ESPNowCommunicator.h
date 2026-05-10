@@ -30,7 +30,7 @@ class ESPNowCTR: public ICTR
     ESPNowCTR(ESPNowCore& core, const std::array<uint8_t, 6>& mac, const bool createTimer = false);
 
     void        Update() {
-
+		HandleSlaveIDTransmission();
 	}
 
 	static ESPNowCTR*	GetCTRForMac(const std::array<uint8_t, 6>& mac);
@@ -88,8 +88,6 @@ class ESPNowCTR: public ICTR
 
     const std::array<uint8_t, 6>&  GetMac() const { return fMac; }
 
-    void            ShouldSendPing(bool should = true);
-
 	void			SetLinkInfo(uint8_t rssi, uint8_t noiseFloor, uint32_t timestamp) {
 		fLastMsgRssi = rssi;
 		fLastMsgNoiseFloor = noiseFloor;
@@ -97,18 +95,18 @@ class ESPNowCTR: public ICTR
 	}
 
 	void			PlanifySlaveIDTransmission() {
-		// atomic_store(&fShouldTransmitSlaveID, true);
+		atomic_store(&fShouldTransmitSlaveID, true);
 	}
 
 	void			HandleSlaveIDTransmission() {
-		// if (atomic_exchange(&fShouldTransmitSlaveID, false))
-		// {
+		if (atomic_exchange(&fShouldTransmitSlaveID, false))
+		{
 			messageBuffer[0] =  SLAVEID_TRANSMISSION;
 			ESP_ERROR_CHECK(esp_efuse_mac_get_default(messageBuffer.data() + 1));
-			// messageBuffer[7] = Settingator::GetInstance().GetSlaveID();
+			messageBuffer[7] = Settingator::GetInstance().GetSlaveID();
 			messageBuffer.SetLen(8);
 			Write();
-		// }
+		}
 	}
 
     private:
@@ -127,9 +125,9 @@ class ESPNowCTR: public ICTR
 
     TimerHandle_t   fPingTimer = nullptr;
 
-    bool        fShouldSendPing = false;
+	std::atomic_bool	fShouldSendPing = false;
 
-	// std::atomic_bool	fShouldTransmitSlaveID = false;
+	std::atomic_bool	fShouldTransmitSlaveID = false;
 };
 
 bool compareMac(const uint8_t* mac1, const uint8_t* mac2);

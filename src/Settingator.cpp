@@ -199,12 +199,6 @@ void Settingator::Update()
 		fShouldStopEspNowInitBroadcasted = false;
 	}
 
-	if (fShouldESPNowBroadcastPing)
-	{
-		// ESPNowBroadcastPing();
-		fShouldESPNowBroadcastPing = false;
-	}
-
 	master.Update();
 
 #if defined(STR_BRIDGE_HID)

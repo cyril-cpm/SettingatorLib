@@ -103,7 +103,7 @@ void ESPNowCore::receiveCallback(const esp_now_recv_info* info, const uint8_t* d
 				if (master.HasCTR(MASTER_CTR_ESPNOW))
 				{
 					ESPNowCTR& ctr = std::get<MASTER_CTR_ESPNOW>
-									master.GetCTRArray()[MASTER_CTR_ESPNOW])
+									(master.GetCTRArray()[MASTER_CTR_ESPNOW])
 									.get();
 
 					if (ctr.GetMac() == src_addrArr)
@@ -121,7 +121,12 @@ void ESPNowCore::receiveCallback(const esp_now_recv_info* info, const uint8_t* d
 			LOG("Not broadcasted Ping");
 #if CONFIG_STR_MASTER_ESPNOW
 			if (!master.HasCTR(MasterCTREnum::MASTER_CTR_ESPNOW))
-				master.GetESPNowCTR().SetMac(src_addrArr);
+			{
+				ESPNowCTR& ctr = std::get<MASTER_CTR_ESPNOW>
+								(master.GetCTRArray()[MASTER_CTR_ESPNOW])
+								.get();
+				ctr.SetMac(src_addrArr);
+			}
 
 			LOG("Message received");
 #endif
