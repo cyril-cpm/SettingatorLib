@@ -106,17 +106,7 @@ void CTRBridge::Update()
 				default:
 					if (core.GetMessageType() < Message::Type::BridgeBase)
 					{
-						const auto& slave = GetSlaveForID(core.GetDstSlaveID());
-
-						if (slave)
-						{
-							LOG("transmitting msg to slave %d", slave->get().GetID());
-							ESP_LOG_BUFFER_HEX("CTRBridge", slave->get().GetEMac().data(),
-												slave->get().GetEMac().size());
-							core.CopyMessageToGlobalBuffer();
-							slave->get().Write();
-						}
-						else if (core.GetMessageType() == Message::Type::InitRequest)
+						if (core.GetMessageType() == Message::Type::InitRequest)
 						{
 							LOG("InitRequest");
 							
@@ -133,6 +123,17 @@ void CTRBridge::Update()
 									break;
 								}
 							}
+						}
+
+						const auto& slave = GetSlaveForID(core.GetDstSlaveID());
+
+						if (slave)
+						{
+							LOG("transmitting msg to slave %d", slave->get().GetID());
+							ESP_LOG_BUFFER_HEX("CTRBridge", slave->get().GetEMac().data(),
+												slave->get().GetEMac().size());
+							core.CopyMessageToGlobalBuffer();
+							slave->get().Write();
 						}
 						
 					}
