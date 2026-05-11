@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Definitions.h"
+#include <atomic>
 
 #if CONFIG_STR_HAS_BRIDGE
 
@@ -13,6 +14,7 @@
 #include "Communicator.h"
 #include "CommunicatorHandler.h"
 #include "Message.h"
+#include "Master.h"
 
 #if CONFIG_STR_SLAVE_ESPNOW
 #include "ESPNowCommunicator.h"
@@ -85,7 +87,8 @@ class Slave : public CTRHandler<SlaveCTR, SlaveCTREnum::SLAVE_CTR_MAX>
 
 			})	{}
 
-    uint8_t 	GetID();
+    void    	SetID(uint8_t id) { fSlaveID = id; }
+    uint8_t 	GetID() const { return fSlaveID; }
     
 	bool    	HasSubSlave(uint8_t id) const {
 #if CONFIG_STR_NB_SUBSLAVE
@@ -103,9 +106,14 @@ class Slave : public CTRHandler<SlaveCTR, SlaveCTREnum::SLAVE_CTR_MAX>
 	}
 
 #if CONFIG_STR_NB_SUBSLAVE
-    void    	AddSubSlave(uint8_t id);
+    void    	AddSubSlave(uint8_t id) {
+		if (fSubSlaveCount <= CONFIG_STR_NB_SUBSLAVE)
+		{
+			fSubSlave[fSubSlaveCount] = id;
+			fSubSlaveCount++;
+		}
+	}
 #endif
-    void    	SetID(uint8_t id);
 	uint16_t	GetLinkInfoSize() const;
 	void		WriteLinkInfoToBuffer(uint16_t msgBuffer) const;
 
@@ -134,19 +142,42 @@ class Slave : public CTRHandler<SlaveCTR, SlaveCTREnum::SLAVE_CTR_MAX>
 			SendInitRequest();
 	}
 
+	void		PlanifySlaveIDRequest() {
+		atomic_store(&fShouldReqestSlaveID, true);
+	}
+
+	void		HandleSlaveIDRequest() {
+		if (atomic_exchange(&fShouldReqestSlaveID, false))
+		{
+			Master::GetInstance().Write({
+								Message::Frame::Start,
+								0x00,
+								0x07,
+								0,
+								0,
+								Message::Type::SlaveIDRequest,
+								Message::Frame::End
+							});
+			fWaitingForID = true;
+		}
+	}
+
+	void Update() {
+		HandleSendInitRequest();
+		HandleSlaveIDRequest();
+	}
+
 	void		SendInitRequest() {
-		messageBuffer[0] = Message::Frame::Start;
-		messageBuffer[1] = 0;
-		messageBuffer[2] = 0x08;
-		messageBuffer[3] = 0;
-		messageBuffer[4] = fSlaveID;
-		messageBuffer[5] = Message::Type::InitRequest;
-		messageBuffer[6] = 0;
-		messageBuffer[7] = Message::Frame::End;
-
-		messageBuffer.SetLen(0x08);
-
-		Write();
+		Write({
+			Message::Frame::Start,
+			0,
+			0x08,
+			0,
+			fSlaveID,
+			Message::Type::InitRequest,
+			0,
+			Message::Frame::End
+		});
 	}
 
 	void		Activate() { fActivated = true; }
@@ -162,6 +193,7 @@ class Slave : public CTRHandler<SlaveCTR, SlaveCTREnum::SLAVE_CTR_MAX>
 	bool					fActivated = false;
 
 	std::atomic_bool		fShouldSendInitRequest = false;
+	std::atomic_bool		fShouldReqestSlaveID = false;
 
 #if CONFIG_STR_NB_SUBSLAVE
     std::array<uint8_t, CONFIG_STR_NB_SUBSLAVE> fSubSlave;

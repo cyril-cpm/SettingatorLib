@@ -3,6 +3,7 @@
 #include "Definitions.h"
 
 #include <array>
+#include <cstdint>
 #include "Communicator.h"
 
 #if STR_HAS_ESPNOW
@@ -28,16 +29,6 @@ class CTRHandler
 			return (bool)fCTRArray[type];
 		}
 
-// #if CONFIG_STR_SLAVE_ESPNOW
-// 		ESPNowCTR&	GetESPNowCTR() {
-// 			return std::get<std::reference_wrapper<ESPNowCTR>>(fCTRArray[type]).get();
-// 		}
-// #endif
-// #if CONFIG_STR_MASTER_ESPNOW
-// 		ESPNowCTR&	GetESPNowCTR() {
-// 			return std::get<MASTER_CTR_ESPNOW>(fCTRArray[MASTER_CTR_ESPNOW]).get();
-// 		}
-// #endif
 		ICTR&		GetCTR(uint8_t type) {
 			return std::get<type>(fCTRArray[type]).get();
 		}
@@ -70,6 +61,19 @@ class CTRHandler
 				if (ctr)
 					ctr.Update();
 			}
+		}
+
+		template <typename CTR_T, uint8_t I>
+		void		SetESPNowCTRMac(std::array<uint8_t, 6>& mac) {
+			CTR_T& ctr = GetCTR<CTR_T, I>();
+
+			if (!ctr)
+				ctr.SetMac(mac);
+		}
+
+		template <typename CTR_T, uint8_t I>
+		CTR_T&			GetCTR() {
+			return std::get<I>(GetCTRArray()[I]).get();
 		}
 
 	protected:

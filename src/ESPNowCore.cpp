@@ -46,160 +46,127 @@ void ESPNowCore::receiveCallback(const esp_now_recv_info* info, const uint8_t* d
 		LOG("len: %d", len);
 		LOG("data: %d", *data);
 
-		if (len == 7 &&
-				data &&
-				isBroadcastMac(des_addrArr))
+		if (len && data)
 		{
-#if CONFIG_STR_SLAVE_ESPNOW
-			if (*data == SLAVE_BROADCAST_PING)
+			switch (*data)
 			{
-				ESP_LOGI(tag, "SLAVE_BROADCAST_PING");
-				OptSlaveRef slave = GetSlaveForEMac({data[1],
-													data[2],
-													data[3],
-													data[4],
-													data[5],
-													data[6]});
-
-				if (initEspNowBroadcasted && !slave)
-				{
-					LOG("Slave not found");
-					if (nbInitialisedSlave < CONFIG_STR_NB_SLAVE)
+#if CONFIG_STR_SLAVE_ESPNOW
+				case SLAVE_BROADCAST_PING:
+					if (len == 7)
 					{
-						LOG("There is room dfor a slave");
-						slave = slaveArray[nbInitialisedSlave];
-						slave->get().SetEMac({data[1],
+						ESP_LOGI(tag, "SLAVE_BROADCAST_PING");
+						OptSlaveRef slave = GetSlaveForEMac({data[1],
+															data[2],
+															data[3],
+															data[4],
+															data[5],
+															data[6]});
+
+						if (initEspNowBroadcasted && !slave)
+						{
+							slave = CreateSlave({data[1],
 												data[2],
 												data[3],
 												data[4],
 												data[5],
 												data[6]});
-						slave->get().Activate();
-						nbInitialisedSlave++;
-					}
-					else
-						LOG("To much slave initialised: %d", nbInitialisedSlave);
-				}
+						}
 
-				if (slave)
-				{
-					if (!slave->get().HasCTR(SlaveCTREnum::SLAVE_CTR_ESPNOW))
-					{
-						LOG("Creating CTR");
-						ESPNowCTR& ctr = std::get<SLAVE_CTR_ESPNOW>
-										(slave->get().GetCTRArray()[SLAVE_CTR_ESPNOW])
-										.get();
+						if (slave)
+						{
+							ESPNowCTR& ctr = slave->get().GetCTR<ESPNowCTR, SLAVE_CTR_ESPNOW>();
 
-						ctr.SetMac(src_addrArr);	
+							if (!ctr)
+								ctr.SetMac(src_addrArr);
+
+							ctr.PlanifyBridgeToSlaveHandshake();
+
+							if (slave->get().GetID())
+								slave->get().PlanifySendInitRequest();
+						}
 					}
-					else
-						slave->get().PlanifySendInitRequest();
-				}
-			}
+					break;
 #endif
 
 #if CONFIG_STR_MASTER_ESPNOW
-			if (*data == BRIDGE_BROADCAST_PING)
-			{
-				if (master.HasCTR(MASTER_CTR_ESPNOW))
-				{
-					ESPNowCTR& ctr = std::get<MASTER_CTR_ESPNOW>
-									(master.GetCTRArray()[MASTER_CTR_ESPNOW])
-									.get();
+				case BRIDGE_BROADCAST_PING:
+					ESPNowCTR& masterCtr = master.GetCTR<ESPNowCTR, MASTER_CTR_ESPNOW>();
 
-					if (ctr.GetMac() == src_addrArr)
+					if (masterCtr.GetMac() == src_addrArr)
 					{
 						LOG("BRIDGE_BROADCAST_PING from Master");
-						ctr.PlanifySlaveIDTransmission();
+						masterCtr.PlanifySlaveIDTransmission();
 					}
-				}
-			}
+					berak;
 #endif
-		}
-		else if (len == 8 &&
-				data &&
-				*data ==  SLAVEID_TRANSMISSION &&
-				!isBroadcastMac(des_addrArr))
-		{
-			ESP_LOGI("ESPNOWCORE", "SLAVEID_TRANSMISSION %d", data[7]);
-			OptSlaveRef slave = GetSlaveForEMac({data[1],
-												data[2],
-												data[3],
-												data[4],
-												data[5],
-												data[6]});
 
-			if (!slave)
-			{
-				LOG("Slave not found");
-				if (nbInitialisedSlave < CONFIG_STR_NB_SLAVE)
-				{
-					LOG("There is room dfor a slave");
-					slave = slaveArray[nbInitialisedSlave];
-					slave->get().SetEMac({data[1],
-											data[2],
-											data[3],
-											data[4],
-											data[5],
-											data[6]});
-					slave->get().Activate();
-					nbInitialisedSlave++;
-				}
-				else
-					LOG("To much slave initialised: %d", nbInitialisedSlave);
-			}
+#if CONFIG_STR_SLAVE_ESPNOW
+				case SLAVEID_TRANSMISSION_TO_BRIDGE:
+					if (len == 8)
+					{
+						ESP_LOGI("ESPNOWCORE", "SLAVEID_TRANSMISSION %d", data[7]);
+						OptSlaveRef slave = GetSlaveForEMac({data[1],
+															data[2],
+															data[3],
+															data[4],
+															data[5],
+															data[6]});
 
-			if (slave)
-			{
-				if (!slave->get().HasCTR(SlaveCTREnum::SLAVE_CTR_ESPNOW))
-				{
-					LOG("Creating CTR");
-					ESPNowCTR& ctr = std::get<SLAVE_CTR_ESPNOW>
-									(slave->get().GetCTRArray()[SLAVE_CTR_ESPNOW])
-									.get();
+						if (!slave)
+						{
+							slave = CreateSlave({data[1],
+										data[2],
+										data[3],
+										data[4],
+										data[5],
+										data[6]}, data[7]);
+						}
+						if (slave)
+						{
+							ESPNowCTR& ctr = slave->get().GetCTR<ESPNowCTR, SLAVE_CTR_ESPNOW>();
 
-					ctr.SetMac(src_addrArr);	
-				}
-				slave->get().SetID(data[7]);
-				slave->get().PlanifySendInitRequest();
-			}
-		}
+							if (!ctr)
+								ctr.SetMac(src_addrArr);
 
-		else
-		{
-			LOG("Not broadcasted Ping");
+							if (slave->get().GetID())
+								slave->get().PlanifySendInitRequest();
+						}
+					}
+					break;
+#endif
+
 #if CONFIG_STR_MASTER_ESPNOW
-			if (!master.HasCTR(MasterCTREnum::MASTER_CTR_ESPNOW))
-			{
-				ESPNowCTR& ctr = std::get<MASTER_CTR_ESPNOW>
-								(master.GetCTRArray()[MASTER_CTR_ESPNOW])
-								.get();
-				ctr.SetMac(src_addrArr);
-			}
+				case BRIDGE_TO_SLAVE_HANDSHAKE:
+					{
+						ESPNowCTR& ctr = master.GetCTR<ESPNowCTR, MASTER_CTR_ESPNOW>();
 
-			LOG("Message received");
+						if (!ctr)
+							ctr.SetMac(src_addrArr);
+					}
+					break;
 #endif
-			ESPNowCore::GetInstance().WriteToBuffer(data, len);
 
-			if (info->rx_ctrl)
-			{
-				std::optional<std::reference_wrapper<ESPNowCTR>> ctr = GetESPNowCommunicatorByMac(src_addrArr);
+				case 0xFF:
+					ESPNowCore::GetInstance().WriteToBuffer(data, len);
 
-				if (ctr)
-				{
-					ESP_LOGI("ESPNOWCORE", "registering linkinfo");
-					ctr->get().SetLinkInfo(info->rx_ctrl->rssi,
-											info->rx_ctrl->noise_floor,
-											info->rx_ctrl->timestamp);
-				}
+					if (info->rx_ctrl)
+					{
+						std::optional<std::reference_wrapper<ESPNowCTR>> ctr
+									= GetESPNowCommunicatorByMac(src_addrArr);
+
+						if (ctr)
+						{
+							ESP_LOGI("ESPNOWCORE", "registering linkinfo");
+							ctr->get().SetLinkInfo(info->rx_ctrl->rssi,
+													info->rx_ctrl->noise_floor,
+													info->rx_ctrl->timestamp);
+						}
+					}
+					break;
 			}
 
 		}
 	}
-}
-
-ESPNowCore::ESPNowCore()
-{
 }
 
 void ESPNowCore::Init()

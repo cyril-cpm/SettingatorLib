@@ -2,6 +2,7 @@
 
 #include "Definitions.h"
 #include <functional>
+#include <initializer_list>
 #include <optional>
 #include "Core.h"
 #include "Slave.h"
@@ -43,6 +44,7 @@ extern uint8_t nbInitialisedSlave;
 
 OptSlaveRef	GetSlaveForID(const uint8_t id);
 OptSlaveRef	GetSlaveForEMac(const std::array<uint8_t, 6>& eMac);
+OptSlaveRef	CreateSlave(std::array<uint8_t, 6>&& eMac, uint8_t id = 0);
 #endif
 
 void		InitCores();

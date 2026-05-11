@@ -19,7 +19,6 @@ class ESPNowCore : public ICore
 			return instance;
 		}
 
-		ESPNowCore();
 		void Init();
 
 		int	 Write(std::initializer_list<uint8_t>message,

@@ -9,27 +9,6 @@
 
 bool initEspNowBroadcasted = false;
 
-uint8_t Slave::GetID()
-{
-    return fSlaveID;
-}
-
-#if CONFIG_STR_NB_SUBSLAVE
-void Slave::AddSubSlave(uint8_t id)
-{
-	if (fSubSlaveCount <= CONFIG_STR_NB_SUBSLAVE)
-	{
-		fSubSlave[fSubSlaveCount] = id;
-		fSubSlaveCount++;
-	}
-}
-#endif
-
-void Slave::SetID(uint8_t id)
-{
-    fSlaveID = id;
-}
-
 uint16_t Slave::GetLinkInfoSize() const
 {
 	const auto& ctrToUse = fCTRArray[fCTRToUse];

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Core.h"
 #include "Definitions.h"
 
 #if STR_HAS_ESPNOW
@@ -30,7 +31,13 @@ class ESPNowCTR: public ICTR
     ESPNowCTR(ESPNowCore& core, const std::array<uint8_t, 6>& mac, const bool createTimer = false);
 
     void        Update() {
+#if CONFIG_STR_SLAVE_ESPNOW
+		HandleBridgeToSlaveHandshake();
+#endif
+
+#if CONFIG_STR_MASTER_ESPNOW
 		HandleSlaveIDTransmission();
+#endif
 	}
 
 	static ESPNowCTR*	GetCTRForMac(const std::array<uint8_t, 6>& mac);
@@ -94,6 +101,7 @@ class ESPNowCTR: public ICTR
 		fLastMsgTimestamp = timestamp;
 	}
 
+#if CONFIG_STR_MASTER_ESPNOW
 	void			PlanifySlaveIDTransmission() {
 		atomic_store(&fShouldTransmitSlaveID, true);
 	}
@@ -101,15 +109,30 @@ class ESPNowCTR: public ICTR
 	void			HandleSlaveIDTransmission() {
 		if (atomic_exchange(&fShouldTransmitSlaveID, false))
 		{
-			messageBuffer[0] =  SLAVEID_TRANSMISSION;
+			uint8_t slaveID = Settingator::GetInstance().GetSlaveID();
+			messageBuffer[0] =  SLAVEID_TRANSMISSION_TO_BRIDGE;
 			ESP_ERROR_CHECK(esp_efuse_mac_get_default(messageBuffer.data() + 1));
-#if CONFIG_STR_MASTER_ESPNOW
-			messageBuffer[7] = Settingator::GetInstance().GetSlaveID();
-#endif
+			messageBuffer[7] = slaveID;
 			messageBuffer.SetLen(8);
 			Write();
+			ESP_LOGI("ESPNowCTR", "Sending Slave ID to Bridge %d", slaveID);
 		}
 	}
+#endif
+
+#if CONFIG_STR_SLAVE_ESPNOW
+	void			PlanifyBridgeToSlaveHandshake() {
+		atomic_store(&fShouldHandshake, true);
+	}
+
+	void			HandleBridgeToSlaveHandshake() {
+		if (atomic_exchange(&fShouldHandshake, false))
+		{
+			Write({ BRIDGE_TO_SLAVE_HANDSHAKE });
+			ESP_LOGI("ESPNowCTR", "Handshake sent to slave");
+		}
+	}
+#endif
 
     private:
 
@@ -130,6 +153,8 @@ class ESPNowCTR: public ICTR
 	std::atomic_bool	fShouldSendPing = false;
 
 	std::atomic_bool	fShouldTransmitSlaveID = false;
+
+	std::atomic_bool	fShouldHandshake = false;
 };
 
 bool compareMac(const uint8_t* mac1, const uint8_t* mac2);

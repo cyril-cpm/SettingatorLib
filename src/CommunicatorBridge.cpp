@@ -106,7 +106,17 @@ void CTRBridge::Update()
 				default:
 					if (core.GetMessageType() < Message::Type::BridgeBase)
 					{
-						if (core.GetMessageType() == Message::Type::InitRequest)
+						const auto& slave = GetSlaveForID(core.GetDstSlaveID());
+
+						if (slave)
+						{
+							LOG("transmitting msg to slave %d", slave->get().GetID());
+							ESP_LOG_BUFFER_HEX("CTRBridge", slave->get().GetEMac().data(),
+												slave->get().GetEMac().size());
+							core.CopyMessageToGlobalBuffer();
+							slave->get().Write();
+						}
+						else if (core.GetMessageType() == Message::Type::InitRequest)
 						{
 							LOG("InitRequest");
 							
@@ -124,16 +134,7 @@ void CTRBridge::Update()
 								}
 							}
 						}
-						const auto& slave = GetSlaveForID(core.GetDstSlaveID());
-
-						if (slave)
-						{
-							LOG("transmitting msg to slave %d", slave->get().GetID());
-							ESP_LOG_BUFFER_HEX("CTRBridge", slave->get().GetEMac().data(),
-												slave->get().GetEMac().size());
-							core.CopyMessageToGlobalBuffer();
-							slave->get().Write();
-						}
+						
 					}
 					break;
 				}
@@ -157,24 +158,7 @@ void CTRBridge::Update()
 		if (!slave)
 			break;
 		
-		if (!slave.GetID() && !slave.IsWaitingForID())
-		{
-			LOG("Slave without ID found, requesting one");
-			slave.SetWaitingForID(true);
-			// Send ID request trhough master
-			master.Write({
-							Message::Frame::Start,
-							0x00,
-							0x07,
-							0,
-							0,
-							Message::Type::SlaveIDRequest,
-							Message::Frame::End
-						});
-		}
-		
-		// slave.Update();
-		slave.HandleSendInitRequest();
+		slave.Update();
 	}
 
 	HandleLinkInfo();
