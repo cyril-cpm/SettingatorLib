@@ -163,8 +163,11 @@ class Slave : public CTRHandler<SlaveCTR, SlaveCTREnum::SLAVE_CTR_MAX>
 	}
 
 	void Update() {
-		HandleSendInitRequest();
+		for (auto& ctr : fCTRArray)
+			ctr.Update();
+
 		HandleSlaveIDRequest();
+		HandleSendInitRequest();
 	}
 
 	void		SendInitRequest() {
