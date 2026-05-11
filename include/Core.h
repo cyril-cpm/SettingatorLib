@@ -71,13 +71,13 @@ class ICore
 		}
 
 		void		ThrowMessage() {
-			ESP_LOGI("CORE", "ThrowMessage");
+			ESP_LOGD("CORE", "ThrowMessage");
 
 			uint16_t msgLength = (fBuf[1] << 8) + fBuf[2];
 
-			ESP_LOGI("CORE", "Offseting Head from %d of %d", fBuf.GetHeadPos(), msgLength);
+			ESP_LOGD("CORE", "Offseting Head from %d of %d", fBuf.GetHeadPos(), msgLength);
 			fBuf.OffsetHead(msgLength);
-			ESP_LOGI("CORE", "res: %d", fBuf.GetHeadPos());
+			ESP_LOGD("CORE", "res: %d", fBuf.GetHeadPos());
 
 		}
 

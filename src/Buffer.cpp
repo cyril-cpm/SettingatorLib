@@ -12,7 +12,7 @@ MessageBuffer messageBuffer;
 
 bool CircularBuffer::Write(const uint8_t* buf, const uint16_t len)
 {
-	LOG("CircularBuffer::Write()");
+	ESP_LOGD(tag, "CircularBuffer::Write()");
 	if (len >= CONFIG_STR_CIRCULAR_BUFFER_SIZE)
 	{
 		LOG("CircularBuffer::Write()");
