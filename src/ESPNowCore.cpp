@@ -77,7 +77,10 @@ void ESPNowCore::receiveCallback(const esp_now_recv_info* info, const uint8_t* d
 							ESPNowCTR& ctr = slave->get().GetCTR<ESPNowCTR, SLAVE_CTR_ESPNOW>();
 
 							if (!ctr)
+							{
 								ctr.SetMac(src_addrArr);
+								ctr.PlanifyPingTimerCreation();
+							}
 
 							ctr.PlanifyBridgeToSlaveHandshake();
 
@@ -128,7 +131,10 @@ void ESPNowCore::receiveCallback(const esp_now_recv_info* info, const uint8_t* d
 							ESPNowCTR& ctr = slave->get().GetCTR<ESPNowCTR, SLAVE_CTR_ESPNOW>();
 
 							if (!ctr)
+							{
 								ctr.SetMac(src_addrArr);
+								ctr.PlanifyPingTimerCreation();
+							}
 
 							if (slave->get().GetID())
 								slave->get().PlanifySendInitRequest();

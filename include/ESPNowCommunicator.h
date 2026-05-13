@@ -33,6 +33,8 @@ class ESPNowCTR: public ICTR
     void        Update() {
 #if CONFIG_STR_SLAVE_ESPNOW
 		HandleBridgeToSlaveHandshake();
+		HandlePingTimerCreation();
+		HandlePingSending();
 #endif
 
 #if CONFIG_STR_MASTER_ESPNOW
@@ -42,9 +44,25 @@ class ESPNowCTR: public ICTR
 
 	static ESPNowCTR*	GetCTRForMac(const std::array<uint8_t, 6>& mac);
 
-	uint16_t	GetLinkInfoSizeImpl() const;
+	uint16_t	GetLinkInfoSizeImpl() const { return 19; };
 
-	void		WriteLinkInfoToBufferImpl(uint16_t index) const;
+	void		WriteLinkInfoToBufferImpl(uint16_t index) const {
+		messageBuffer[index] = ICTR::LinkType::ESP_NOW;
+
+		memcpy(messageBuffer.data() + index + 1, fMac.data(), 6);
+
+		messageBuffer[index + 7] = fLastMsgRssi;
+		messageBuffer[index + 8] = fLastMsgNoiseFloor;
+
+		uint32_t deltaMs = pdTICKS_TO_MS(xTaskGetTickCount()) - fLastMsgTimestamp;
+
+		memcpy(messageBuffer.data() + index + 9, (uint8_t*)&deltaMs, 4);
+
+		messageBuffer[index + 13] = fPeerLastMsgRssi;
+		messageBuffer[index + 14] = fPeerLastMsgNoiseFloor;
+
+		memcpy(messageBuffer.data() + index + 15, (uint8_t*)&(fPeerLastMsgDeltastamp), 4);
+	}
 
     void        SendPong() {
 		uint32_t deltaMs = pdTICKS_TO_MS(xTaskGetTickCount()) - fLastMsgTimestamp;
@@ -132,6 +150,38 @@ class ESPNowCTR: public ICTR
 			ESP_LOGI("ESPNowCTR", "Handshake sent to slave");
 		}
 	}
+
+	void			PlanifyPingTimerCreation() {
+		atomic_store(&fShouldCreatePingTimer, true);
+	}
+
+	void			HandlePingTimerCreation() {
+		if (atomic_exchange(&fShouldCreatePingTimer, false))
+		{
+			fPingTimer = xTimerCreate(
+					"pingTimer",
+					pdMS_TO_TICKS(5000),
+					pdTRUE,
+					(void*)this,
+					[](TimerHandle_t timer) {
+						ESPNowCTR* ctr = (ESPNowCTR*)pvTimerGetTimerID(timer);
+
+						ctr->PlanifyPingSending();
+					}
+				);
+		 	xTimerStart(fPingTimer, 0);
+			ESP_LOGI("ESPNowCTR", "CREATING PING TIMER");
+		}
+	}
+
+	void			PlanifyPingSending() {
+		atomic_store(&fShouldSendPing, true);
+	}
+
+	void			HandlePingSending() {
+		if (atomic_exchange(&fShouldSendPing, false))
+			Write({ LINK_PING });
+	}
 #endif
 
     private:
@@ -155,12 +205,29 @@ class ESPNowCTR: public ICTR
 	std::atomic_bool	fShouldTransmitSlaveID = false;
 
 	std::atomic_bool	fShouldHandshake = false;
+
+	std::atomic_bool    fShouldCreatePingTimer = false;
 };
 
-bool compareMac(const uint8_t* mac1, const uint8_t* mac2);
 
-extern std::array<ESPNowCTR, NB_ESPNOW_CTR> espNowCtrArray;
-extern uint8_t registeredEspNowCtr;
+inline bool compareMac(const uint8_t* mac1, const uint8_t* mac2) {
+	return memcmp(mac1, mac2, 6) == 0;
+}
 
-std::optional<std::reference_wrapper<ESPNowCTR>> GetESPNowCommunicatorByMac(const std::array<uint8_t, 6>& mac);
+inline std::array<ESPNowCTR, NB_ESPNOW_CTR> espNowCtrArray;
+inline uint8_t registeredEspNowCtr;
+
+inline std::optional<std::reference_wrapper<ESPNowCTR>> GetESPNowCommunicatorByMac(const std::array<uint8_t, 6>& mac)
+{
+	for (auto& ctr : espNowCtrArray)
+	{
+		if (!ctr)
+			break;
+
+		if (mac == ctr.GetMac())
+			return ctr;
+	}
+	return std::nullopt;
+}
+
 #endif
