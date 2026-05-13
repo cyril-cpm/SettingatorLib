@@ -89,23 +89,7 @@ void ESPNowCore::receiveCallback(const esp_now_recv_info* info, const uint8_t* d
 						}
 					}
 					break;
-#endif
 
-#if CONFIG_STR_MASTER_ESPNOW
-				case BRIDGE_BROADCAST_PING:
-					{
-						ESPNowCTR& masterCtr = master.GetCTR<ESPNowCTR, MASTER_CTR_ESPNOW>();
-
-						if (masterCtr.GetMac() == src_addrArr)
-						{
-							LOG("BRIDGE_BROADCAST_PING from Master");
-							masterCtr.PlanifySlaveIDTransmission();
-						}
-					}
-					break;
-#endif
-
-#if CONFIG_STR_SLAVE_ESPNOW
 				case SLAVEID_TRANSMISSION_TO_BRIDGE:
 					if (len == 8)
 					{
@@ -144,6 +128,18 @@ void ESPNowCore::receiveCallback(const esp_now_recv_info* info, const uint8_t* d
 #endif
 
 #if CONFIG_STR_MASTER_ESPNOW
+				case BRIDGE_BROADCAST_PING:
+					{
+						ESPNowCTR& masterCtr = master.GetCTR<ESPNowCTR, MASTER_CTR_ESPNOW>();
+
+						if (masterCtr.GetMac() == src_addrArr)
+						{
+							LOG("BRIDGE_BROADCAST_PING from Master");
+							masterCtr.PlanifySlaveIDTransmission();
+						}
+					}
+					break;
+
 				case BRIDGE_TO_SLAVE_HANDSHAKE:
 					{
 						ESPNowCTR& ctr = master.GetCTR<ESPNowCTR, MASTER_CTR_ESPNOW>();
@@ -153,6 +149,14 @@ void ESPNowCore::receiveCallback(const esp_now_recv_info* info, const uint8_t* d
 						ESP_LOGI("ESPNowCore", "BRIDGE_TO_SLAVE_HANDSHAKE");
 					}
 					break;
+
+				case LINK_PING:
+					{
+						ESPNowCTR& ctr = master.GetCTR<ESPNowCTR, MASTER_CTR_ESPNOW>();
+
+						if (ctr)
+							ctr.PlanifyPongSending();
+					}
 #endif
 
 				case 0xFF:

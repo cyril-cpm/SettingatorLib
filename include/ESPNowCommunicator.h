@@ -2,6 +2,8 @@
 
 #include "Core.h"
 #include "Definitions.h"
+#include "freertos/idf_additions.h"
+#include "freertos/projdefs.h"
 
 #if STR_HAS_ESPNOW
 #include "Communicator.h"
@@ -44,6 +46,7 @@ class ESPNowCTR: public ICTR
 
 	static ESPNowCTR*	GetCTRForMac(const std::array<uint8_t, 6>& mac);
 
+#if CONFIG_STR_SLAVE_ESPNOW
 	uint16_t	GetLinkInfoSizeImpl() const { return 19; };
 
 	void		WriteLinkInfoToBufferImpl(uint16_t index) const {
@@ -51,18 +54,19 @@ class ESPNowCTR: public ICTR
 
 		memcpy(messageBuffer.data() + index + 1, fMac.data(), 6);
 
-		messageBuffer[index + 7] = fLastMsgRssi;
-		messageBuffer[index + 8] = fLastMsgNoiseFloor;
+		messageBuffer[index + 7] = atomic_load(fLastMsgRssi);
+		messageBuffer[index + 8] = atomic_load(fLastMsgNoiseFloor);
 
-		uint32_t deltaMs = pdTICKS_TO_MS(xTaskGetTickCount()) - fLastMsgTimestamp;
+		uint32_t deltaMs = pdTICKS_TO_MS(xTaskGetTickCount()) - atomic_load(fLastMsgTimestamp);
 
 		memcpy(messageBuffer.data() + index + 9, (uint8_t*)&deltaMs, 4);
 
-		messageBuffer[index + 13] = fPeerLastMsgRssi;
-		messageBuffer[index + 14] = fPeerLastMsgNoiseFloor;
+		messageBuffer[index + 13] = atomic_load(fPeerLastMsgRssi);
+		messageBuffer[index + 14] = atomic_load(fPeerLastMsgNoiseFloor);
 
-		memcpy(messageBuffer.data() + index + 15, (uint8_t*)&(fPeerLastMsgDeltastamp), 4);
+		memcpy(messageBuffer.data() + index + 15, (uint8_t*)&(atomic_load(fPeerLastMsgDeltastamp)), 4);
 	}
+#endif
 
     void        SendPong() {
 		uint32_t deltaMs = pdTICKS_TO_MS(xTaskGetTickCount()) - fLastMsgTimestamp;
@@ -81,20 +85,6 @@ class ESPNowCTR: public ICTR
 			(uint8_t)(deltaMs),
 			Message::Frame::End
 		}, fMac);
-	}
-
-    void        SendPing() {
-		fCore.Write({
-			Message::Frame::Start,
-			0x00,
-			0x06,
-			0,
-			Message::Type::EspNowPing,
-			Message::Frame::End
-		}, fMac);
-
-		if (fPingTimer)
-			xTimerChangePeriod(fPingTimer, pdMS_TO_TICKS(2000), 0);
 	}
 
 	int		Write(std::initializer_list<uint8_t> message) const {
@@ -117,6 +107,11 @@ class ESPNowCTR: public ICTR
 		fLastMsgRssi = rssi;
 		fLastMsgNoiseFloor = noiseFloor;
 		fLastMsgTimestamp = timestamp;
+
+#if CONFIG_STR_SLAVE_ESPNOW
+		if (fPingTimer)
+			xTimerChangePeriod(fPingTimer, pdMS_TO_TICKS(5000), 0);
+#endif
 	}
 
 #if CONFIG_STR_MASTER_ESPNOW
@@ -134,6 +129,27 @@ class ESPNowCTR: public ICTR
 			messageBuffer.SetLen(8);
 			Write();
 			ESP_LOGI("ESPNowCTR", "Sending Slave ID to Bridge %d", slaveID);
+		}
+	}
+
+	void			PlanifyPongSending() {
+		atomic_store(&fShouldSendPong, true);
+	}
+
+	void			HandlePongSending() {
+		if (std::atomic_exchange(&fShouldSendPong, false))
+		{
+			uint32_t deltaMs = pdTICKS_TO_MS(xTaskGetTickCount()) - fLastMsgTimestamp;
+
+			Write({ LINK_PONG,
+					(uint8_t)fLastMsgRssi,
+					(uint8_t)fLastMsgNoiseFloor,
+					(uint8_t)(deltaMs >> 24),
+					(uint8_t)(deltaMs >> 16),
+					(uint8_t)(deltaMs >> 8),
+					(uint8_t)(deltaMs)
+				});
+
 		}
 	}
 #endif
@@ -190,23 +206,27 @@ class ESPNowCTR: public ICTR
 
 	std::array<uint8_t, 6>	fMac;
 
-    uint32_t    fLastMsgTimestamp = 0;
-    int8_t      fLastMsgRssi = 0;
-    int8_t      fLastMsgNoiseFloor = 0;
+	std::atomic_uint32_t	fLastMsgTimestamp = 0;
+	std::atomic_int8_t		fLastMsgRssi = 0;
+	std::atomic_int8_t		fLastMsgNoiseFloor = 0;
 
-    uint32_t    fPeerLastMsgDeltastamp = 0;
-    int8_t      fPeerLastMsgRssi = 0;
-    int8_t      fPeerLastMsgNoiseFloor = 0;
+#if CONFIG_STR_MASTER_ESPNOW
+	std::atomic_bool	fShouldTransmitSlaveID = false;
+	std::atomic_bool	fShouldSendPong = false;
+#endif
+
+#if CONFIG_STR_SLAVE_ESPNOW
+	std::atomic_bool	fShouldSendPing = false;
+	std::atomic_bool	fShouldHandshake = false;
+	std::atomic_bool    fShouldCreatePingTimer = false;
 
     TimerHandle_t   fPingTimer = nullptr;
 
-	std::atomic_bool	fShouldSendPing = false;
+	std::atomic_uint32_t	fPeerLastMsgDeltastamp = 0;
+	std::atomic_int8_t		fPeerLastMsgRssi = 0;
+	std::atomic_int8_t		fPeerLastMsgNoiseFloor = 0;
 
-	std::atomic_bool	fShouldTransmitSlaveID = false;
-
-	std::atomic_bool	fShouldHandshake = false;
-
-	std::atomic_bool    fShouldCreatePingTimer = false;
+#endif
 };
 
 
