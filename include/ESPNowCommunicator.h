@@ -54,38 +54,25 @@ class ESPNowCTR: public ICTR
 
 		memcpy(messageBuffer.data() + index + 1, fMac.data(), 6);
 
-		messageBuffer[index + 7] = atomic_load(fLastMsgRssi);
-		messageBuffer[index + 8] = atomic_load(fLastMsgNoiseFloor);
+		messageBuffer[index + 7] = fLastMsgRssi;
+		messageBuffer[index + 8] = fLastMsgNoiseFloor;
 
-		uint32_t deltaMs = pdTICKS_TO_MS(xTaskGetTickCount()) - atomic_load(fLastMsgTimestamp);
+		uint32_t deltaMs = pdTICKS_TO_MS(xTaskGetTickCount()) - fLastMsgTimestamp;
 
 		memcpy(messageBuffer.data() + index + 9, (uint8_t*)&deltaMs, 4);
 
-		messageBuffer[index + 13] = atomic_load(fPeerLastMsgRssi);
-		messageBuffer[index + 14] = atomic_load(fPeerLastMsgNoiseFloor);
+		messageBuffer[index + 13] = fPeerLastMsgRssi;
+		messageBuffer[index + 14] = fPeerLastMsgNoiseFloor;
 
-		memcpy(messageBuffer.data() + index + 15, (uint8_t*)&(atomic_load(fPeerLastMsgDeltastamp)), 4);
+		memcpy(messageBuffer.data() + index + 15, (uint8_t*)&(fPeerLastMsgDeltastamp), 4);
+	}
+
+	void		SetPeerLinkInfo(int8_t rssi, int8_t noiseFloor, uint32_t deltastamp) {
+		fPeerLastMsgRssi = rssi;
+		fPeerLastMsgNoiseFloor = noiseFloor;
+		fPeerLastMsgDeltastamp = deltastamp;
 	}
 #endif
-
-    void        SendPong() {
-		uint32_t deltaMs = pdTICKS_TO_MS(xTaskGetTickCount()) - fLastMsgTimestamp;
-
-		fCore.Write({
-			Message::Frame::Start,
-			0x00,
-			0x0C,
-			0,
-			Message::Type::EspNowPong,
-			(uint8_t)fLastMsgRssi,
-			(uint8_t)fLastMsgNoiseFloor,
-			(uint8_t)(deltaMs >> 24),
-			(uint8_t)(deltaMs >> 16),
-			(uint8_t)(deltaMs >> 8),
-			(uint8_t)(deltaMs),
-			Message::Frame::End
-		}, fMac);
-	}
 
 	int		Write(std::initializer_list<uint8_t> message) const {
 		return fCore.Write(message, fMac);
@@ -103,7 +90,7 @@ class ESPNowCTR: public ICTR
 
     const std::array<uint8_t, 6>&  GetMac() const { return fMac; }
 
-	void			SetLinkInfo(uint8_t rssi, uint8_t noiseFloor, uint32_t timestamp) {
+	void			SetLinkInfo(int8_t rssi, int8_t noiseFloor, uint32_t timestamp) {
 		fLastMsgRssi = rssi;
 		fLastMsgNoiseFloor = noiseFloor;
 		fLastMsgTimestamp = timestamp;
@@ -229,6 +216,8 @@ class ESPNowCTR: public ICTR
 #endif
 };
 
+using OptESPNowCtrRef = std::optional<std::reference_wrapper<ESPNowCTR>>;
+
 
 inline bool compareMac(const uint8_t* mac1, const uint8_t* mac2) {
 	return memcmp(mac1, mac2, 6) == 0;
@@ -237,7 +226,7 @@ inline bool compareMac(const uint8_t* mac1, const uint8_t* mac2) {
 inline std::array<ESPNowCTR, NB_ESPNOW_CTR> espNowCtrArray;
 inline uint8_t registeredEspNowCtr;
 
-inline std::optional<std::reference_wrapper<ESPNowCTR>> GetESPNowCommunicatorByMac(const std::array<uint8_t, 6>& mac)
+inline OptESPNowCtrRef GetESPNowCommunicatorByMac(const std::array<uint8_t, 6>& mac)
 {
 	for (auto& ctr : espNowCtrArray)
 	{

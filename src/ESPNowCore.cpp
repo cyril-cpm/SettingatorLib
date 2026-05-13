@@ -1,5 +1,7 @@
 #include "Core.h"
 #include "Definitions.h"
+#include <cstdint>
+#include <sys/syslimits.h>
 
 #if STR_HAS_ESPNOW
 #include "ESPNowCore.h"
@@ -123,6 +125,22 @@ void ESPNowCore::receiveCallback(const esp_now_recv_info* info, const uint8_t* d
 							if (slave->get().GetID())
 								slave->get().PlanifySendInitRequest();
 						}
+					}
+					break;
+
+				case LINK_PONG:
+					if (len == 7)
+					{
+						OptESPNowCtrRef ctr = GetESPNowCommunicatorByMac(src_addrArr);
+
+						if (ctr)
+							ctr->get().SetPeerLinkInfo((int8_t)data[1],
+														(int8_t)data[2],
+														(data[3] << 24) +
+														(data[4] << 16) +
+														(data[5] << 8) +
+														data[6]);
+
 					}
 					break;
 #endif
