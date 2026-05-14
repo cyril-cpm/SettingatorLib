@@ -183,7 +183,10 @@ class ESPNowCTR: public ICTR
 
 	void			HandlePingSending() {
 		if (atomic_exchange(&fShouldSendPing, false))
+		{
 			Write({ LINK_PING });
+			ESP_LOGD("ESPNowCTR", "Ping Sent");
+		}
 	}
 #endif
 

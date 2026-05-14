@@ -133,12 +133,15 @@ void ESPNowCore::receiveCallback(const esp_now_recv_info* info, const uint8_t* d
 				case LINK_PONG:
 					if (len == 7)
 					{
+						ESP_LOGD("ESPNowCore", "Pong received");
 						OptESPNowCtrRef ctr = GetESPNowCommunicatorByMac(src_addrArr);
 
 						if (ctr)
 						{
+							ESP_LOGD("ESPNowCore", "ctr found");
 							if (info->rx_ctrl)
 							{
+								ESP_LOGD("ESPNowCore", "registering linkInfo");
 								ctr->get().SetLinkInfo(info->rx_ctrl->rssi,
 														info->rx_ctrl->noise_floor,
 														info->rx_ctrl->timestamp / 1000);
