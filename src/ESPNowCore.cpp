@@ -1,5 +1,7 @@
 #include "Core.h"
 #include "Definitions.h"
+#include "freertos/idf_additions.h"
+#include "freertos/projdefs.h"
 #include <cstdint>
 #include <sys/syslimits.h>
 
@@ -134,12 +136,21 @@ void ESPNowCore::receiveCallback(const esp_now_recv_info* info, const uint8_t* d
 						OptESPNowCtrRef ctr = GetESPNowCommunicatorByMac(src_addrArr);
 
 						if (ctr)
+						{
+							if (info->rx_ctrl)
+							{
+								ctr->get().SetLinkInfo(info->rx_ctrl->rssi,
+														info->rx_ctrl->noise_floor,
+														info->rx_ctrl->timestamp / 1000);
+							}
+
 							ctr->get().SetPeerLinkInfo((int8_t)data[1],
 														(int8_t)data[2],
 														(data[3] << 24) +
 														(data[4] << 16) +
 														(data[5] << 8) +
 														data[6]);
+						}
 
 					}
 					break;
@@ -172,27 +183,28 @@ void ESPNowCore::receiveCallback(const esp_now_recv_info* info, const uint8_t* d
 					{
 						ESPNowCTR& ctr = master.GetCTR<ESPNowCTR, MASTER_CTR_ESPNOW>();
 
+								ctr->get().SetLinkInfo(info->rx_ctrl->rssi,
+														info->rx_ctrl->noise_floor,
+														info->rx_ctrl->timestamp / 1000);
 						if (ctr)
+						{
+							if (info->rx_ctrl)
+							{
+								ctr->get().SetLinkInfo(info->rx_ctrl->rssi,
+														info->rx_ctrl->noise_floor,
+														info->rx_ctrl->timestamp / 1000);
+							}
+
 							ctr.PlanifyPongSending();
+						}
 					}
+					break;
 #endif
 
 				case 0xFF:
 					ESPNowCore::GetInstance().WriteToBuffer(data, len);
 
-					if (info->rx_ctrl)
-					{
-						std::optional<std::reference_wrapper<ESPNowCTR>> ctr
-									= GetESPNowCommunicatorByMac(src_addrArr);
-
-						if (ctr)
-						{
-							ESP_LOGI("ESPNOWCORE", "registering linkinfo");
-							ctr->get().SetLinkInfo(info->rx_ctrl->rssi,
-													info->rx_ctrl->noise_floor,
-													info->rx_ctrl->timestamp);
-						}
-					}
+					
 					break;
 			}
 
