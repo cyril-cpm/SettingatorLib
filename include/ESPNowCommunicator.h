@@ -41,6 +41,7 @@ class ESPNowCTR: public ICTR
 
 #if CONFIG_STR_MASTER_ESPNOW
 		HandleSlaveIDTransmission();
+		HandlePongSending();
 #endif
 	}
 
@@ -127,6 +128,8 @@ class ESPNowCTR: public ICTR
 		if (std::atomic_exchange(&fShouldSendPong, false))
 		{
 			uint32_t deltaMs = pdTICKS_TO_MS(xTaskGetTickCount()) - fLastMsgTimestamp;
+
+			ESP_LOGD("ESPNowCTR", "Sending Pong");
 
 			Write({ LINK_PONG,
 					(uint8_t)fLastMsgRssi,

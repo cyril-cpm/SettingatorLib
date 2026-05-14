@@ -47,8 +47,8 @@ void ESPNowCore::receiveCallback(const esp_now_recv_info* info, const uint8_t* d
 		if (info->src_addr)
 			std::copy(info->src_addr, info->src_addr + 6, src_addrArr.begin());
 
-		LOG("len: %d", len);
-		LOG("data: %d", *data);
+		ESP_LOGD("ESPNowCore", "len: %d", len);
+		ESP_LOGD("ESPNowCore", "data: %d", *data);
 
 		if (len && data)
 		{
@@ -186,14 +186,15 @@ void ESPNowCore::receiveCallback(const esp_now_recv_info* info, const uint8_t* d
 					{
 						ESPNowCTR& ctr = master.GetCTR<ESPNowCTR, MASTER_CTR_ESPNOW>();
 
-								ctr->get().SetLinkInfo(info->rx_ctrl->rssi,
-														info->rx_ctrl->noise_floor,
-														info->rx_ctrl->timestamp / 1000);
+						ESP_LOGD("ESPNowCore", "PING received");
+
 						if (ctr)
 						{
+							ESP_LOGD("ESPNowCore", "master CTR found");
 							if (info->rx_ctrl)
 							{
-								ctr->get().SetLinkInfo(info->rx_ctrl->rssi,
+								ESP_LOGD("ESPNowCore", "Setting LinkInfo");
+								ctr.SetLinkInfo(info->rx_ctrl->rssi,
 														info->rx_ctrl->noise_floor,
 														info->rx_ctrl->timestamp / 1000);
 							}
