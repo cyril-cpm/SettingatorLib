@@ -21,15 +21,29 @@ class ESPNowCore : public ICore
 
 		void Init();
 
-		int	 Write(std::initializer_list<uint8_t>message,
-				const std::array<uint8_t, 6>& dstMac) {
-			ESP_ERROR_CHECK_WITHOUT_ABORT(esp_now_send(dstMac.data(), message.begin(), message.size()));
+		int	 Write(
+			std::initializer_list<uint8_t>message,
+			const std::array<uint8_t, 6>& dstMac
+		) {
+			
+			ESP_ERROR_CHECK_WITHOUT_ABORT(
+				esp_now_send(dstMac.data(), message.begin(), message.size())
+			);
+			
 			return 0;
 		}
 
 		int	Write(const std::array<uint8_t, 6>& dstMac) {
 			ESP_LOGI("ESPNowCore", "sending");
-			ESP_ERROR_CHECK_WITHOUT_ABORT(esp_now_send(dstMac.data(), messageBuffer.data(), messageBuffer.len()));
+			
+			ESP_ERROR_CHECK_WITHOUT_ABORT(
+				esp_now_send(
+					dstMac.data(),
+					messageBuffer.data(),
+					messageBuffer.len()
+				)
+			);
+
 			ESP_LOGI("ESPNowCore", "done");
 			return 0;
 		}
@@ -74,7 +88,10 @@ class ESPNowCore : public ICore
 		void	HandleLinkInfo();
 		void	shouldsendlinkinfo(bool should = true);
 
-		static void			receiveCallback(const esp_now_recv_info* info, const uint8_t* data, int len);
+		static void			receiveCallback(
+				const esp_now_recv_info* info,
+				const uint8_t* data, int len
+			);
 
 	private:
 
