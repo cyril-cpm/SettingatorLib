@@ -30,8 +30,6 @@ class ESPNowCTR: public ICTR
 
 	ESPNowCTR() : fCore(ESPNowCore::GetInstance()) {}
 
-    ESPNowCTR(ESPNowCore& core, const std::array<uint8_t, 6>& mac, const bool createTimer = false);
-
     void        Update() {
 #if CONFIG_STR_SLAVE_ESPNOW
 		HandleBridgeToSlaveHandshake();

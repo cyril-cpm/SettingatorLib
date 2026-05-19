@@ -88,10 +88,10 @@ class ESPNowCore : public ICore
 		void	HandleLinkInfo();
 		void	shouldsendlinkinfo(bool should = true);
 
-		static void			receiveCallback(
-				const esp_now_recv_info* info,
-				const uint8_t* data, int len
-			);
+		static void	receiveCallback(
+			const esp_now_recv_info* info,
+			const uint8_t* data, int len
+		);
 
 	private:
 
