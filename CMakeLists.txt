@@ -9,6 +9,7 @@ idf_component_register(SRC_DIRS "src"
 									esp_system
 									esp_driver_rmt
 									esp_driver_gpio
+									esp_driver_uart
 				)
 
 target_compile_options(${COMPONENT_LIB} PRIVATE -std=gnu++23)
