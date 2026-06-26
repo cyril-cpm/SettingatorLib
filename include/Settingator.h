@@ -2,6 +2,8 @@
 
 #include "Definitions.h"
 
+#if CONFIG_STR_HAS_SETTINGATOR
+
 #include <cstdint>
 #include <functional>
 #include <vector>
@@ -9,8 +11,6 @@
 
 #include "Led.h"
 #include "Setting.h"
-#include "CommunicatorBridge.h"
-
 #include "Core.h"
 
 class Preferences;
@@ -48,7 +48,14 @@ class Settingator
     ~Settingator();
 
     void Update();
-    uint8_t AddSetting(Setting::Type type, void* data_ptr, size_t data_size, const char* name = "sans nom", std::function<void()> callback = nullptr);
+    uint8_t AddSetting(
+			Setting::Type type,
+			void* data_ptr,
+			size_t data_size,
+			const char* name = "sans nom",
+			std::function<void()> callback = nullptr
+		);
+
     void UpdateSetting(uint8_t ref, uint8_t* newValuePtr, size_t newValueSize);
     void SendUpdateMessage(Setting& setting);
     void SendUpdateMessage(uint8_t ref);
@@ -110,3 +117,5 @@ class Settingator
     bool        fShouldStopEspNowInitBroadcasted = false;
     bool        fShouldESPNowBroadcastPing = false;
 };
+
+#endif

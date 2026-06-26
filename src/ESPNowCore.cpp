@@ -245,8 +245,18 @@ void ESPNowCore::Init()
 	//NOW
 	ESP_ERROR_CHECK(esp_now_init());
 	ESP_ERROR_CHECK(esp_now_register_recv_cb(receiveCallback));
+	ESP_ERROR_CHECK(
+			esp_now_register_send_cb(
+				[](const esp_now_send_info_t* tx_info, esp_now_send_status_t status) {
+					if (status != ESP_NOW_SEND_SUCCESS)
+						ESP_LOGE("ESPNowCore", "Sending data failed");
 
-	ESP_ERROR_CHECK(esp_read_mac(fMac.data(), ESP_MAC_WIFI_STA));	// Récupération de l'adresse MAC Wi-Fi (STA)
+
+				}
+			)
+		);
+
+	ESP_ERROR_CHECK(esp_read_mac(fMac.data(), ESP_MAC_WIFI_STA));
 }
 
 void ESPNowCore::AddPeer(const std::array<uint8_t, 6>& peerMac)

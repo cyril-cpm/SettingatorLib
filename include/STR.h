@@ -7,6 +7,7 @@
 #include "Core.h"
 #include "Slave.h"
 #include "Master.h"
+#include "freertos/idf_additions.h"
 
 #if STR_HAS_ESPNOW
 #include "ESPNowCore.h"

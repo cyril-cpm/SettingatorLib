@@ -16,17 +16,7 @@ class UARTCore : public ICore
 {
 	public:
 
-		static UARTCore& GetDefaultUARTInstance()
-		{
-			static UARTCore	instance(UART_NUM_0,
-				UART_PIN_NO_CHANGE,
-				UART_PIN_NO_CHANGE,
-				115200);
-
-			return instance;
-		}
-#
-#if CONFIG_STR_UART0
+#if STR_UART0
 		static UARTCore& GetUART0Instance()
 		{
 			static UARTCore instance(UART_NUM_0,
@@ -38,11 +28,10 @@ class UARTCore : public ICore
 		}
 #endif
 
-
-#if CONFIG_STR_UART1
+#if STR_UART1
 		static UARTCore& GetUART1Instance()
 		{
-			static UARTCore instance(UART_NUM_0,
+			static UARTCore instance(UART_NUM_1,
 					CONFIG_STR_UART1_TX_PIN,
 					CONFIG_STR_UART1_RX_PIN,
 					CONFIG_STR_UART1_BAUDRATE);
@@ -51,10 +40,10 @@ class UARTCore : public ICore
 		}
 #endif
 
-#if CONFIG_STR_UART2
+#if STR_UART2
 		static UARTCore& GetUART2Instance()
 		{
-			static UARTCore instance(UART_NUM_0,
+			static UARTCore instance(UART_NUM_2,
 					CONFIG_STR_UART2_TX_PIN,
 					CONFIG_STR_UART2_RX_PIN,
 					CONFIG_STR_UART2_BAUDRATE);
@@ -62,8 +51,6 @@ class UARTCore : public ICore
 			return instance;
 		}
 #endif
-
-		UARTCore(uart_port_t port, int tx, int rx, int baudrate);
 
 		int Write(std::initializer_list<uint8_t> message) const {
 			return uart_write_bytes(fUartPort, message.begin(), message.size());
@@ -130,6 +117,14 @@ class UARTCore : public ICore
 		void	Init();
 
 	private:
+
+		UARTCore(uart_port_t port, int tx, int rx, int baudrate)
+			: 
+				fUartPort(port),
+				fRx(tx),
+				fTx(rx),
+				fBaudrate(baudrate)
+		{}
 
 		uart_port_t		fUartPort;
 		int				fRx;

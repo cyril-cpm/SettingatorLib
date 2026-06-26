@@ -22,6 +22,11 @@
 #include "UARTCommunicator.h"
 #endif
 
+#if CONFIG_STR_MASTER_LORA
+#include "LORACore.h"
+#include "LORACommunicator.h"
+#endif
+
 enum MasterCTREnum {
 
 #if CONFIG_STR_MASTER_ESPNOW
@@ -40,6 +45,10 @@ enum MasterCTREnum {
 	MASTER_CTR_UART2,
 #endif
 
+#if CONFIG_STR_MASTER_LORA
+	MASTER_CTR_LORA,
+#endif
+
 	MASTER_CTR_MAX
 };
 
@@ -54,6 +63,10 @@ using MasterCTR = CTRVariant<
 
 #if STR_MASTER_HAS_UART
 			,std::reference_wrapper<UARTCTR>
+#endif
+
+#if CONFIG_STR_MASTER_LORA
+			,std::reference_wrapper<LORACTR>
 #endif
 		)
 	>;
@@ -85,6 +98,10 @@ class Master : public CTRHandler<MasterCTR, MasterCTREnum::MASTER_CTR_MAX>
 
 #if CONFIG_STR_MASTER_UART2
 						,uartCtrArray[UartCTREnum::UART_CTR_UART2]
+#endif
+
+#if CONFIG_STR_MASTER_LORA
+						,loraCtrArray[registeredLoRaCtr++]
 #endif
 					)
 				}) {}

@@ -6,107 +6,224 @@ menu "Settingator Config"
 		help
 			Has a settingator
 
+	if STR_HAS_SETTINGATOR
+		config STR_NB_SETTINGS
+			int "Number of Settings"
+			default 1
+			help
+				Number of settings
+	endif
+
 	config STR_HAS_BRIDGE
 		bool "Has a bridge"
 		default n
 		help
 			Has a bridge
 
-	config STR_NB_SETTINGS
-		int "Number of Settings"
-		default 1
-		help
-			Number of settings
+	if STR_HAS_BRIDGE
+		config STR_NB_SLAVE
+			int "Number of Slave"
+			default 10
+			help
+				Number of Slave
 
-	config STR_RMT_MEM_BLOCK_SYMBOLS
-		int "RMT mem block symbols"
-		default 48
-		help
-			Définit la taille des symbols RMT
+		if STR_NB_SLAVE
+			config STR_NB_SUBSLAVE
+				int "Max number of subslave per Slave"
+				default 0
+				help
+					Max number of subslaves per Slave
+		endif
+	endif
 
-	config STR_UART0
-		bool "UART0 enabled"
+	config STR_MASTER_UART0
+		bool "Use UART0 CTR in Master"
 		default n
 		help
-			Enable UART0
+			Use UART0 CTR in Master
 
-	config STR_UART0_TX_PIN
-		int "UART0 TX Pin"
-		default -1
+	config STR_SLAVE_UART0
+		bool "Use UART0 CTR in Slave"
+		default n
+		depends on STR_HAS_BRIDGE
 		help
-			TX Pin for UART0
+			Use UART0 CTR in Slave
 
-	config STR_UART0_RX_PIN
-		int "UART0 RX Pin"
-		default -1
-		help
-			RX Pin for UART0
+	if STR_MASTER_UART0 || STR_SLAVE_UART0
+		config STR_UART0_TX_PIN
+			int "UART0 TX Pin"
+			default -1
+			help
+				TX Pin for UART0
 
-	config STR_UART0_BAUDRATE
-		int "STR_UART0_BAUDRATE"
-		default 115200
-		help
-			UART0 Baudrate
+		config STR_UART0_RX_PIN
+			int "UART0 RX Pin"
+			default -1
+			help
+				RX Pin for UART0
 
-	config STR_UART1
-		bool "UART1 enabled"
+		config STR_UART0_BAUDRATE
+			int "STR_UART0_BAUDRATE"
+			default 115200
+			help
+				UART0 Baudrate
+	endif
+
+	config STR_MASTER_UART1
+		bool "Use UART1 CTR in Master"
 		default n
 		help
-			Enable UART1
+			Use UART1 CTR in Master
 
-	config STR_UART1_TX_PIN
-		int "UART1 TX Pin"
-		default -1
+	config STR_SLAVE_UART1
+		bool "Use UART1 CTR in Slave"
+		default n
+		depends on STR_HAS_BRIDGE
 		help
-			TX Pin for UART1
+			Use UART1 CTR in Slave
 
-	config STR_UART1_RX_PIN
-		int "UART1 RX Pin"
-		default -1
-		help
-			RX Pin for UART1
+	if STR_MASTER_UART1 || STR_SLAVE_UART1
+		config STR_UART1_TX_PIN
+			int "UART1 TX Pin"
+			default -1
+			help
+				TX Pin for UART1
 
-	config STR_UART1_BAUDRATE
-		int "UART1 Baudrate"
-		default 115200
-		help
-			UART1 Baudrate
+		config STR_UART1_RX_PIN
+			int "UART1 RX Pin"
+			default -1
+			help
+				RX Pin for UART1
 
-	config STR_UART2
-		bool "UART2 enabled"
+		config STR_UART1_BAUDRATE
+			int "UART1 Baudrate"
+			default 115200
+			help
+				UART1 Baudrate
+	endif
+
+	config STR_MASTER_UART2
+		bool "Use UART2 CTR in Master"
 		default n
 		help
-			Enable UART2
+			Use UART2 CTR in Master
 
-	config STR_UART2_TX_PIN
-		int "UART2 TX Pin"
-		default -1
+	config STR_SLAVE_UART2
+		bool "Use UART2 CTR in Slave"
+		default n
+		depends on STR_HAS_BRIDGE
 		help
-			TX Pin for UART2
+			Use UART2 CTR in Slave
 
-	config STR_UART2_RX_PIN
-		int "UART2 RX Pin"
-		default -1
-		help
-			RX Pin for UART2
+	if STR_MASTER_UART2 || STR_SLAVE_UART2
+		config STR_UART2_TX_PIN
+			int "UART2 TX Pin"
+			default -1
+			help
+				TX Pin for UART2
 
-	config STR_UART2_BAUDRATE
-		int "UART2 Baudrate"
-		default 115200
-		help
-			UART2 Baudrate
+		config STR_UART2_RX_PIN
+			int "UART2 RX Pin"
+			default -1
+			help
+				RX Pin for UART2
 
-	config STR_ESPNOW
-		bool "ESPNOW enabled"
+		config STR_UART2_BAUDRATE
+			int "UART2 Baudrate"
+			default 115200
+			help
+				UART2 Baudrate
+	endif
+
+	config STR_MASTER_ESPNOW
+		bool "Use ESPNOW CTR in Master"
 		default n
 		help
-			Enable ESPNOW
+			Use ESPNOW CTR in Master
 
-	config STR_ESPNOW_CHANNEL
-		int "ESPNOW Channel"
-		default 0
+	config STR_SLAVE_ESPNOW
+		bool "Use ESPNOW CTR in Slave"
+		default n
+		depends on STR_HAS_BRIDGE
 		help
-			Channel for ESPNOW
+			Use ESPNOW CTR in Slave
+
+	if STR_MASTER_ESPNOW || STR_SLAVE_ESPNOW
+		config STR_ESPNOW_CHANNEL
+			int "ESPNOW Channel"
+			default 0
+			help
+				Channel for ESPNOW
+	endif
+
+	config STR_MASTER_LORA
+		bool "Use LoRa CTR in Master"
+		default n
+		help
+			Use LoRa CTR in Master
+
+	config STR_SLAVE_LORA
+		bool "Use LoRa CTR in Slave"
+		default n
+		depends on STR_HAS_BRIDGE
+		help
+			Use LoRa CTR in Slave
+
+	if STR_MASTER_LORA || STR_SLAVE_LORA
+		config STR_LORA_PORT
+			int "LoRa UART Port"
+			default 1
+			help
+				UART Port for LoRa
+
+		config STR_LORA_AUX_PIN
+			int "LoRa AUX Pin"
+			default -1
+			help
+				AUX Pin for LoRa
+
+		config STR_LORA_M0_PIN
+			int "LoRa M0 Pin"
+			default -1
+			help
+				M0 Pin for LoRa
+
+		config STR_LORA_M1_PIN
+			int "LoRa M1 Pin"
+			default -1
+			help
+				M1 Pin for LoRa
+
+		config STR_LORA_RX_PIN
+			int "LoRa RX Pin"
+			default -1
+			help
+				RX Pin for LoRa
+
+		config STR_LORA_TX_PIN
+			int "LoRa TX Pin"
+			default -1
+			help
+				TX Pin for LoRa
+
+		config STR_LORA_BAUDRATE
+			int "LoRa Baudrate"
+			default 115200
+			help
+				LoRa Baudrate
+
+		config STR_LORA_DATA_RATE
+			int "LoRa Data Rate"
+			default -1
+			help
+				LoRa Data Rate
+
+		config STR_LORA_TASK_STACK_SIZE
+			int "LoRa Task Stack Size"
+			default 8192
+			help
+				LoRa Task Stack Size
+	endif
 
 	config STR_MESSAGE_BUFFER_SIZE
 		int "Message Buffer Size"
@@ -120,71 +237,25 @@ menu "Settingator Config"
 		help
 			Circular buffer size
 
-	config STR_NB_SLAVE
-		int "Number of Slave"
-		default 10
-		help
-			Number of Slave
-
-	config STR_SLAVE_ESPNOW
-		bool "Use ESPNOW CTR in Slave"
-		default n
-		help
-			Use ESPNOW CTR in Slave
-
-	config STR_SLAVE_UART0
-		bool "Use UART0 CTR in Slave"
-		default n
-		help
-			Use UART0 CTR in Slave
-
-	config STR_SLAVE_UART1
-		bool "Use UART1 CTR in Slave"
-		default n
-		help
-			Use UART1 CTR in Slave
-
-	config STR_SLAVE_UART2
-		bool "Use UART2 CTR in Slave"
-		default n
-		help
-			Use UART2 CTR in Slave
-
-	config STR_MASTER_ESPNOW
-		bool "Use ESPNOW CTR in Master"
-		default n
-		help
-			Use ESPNOW CTR in Master
-
-	config STR_MASTER_UART0
-		bool "Use UART0 CTR in Master"
-		default n
-		help
-			Use UART0 CTR in Master
-
-	config STR_MASTER_UART1
-		bool "Use UART1 CTR in Master"
-		default n
-		help
-			Use UART1 CTR in Master
-
-	config STR_MASTER_UART2
-		bool "Use UART2 CTR in Master"
-		default n
-		help
-			Use UART2 CTR in Master
-
-	config STR_NB_SUBSLAVE
-		int "Max number of subslave per Slave"
-		default 0
-		help
-			Max number of subslaves per Slave
-
 	config STR_HAS_LED_STRIP_0
 		bool "Has LED Strip 0"
 		default false
 		help
 			Has Led Strip 0
+
+	if STR_HAS_LED_STRIP_0
+		config STR_LED_STRIP_0_PIN
+			int	"GPIO Pin for led stip 0"
+			default 0
+			help
+				GPIO Pin for led strip 0
+
+		config STR_LED_STRIP_0_DATA_LEN
+			int "DATA Len for led strip 0"
+			default 8
+			help
+				DATA Len for led strip 0
+	endif
 
 	config STR_HAS_LED_STRIP_1
 		bool "Has LED Strip 1"
@@ -192,11 +263,39 @@ menu "Settingator Config"
 		help
 			Has Led Strip 1
 
+	if STR_HAS_LED_STRIP_1
+		config STR_LED_STRIP_1_PIN
+			int	"GPIO Pin for led stip 1"
+			default 1
+			help
+				GPIO Pin for led strip 1
+
+		config STR_LED_STRIP_1_DATA_LEN
+			int "DATA Len for led strip 1"
+			default 8
+			help
+				DATA Len for led strip 1
+	endif
+
 	config STR_HAS_LED_STRIP_2
 		bool "Has LED Strip 2"
 		default false
 		help
 			Has Led Strip 2
+
+	if STR_HAS_LED_STRIP_2
+		config STR_LED_STRIP_2_PIN
+			int	"GPIO Pin for led stip 2"
+			default 2
+			help
+				GPIO Pin for led strip 2
+
+		config STR_LED_STRIP_2_DATA_LEN
+			int "DATA Len for led strip 2"
+			default 8
+			help
+				DATA Len for led strip 2
+	endif
 
 	config STR_HAS_LED_STRIP_3
 		bool "Has LED Strip 3"
@@ -204,56 +303,25 @@ menu "Settingator Config"
 		help
 			Has Led Strip 3
 
-	config STR_LED_STRIP_0_PIN
-		int	"GPIO Pin for led stip 0"
-		default 0
-		help
-			GPIO Pin for led strip 0
-	
-	config STR_LED_STRIP_0_DATA_LEN
-		int "DATA Len for led strip 0"
-		default 8
-		help
-			DATA Len for led strip 0
+	if STR_HAS_LED_STRIP_3
+		config STR_LED_STRIP_3_PIN
+			int	"GPIO Pin for led stip 3"
+			default 3
+			help
+				GPIO Pin for led strip 3
 
+		config STR_LED_STRIP_3_DATA_LEN
+			int "DATA Len for led strip 3"
+			default 8
+			help
+				DATA Len for led strip 3
+	endif
 
-	config STR_LED_STRIP_1_PIN
-		int	"GPIO Pin for led stip 1"
-		default 1
+	config STR_RMT_MEM_BLOCK_SYMBOLS
+		int "RMT mem block symbols"
+		default 48
+		depends on STR_HAS_LED_STRIP_0 || STR_HAS_LED_STRIP_1 || STR_HAS_LED_STRIP_2 || STR_HAS_LED_STRIP_3
 		help
-			GPIO Pin for led strip 1
-	
-	config STR_LED_STRIP_1_DATA_LEN
-		int "DATA Len for led strip 1"
-		default 8
-		help
-			DATA Len for led strip 1
-
-
-	config STR_LED_STRIP_2_PIN
-		int	"GPIO Pin for led stip 2"
-		default 2
-		help
-			GPIO Pin for led strip 2
-	
-	config STR_LED_STRIP_2_DATA_LEN
-		int "DATA Len for led strip 2"
-		default 8
-		help
-			DATA Len for led strip 2
-
-
-	config STR_LED_STRIP_3_PIN
-		int	"GPIO Pin for led stip 3"
-		default 3
-		help
-			GPIO Pin for led strip 3
-	
-	config STR_LED_STRIP_3_DATA_LEN
-		int "DATA Len for led strip 3"
-		default 8
-		help
-			DATA Len for led strip 3
-
+			Définit la taille des symbols RMT
 
 endmenu

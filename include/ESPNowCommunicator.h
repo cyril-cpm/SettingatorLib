@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Core.h"
 #include "Definitions.h"
 #include "freertos/idf_additions.h"
 #include "freertos/projdefs.h"

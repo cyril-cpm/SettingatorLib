@@ -20,7 +20,6 @@ class CTRBridge
 		return instance;
 	}
 
-	void	test();
 	void	begin();
 
 	void			StartEspNowInitBroadcasted();
@@ -37,10 +36,11 @@ class CTRBridge
 	void			_configDirectSettingUpdate(Message& msg);
 	void			_removeDirectMessageConfig(Message& msg, uint8_t messageType);
 	void			_reinitSlaves();
-	void			_treatSettingInit(Message& msg, Slave& slave);
+	// void			_treatSettingInit(Message& msg, Slave& slave);
 
 	bool			fShouldSendLinkInfo = false;
 	TimerHandle_t	fLinkInfoTimer = nullptr;
+	std::array<uint8_t, 6>	fEMac;
 };
 
 #endif

@@ -10,14 +10,6 @@
 
 static const char* tag = "UARTCore";
 
-UARTCore::UARTCore(uart_port_t port, int tx, int rx, int baudrate)
-	:
-		fUartPort(port),
-		fRx(rx),
-		fTx(tx),
-		fBaudrate(baudrate)
-{}
-
 void UARTCore::Init() 
 {
 	LOG("InitImpl");

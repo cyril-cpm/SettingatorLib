@@ -24,6 +24,10 @@
 #include "UARTCommunicator.h"
 #endif
 
+#if CONFIG_STR_SLAVE_LORA
+#include "LORACommunicator.h"
+#endif
+
 
 enum SlaveCTREnum {
 
@@ -43,6 +47,10 @@ enum SlaveCTREnum {
 	SLAVE_CTR_UART2,
 #endif
 
+#if CONFIG_STR_SLAVE_LORA
+	SLAVE_CTR_LORA,
+#endif
+
 	SLAVE_CTR_MAX
 };
 
@@ -56,6 +64,10 @@ using SlaveCTR = CTRVariant<
 
 #if STR_SLAVE_HAS_UART
 			,std::reference_wrapper<UARTCTR>
+#endif
+
+#if CONFIG_STR_SLAVE_LORA
+			,std::reference_wrapper<LORACTR>
 #endif
 		)
 	>;
@@ -83,13 +95,17 @@ class Slave : public CTRHandler<SlaveCTR, SlaveCTREnum::SLAVE_CTR_MAX>
 #if CONFIG_STR_SLAVE_UART2
 						,uartCtrArray[UartCTREnum::UART_CTR_UART2]
 #endif
+
+#if CONFIG_STR_SLAVE_LORA
+						,loraCtrArray[registeredLoRaCtr++]
+#endif
 					)
 
 			})	{}
 
     void    	SetID(uint8_t id) { fSlaveID = id; }
     uint8_t 	GetID() const { return fSlaveID; }
-    
+
 	bool    	HasSubSlave(uint8_t id) const {
 #if CONFIG_STR_NB_SUBSLAVE
 		uint8_t i = 0;
@@ -132,7 +148,7 @@ class Slave : public CTRHandler<SlaveCTR, SlaveCTREnum::SLAVE_CTR_MAX>
 	bool		IsWaitingForID() const {
 		return fWaitingForID;
 	}
-	
+
 	void		PlanifySendInitRequest() {
 		atomic_store(&fShouldSendInitRequest, true);
 	}

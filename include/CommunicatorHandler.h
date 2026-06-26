@@ -7,7 +7,7 @@
 #include "Communicator.h"
 
 #if STR_HAS_ESPNOW
-#include "ESPNowCommunicator.h"
+// #include "ESPNowCommunicator.h"
 #endif
 
 #if STR_HAS_UART
@@ -63,13 +63,13 @@ class CTRHandler
 			}
 		}
 
-		template <typename CTR_T, uint8_t I>
-		void		SetESPNowCTRMac(std::array<uint8_t, 6>& mac) {
-			CTR_T& ctr = GetCTR<CTR_T, I>();
-
-			if (!ctr)
-				ctr.SetMac(mac);
-		}
+		// template <typename CTR_T, uint8_t I>
+		// void		SetESPNowCTRMac(std::array<uint8_t, 6>& mac) {
+		// 	CTR_T& ctr = GetCTR<CTR_T, I>();
+		//
+		// 	if (!ctr)
+		// 		ctr.SetMac(mac);
+		// }
 
 		template <typename CTR_T, uint8_t I>
 		CTR_T&			GetCTR() {

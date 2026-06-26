@@ -1,6 +1,7 @@
 #include "STR.h"
 #include "Slave.h"
 #include "esp_log_buffer.h"
+#include "freertos/idf_additions.h"
 
 static const char* tag = "STR";
 
@@ -84,6 +85,9 @@ OptSlaveRef CreateSlave(std::array<uint8_t, 6> &&eMac, uint8_t id)
 
 void		InitCores()
 {
+	if (!mainTaskHandle)
+		mainTaskHandle = xTaskGetCurrentTaskHandle();
+
 #if CONFIG_STR_ESPNOW
 	ESPNowCore::GetInstance().Init();
 #endif
@@ -96,7 +100,11 @@ void		InitCores()
 	UARTCore::GetUART1Instance().Init();
 #endif
 
-#if CONFIG_STAR_UART0
+#if CONFIG_STR_UART2
 	UARTCore::GetUART2Instance().Init();
+#endif
+
+#if STR_HAS_LORA
+	LORACore::GetInstance().Init();
 #endif
 }

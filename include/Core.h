@@ -4,6 +4,9 @@
 #include <esp_log.h>
 #include "Buffer.h"
 #include "Message.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/idf_additions.h"
+#include "portmacro.h"
 #include <cstdint>
 #include <type_traits>
 #include <utility>
@@ -116,11 +119,19 @@ class ICore
 
 		const uint8_t&	operator[](uint16_t index) const { return fBuf[index]; }
 	
+		void		SemGive() { xSemaphoreGive(fSem); }
+		void		SemTake() { xSemaphoreTake(fSem, portMAX_DELAY); }
 	protected:
 
+		ICore() {
+			fSem = xSemaphoreCreateBinaryStatic(&fSemBuf);
+		}
+
 		CircularBuffer fBuf;
+		StaticSemaphore_t	fSemBuf;
+		SemaphoreHandle_t	fSem;
 
 };
 
-
+inline TaskHandle_t mainTaskHandle = nullptr;
 

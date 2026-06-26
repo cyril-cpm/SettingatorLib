@@ -201,6 +201,23 @@ void Settingator::Update()
 
 	master.Update();
 
+#if CONFIG_STR_UART0
+	UARTCore::GetUART0Instance().Read();
+#endif
+
+#if CONFIG_STR_UART1
+	UARTCore::GetUART1Instance().Read();
+#endif
+
+#if CONFIG_STR_UART2
+	UARTCore::GetUART2Instance().Read();
+#endif
+
+#if STR_HAS_LORA
+	LORACore::GetInstance().Read();
+#endif
+
+
 #if defined(STR_BRIDGE_HID)
 	fInfoLEDStrip.Show();
 #endif

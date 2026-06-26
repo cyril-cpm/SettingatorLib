@@ -1,8 +1,4 @@
 #include "CommunicatorBridge.h"
-#include "Master.h"
-#include "UARTCommunicator.h"
-#include "esp_attr.h"
-#include "esp_log_buffer.h"
 
 #if CONFIG_STR_HAS_BRIDGE
 
@@ -52,6 +48,8 @@ void	CTRBridge::CreateLinkInfoTimer()
 
 void CTRBridge::begin()
 {
+	esp_read_mac(fEMac.data(), ESP_MAC_BASE);
+
 	if (esp_task_wdt_status(nullptr) == ESP_ERR_NOT_FOUND)
 		ESP_ERROR_CHECK(esp_task_wdt_add(nullptr));
 
@@ -174,6 +172,10 @@ void CTRBridge::Update()
 
 #if CONFIG_STR_UART2
 	UARTCore::GetUART2Instance().Read();
+#endif
+
+#if STR_HAS_LORA
+	LORACore::GetInstance().Read();
 #endif
 
 	ESP_ERROR_CHECK(esp_task_wdt_reset());
@@ -373,8 +375,8 @@ void CTRBridge::_reinitSlaves()
 	// }
 }
 
-void CTRBridge::_treatSettingInit(Message& msg, Slave& slave)
-{
+// void CTRBridge::_treatSettingInit(Message& msg, Slave& slave)
+// {
 	// LOG("Init Setting from slave %d:", msg.GetSlaveID());
 	// uint8_t msgSlaveID = msg.GetSlaveID();
 	//
@@ -383,7 +385,7 @@ void CTRBridge::_treatSettingInit(Message& msg, Slave& slave)
 	//
 	// if (!slave.HasSubSlave(msgSlaveID))
 	// 	slave.AddSubSlave(msgSlaveID);
-}
+// }
 
 void CTRBridge::HandleLinkInfo()
 {
@@ -420,7 +422,7 @@ void CTRBridge::HandleLinkInfo()
 	messageBuffer[4] = 0;
 	messageBuffer[5] = Message::Type::LinkInfo;
 	messageBuffer[6] = nbCTR;
-	memcpy(messageBuffer.data() + 7, ESPNowCore::GetInstance().GetMac().data(), 6);
+	memcpy(messageBuffer.data() + 7, fEMac.data(), 6);
 	messageBuffer[msgSize-1] = Message::Frame::End;
 	messageBuffer.SetLen(msgSize);
 

@@ -28,7 +28,7 @@ class ESPNowCore : public ICore
 			
 			ESP_ERROR_CHECK_WITHOUT_ABORT(
 				esp_now_send(dstMac.data(), message.begin(), message.size())
-			);
+			);;;
 			
 			return 0;
 		}
@@ -36,6 +36,7 @@ class ESPNowCore : public ICore
 		int	Write(const std::array<uint8_t, 6>& dstMac) {
 			ESP_LOGI("ESPNowCore", "sending");
 			
+			SemTake();
 			ESP_ERROR_CHECK_WITHOUT_ABORT(
 				esp_now_send(
 					dstMac.data(),
