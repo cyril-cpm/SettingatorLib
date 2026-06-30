@@ -3,15 +3,16 @@
 #include "Definitions.h"
 
 #if STR_HAS_LORA
+#include "Buffer.h"
+#include "Core.h"
+#include "UARTUtils.h"
+
 #include "esp_err.h"
 #include "sdkconfig.h"
 #include <cstdint>
 #include <driver/uart.h>
 #include <driver/gpio.h>
 #include <initializer_list>
-#include "Buffer.h"
-#include "hal/uart_types.h"
-#include "Core.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "esp_task.h"
@@ -24,6 +25,12 @@
 class LORACore : public ICore
 {
 	public:
+
+		enum Frame
+		{
+			Start = 0x42,
+			End = 0x24
+		};
 
 		static LORACore& GetInstance()
 		{
@@ -92,6 +99,31 @@ class LORACore : public ICore
 
 		void SetMode(uint8_t mode) {}
 
+		void ConfigModule() const {
+			ESP_ERROR_CHECK(uart_wait_tx_done(fUartPort, portMAX_DELAY));
+
+			ESP_ERROR_CHECK(uart_flush_input(fUartPort));
+
+			ESP_ERROR_CHECK(uart_set_baudrate(fUartPort, 9600));
+
+			ESP_ERROR_CHECK(gpio_set_level(static_cast<gpio_num_t>(fM0Pin), 1));
+			ESP_ERROR_CHECK(gpio_set_level(static_cast<gpio_num_t>(fM1Pin), 1));
+			ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+
+			// 0xC0 = write permanent, 0x00 = start reg, 0x03 = 3 bytes:
+			// ADDH, ADDL, SPED (baud | 8N1 parity | 62.5k air data rate = 0xFF)
+			uint8_t cfg[] = {
+				0xC0,
+				0x00,
+				0x03,
+				static_cast<uint8_t>(fAddress >> 8),
+				static_cast<uint8_t>(fAddress & 0xFF),
+				0xFF
+			};
+			uart_write_bytes(fUartPort, cfg, sizeof(cfg));
+			ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+		}
+
 	private:
 
 		LORACore(uart_port_t port, int tx, int rx, int baudrate,
@@ -124,6 +156,33 @@ class LORACore : public ICore
 		}
 
 		void _Init() {
+			ESP_ERROR_CHECK(uart_driver_install(fUartPort, 256, 0, 0, nullptr, 0));
+
+			uart_config_t uart_conf = {
+				.baud_rate = fBaudrate,
+				.data_bits = UART_DATA_8_BITS,
+				.parity = UART_PARITY_DISABLE,
+				.stop_bits = UART_STOP_BITS_1,
+				.flow_ctrl = UART_HW_FLOWCTRL_DISABLE,
+				.rx_flow_ctrl_thresh = 0,
+				.source_clk = UART_SCLK_DEFAULT,
+				.flags = { 
+					.allow_pd = 0,
+					.backup_before_sleep = 0
+				}
+			};
+
+			ESP_ERROR_CHECK(uart_param_config(fUartPort, &uart_conf));
+			ESP_ERROR_CHECK(
+					uart_set_pin(
+						fUartPort,
+						fTx,
+						fRx,
+						UART_PIN_NO_CHANGE,
+						UART_PIN_NO_CHANGE
+					)
+				);
+
 			gpio_config_t io_conf = {
 				.pin_bit_mask = (1ULL << fM0Pin) | (1ULL << fM1Pin),
 				.mode = GPIO_MODE_OUTPUT,
@@ -141,29 +200,6 @@ class LORACore : public ICore
 				.intr_type = GPIO_INTR_DISABLE
 			};
 			ESP_ERROR_CHECK(gpio_config(&aux_conf));
-
-			uart_config_t uart_conf = {
-				.baud_rate = fBaudrate,
-				.data_bits = UART_DATA_8_BITS,
-				.parity = UART_PARITY_DISABLE,
-				.stop_bits = UART_STOP_BITS_1,
-				.flow_ctrl = UART_HW_FLOWCTRL_DISABLE,
-				.rx_flow_ctrl_thresh = 0,
-				.source_clk = UART_SCLK_DEFAULT
-			};
-
-			ESP_ERROR_CHECK(uart_param_config(fUartPort, &uart_conf));
-			ESP_ERROR_CHECK(
-					uart_set_pin(
-						fUartPort,
-						fTx,
-						fRx,
-						UART_PIN_NO_CHANGE,
-						UART_PIN_NO_CHANGE
-					)
-				);
-
-			ESP_ERROR_CHECK(uart_driver_install(fUartPort, 256, 0, 0, nullptr, 0));
 
 			esp_err_t err = gpio_install_isr_service(0);
 			if (err != ESP_ERR_INVALID_STATE)
@@ -184,35 +220,40 @@ class LORACore : public ICore
 			ESP_ERROR_CHECK(gpio_set_intr_type(
 				static_cast<gpio_num_t>(fAuxPin), GPIO_INTR_POSEDGE));
 
-			ESP_ERROR_CHECK(gpio_set_level(static_cast<gpio_num_t>(fM0Pin), 1));
-			ESP_ERROR_CHECK(gpio_set_level(static_cast<gpio_num_t>(fM1Pin), 1));
-			ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
-
 			uint8_t mac[6];
 			ESP_ERROR_CHECK(esp_read_mac(mac, ESP_MAC_BASE));
 			fAddress = (static_cast<uint16_t>(mac[4]) << 8) | mac[5];
 
-			// 0xC0 = write permanent, 0x00 = start reg, 0x03 = 3 bytes:
-			// ADDH, ADDL, SPED (baud | 8N1 parity | 62.5k air data rate = 0xFF)
-			uint8_t cfg[] = {
-				0xC0,
-				0x00,
-				0x03,
-				static_cast<uint8_t>(fAddress >> 8),
-				static_cast<uint8_t>(fAddress & 0xFF),
-				0xFF
-			};
-			uart_write_bytes(fUartPort, cfg, sizeof(cfg));
+			ESP_ERROR_CHECK(gpio_set_level(static_cast<gpio_num_t>(fM0Pin), 0));
+			ESP_ERROR_CHECK(gpio_set_level(static_cast<gpio_num_t>(fM1Pin), 0));
 			ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
 
 			if (mainTaskHandle)
 				xTaskNotifyGive(mainTaskHandle);
 		}
 
+		inline void	_ReadUart() {
+			ReadUart(fUartPort, fMidBuf);
+		}
+
+		inline bool _FetchMessage() {
+			return fMidBuf.Fetch(
+					LORACore::Frame::Start,
+					LORACore::Frame::End,
+					"LORACore"
+				);
+		}
+
+		inline void	_TreatMessage();
+
 		void _Run() {
-			// while (true) {
-			// 	// uart_read_bytes(fUartPort, dd, uint32_t length, uint32_t ticks_to_wait)
-			// }
+			while (true)
+			{
+				ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+				_ReadUart();
+				if (_FetchMessage())
+					_TreatMessage();
+			}
 		}
 
 		uart_port_t		fUartPort;
@@ -227,8 +268,10 @@ class LORACore : public ICore
 		uint16_t		fAddress;
 		uint8_t			fChannel;
 
-		StackType_t			fLoRaStackBuffer[CONFIG_STR_LORA_TASK_STACK_SIZE];
-		StaticTask_t		fLoRaTaskBuffer;
+		StackType_t		fLoRaStackBuffer[CONFIG_STR_LORA_TASK_STACK_SIZE];
+		StaticTask_t	fLoRaTaskBuffer;
+
+		CircularBuffer	fMidBuf;
 };
 
 #endif

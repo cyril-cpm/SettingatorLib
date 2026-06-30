@@ -6,32 +6,27 @@
 #include <optional>
 #include "Core.h"
 #include "Slave.h"
-#include "Master.h"
 #include "freertos/idf_additions.h"
 
-#if STR_HAS_ESPNOW
-#include "ESPNowCore.h"
-#endif
-
-#if STR_HAS_UART
-#include "UARTCore.h"
-#endif
-
 enum CoreEnum {
-#if CONFIG_STR_ESPNOW
+#if STR_HAS_ESPNOW
 	CORE_ESPNOW,
 #endif
 
-#if CONFIG_STR_UART0
+#if STR_UART0
 	CORE_UART0,
 #endif
 
-#if CONFIG_STR_UART1
+#if STR_UART1
 	CORE_UART1,
 #endif
 
-#if CONFIG_STR_UART2
+#if STR_UART2
 	CORE_UART2,
+#endif
+
+#if STR_HAS_LORA
+	CORE_LORA,
 #endif
 
 	CORE_MAX

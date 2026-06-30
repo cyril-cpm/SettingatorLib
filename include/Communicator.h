@@ -9,8 +9,6 @@
 #include <type_traits>
 #include <variant>
 #include "MiscDef.h"
-#include "UARTCore.h"
-#include "ESPNowCore.h"
 #include <mutex>
 
 class ICTR
@@ -21,6 +19,7 @@ class ICTR
 	{
 		ESP_NOW = 0x00,
 		UART = 0x01,
+		LORA = 0x02,
 		UNKNOWN = 0xFF
 	};
 

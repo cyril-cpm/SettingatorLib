@@ -1,21 +1,22 @@
-#include "Core.h"
 #include "Definitions.h"
-#include "freertos/idf_additions.h"
-#include "freertos/projdefs.h"
-#include <cstdint>
-#include <sys/syslimits.h>
 
 #if STR_HAS_ESPNOW
+#include "Core.h"
 #include "ESPNowCore.h"
 #include "ESPNowCommunicator.h"
 #include "STR.h"
 #include "MiscDef.h"
+#include "Slave.h"
 
 #include <functional>
 #include <esp_wifi.h>
 #include <esp_mac.h>
 #include <nvs_flash.h>
-#include "Slave.h"
+#include "freertos/idf_additions.h"
+#include "freertos/projdefs.h"
+#include <cstdint>
+#include <sys/syslimits.h>
+
 
 #if CONFIG_STR_SLAVE_ESPNOW
 #endif
@@ -38,12 +39,8 @@ void ESPNowCore::receiveCallback(const esp_now_recv_info* info, const uint8_t* d
 {
 	LOG("data received");
 	 if (info)
-	{
-		std::array<uint8_t, 6> des_addrArr;
-		if (info->des_addr)
-			std::copy(info->des_addr, info->des_addr + 6, des_addrArr.begin());
-
-		std::array<uint8_t, 6> src_addrArr;
+	 {
+		 std::array<uint8_t, 6> src_addrArr;
 		if (info->src_addr)
 			std::copy(info->src_addr, info->src_addr + 6, src_addrArr.begin());
 

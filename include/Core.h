@@ -24,73 +24,7 @@ class ICore
 	public:
 
 		bool		FetchMessage() {
-			
-			uint16_t contentLength = fBuf.GetContentLength();
-
-			if (!contentLength)
-				return false;
-
-			uint16_t i = 0;
-
-			for (; i <= contentLength && fBuf[i] != Message::Frame::Start; i++);
-
-			fBuf.OffsetHead(i);
-
-			if (i + 2 >= contentLength)
-			{
-				// ESP_LOGI("CORE", "Not enough content %d", c);
-				return false;
-			}
-
-			uint16_t msgLength = (fBuf[1] << 8) + fBuf[2];
-
-			if (msgLength > contentLength)
-			{
-				ESP_LOGI("CORE", "msgLength %d > content %d", msgLength, contentLength);
-				ESP_LOGI(
-						"CORE",
-						"head: %d, tail: %d",
-						fBuf.GetHeadPos(),
-						fBuf.GetTailPos()
-					);
-
-				fBuf.LogWholeBuffer();
-				return false;
-			}
-
-			if (fBuf[msgLength - 1] != Message::Frame::End)
-			{
-				ESP_LOGI(
-						"CORE", "End Frame not found at fBuf[msgLength] %d length: %d",
-						fBuf[msgLength],
-						msgLength
-					);
-
-				ESP_LOGI(
-						"CORE",
-						"head: %d\ttail: %d",
-						fBuf.GetHeadPos(),
-						fBuf.GetTailPos()
-					);
-
-				fBuf.LogContent();
-				fBuf.LogWholeBuffer();
-
-
-				for (; i <= contentLength && fBuf[i] != Message::Frame::Start; i++);
-
-				fBuf.OffsetHead(i);
-
-				ESP_LOGI(
-						"CORE",
-						"head offseted of %d, result is %d",
-						i, fBuf.GetHeadPos()
-					);
-				// abort();
-				return false;
-			}
-
-			return true;
+			return fBuf.Fetch(Message::Frame::Start, Message::Frame::End, "CORE");
 		}
 
 		void		ThrowMessage() {

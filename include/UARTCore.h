@@ -1,16 +1,18 @@
 #pragma once
 
 #include "Definitions.h"
+
+#if STR_HAS_UART
+#include "Core.h"
+#include "Buffer.h"
+#include "UARTUtils.h"
+
+#include <driver/uart.h>
+#include <initializer_list>
 #include "esp_err.h"
 #include "sdkconfig.h"
 #include <cstdint>
 
-#if STR_HAS_UART
-#include <driver/uart.h>
-#include <initializer_list>
-#include "Buffer.h"
-#include "hal/uart_types.h"
-#include "Core.h"
 
 class UARTCore : public ICore
 {
@@ -61,57 +63,7 @@ class UARTCore : public ICore
 		}
 
 		void Read() {
-			size_t size;
-
-			ESP_ERROR_CHECK(uart_get_buffered_data_len(fUartPort, &size));
-
-			if (!size)
-				return;
-
-			if (size > fBuf.GetRemainingLength())
-				size = fBuf.GetRemainingLength();
-			
-			uint16_t contingousRemaining = fBuf.GetContingousRemainingLength();
-
-			if (size > contingousRemaining)
-			{
-				uint16_t overflow = size - contingousRemaining;
-
-				if (overflow >= fBuf.GetHeadPos())
-				{
-					ESP_LOGI("UARTCore", "UARTCore::Read()");
-					ESP_LOGI("UARTCore", "Not enough space left in CircularBuffer (%d)",
-							fBuf.GetRemainingLength());
-
-					fBuf.LogWholeBuffer();
-					ESP_LOGI("UARTCore", "fHead: %t\tfTail: %d",
-							fBuf.GetHeadPos(),
-							fBuf.GetTailPos());
-					return;
-				}
-
-				int read = uart_read_bytes(fUartPort,
-												fBuf.GetTailPtr(),
-												contingousRemaining,
-												0);
-				if (read >= 0)
-				{
-					fBuf.OffsetTail(read);
-
-					read = uart_read_bytes(fUartPort, fBuf.GetTailPtr(), overflow, 0);
-					
-					if (read >= 0)
-						fBuf.OffsetTail(read);
-				}
-			}
-			else
-			{
-				int read = uart_read_bytes(fUartPort, fBuf.GetTailPtr(), size, 0);
-				
-				if (read >=0)
-					fBuf.OffsetTail(read);
-			}
-
+			ReadUart(fUartPort, fBuf);
 		}
 
 		void	Init();

@@ -120,6 +120,79 @@ class CircularBuffer
 			ESP_LOG_BUFFER_HEX("BUFFER", fBuf.data(), fBuf.size());
 		}
 
+		bool			Fetch(
+				const uint8_t startFrame,
+				const uint8_t endFrame,
+				const char* logTag = "CIRCULAR_BUFFER"
+			) {
+			uint16_t contentLength = GetContentLength();
+
+			if (!contentLength)
+				return false;
+
+			uint16_t i = 0;
+
+			for (; i <= contentLength && (*this)[i] != startFrame; i++);
+
+			OffsetHead(i);
+
+			if (i + 2 >= contentLength)
+			{
+				// ESP_LOGI("LORA", "Not enough content %d", c);
+				return false;
+			}
+
+			uint16_t msgLength = ((*this)[1] << 8) + (*this)[2];
+
+			if (msgLength > contentLength)
+			{
+				ESP_LOGD(logTag, "msgLength %d > content %d", msgLength, contentLength);
+				ESP_LOGD(
+						logTag,
+						"head: %d, tail: %d",
+						GetHeadPos(),
+						GetTailPos()
+					);
+
+				LogWholeBuffer();
+				return false;
+			}
+
+			if ((*this)[msgLength - 1] != endFrame)
+			{
+				ESP_LOGD(
+						logTag,
+						"End Frame not found at (*this)[msgLength] %d length: %d",
+						(*this)[msgLength],
+						msgLength
+					);
+
+				ESP_LOGD(
+						logTag,
+						"head: %d\ttail: %d",
+						GetHeadPos(),
+						GetTailPos()
+					);
+
+				LogContent();
+				LogWholeBuffer();
+
+
+				for (; i <= contentLength && (*this)[i] != startFrame; i++);
+
+				OffsetHead(i);
+
+				ESP_LOGD(
+						logTag,
+						"head offseted of %d, result is %d",
+						i, GetHeadPos()
+					);
+				return false;
+			}
+
+			return true;
+		}
+
 	private:
 
 		std::array<uint8_t, CONFIG_STR_CIRCULAR_BUFFER_SIZE>	fBuf;

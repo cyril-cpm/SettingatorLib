@@ -5,7 +5,6 @@
 #include "MiscDef.h"
 #include "Buffer.h"
 #include "driver/uart.h"
-#include "hal/uart_types.h"
 #include <initializer_list>
 
 static const char* tag = "UARTCore";
