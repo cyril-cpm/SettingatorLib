@@ -13,17 +13,14 @@
 #include "CommunicatorHandler.h"
 
 #if CONFIG_STR_MASTER_ESPNOW
-#include "ESPNowCore.h"
 #include "ESPNowCommunicator.h"
 #endif
 
 #if STR_MASTER_HAS_UART
-#include "UARTCore.h"
 #include "UARTCommunicator.h"
 #endif
 
 #if CONFIG_STR_MASTER_LORA
-#include "LORACore.h"
 #include "LORACommunicator.h"
 #endif
 

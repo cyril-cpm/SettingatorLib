@@ -19,6 +19,30 @@
 #define SLAVEID_TRANSMISSION_TO_BRIDGE 0x05
 #define BRIDGE_TO_SLAVE_HANDSHAKE 0x06
 
+enum CoreEnum {
+#if STR_HAS_ESPNOW
+	CORE_ESPNOW,
+#endif
+
+#if STR_UART0
+	CORE_UART0,
+#endif
+
+#if STR_UART1
+	CORE_UART1,
+#endif
+
+#if STR_UART2
+	CORE_UART2,
+#endif
+
+#if STR_HAS_LORA
+	CORE_LORA,
+#endif
+
+	CORE_MAX
+};
+
 class ICore
 {
 	public:
@@ -69,3 +93,6 @@ class ICore
 
 inline TaskHandle_t mainTaskHandle = nullptr;
 
+extern std::array<std::reference_wrapper<ICore>, CORE_MAX> coreArray;
+
+void		InitCores();

@@ -5,6 +5,7 @@
 #if STR_HAS_LORA
 #include "Buffer.h"
 #include "Core.h"
+#include "Link.h"
 #include "UARTUtils.h"
 
 #include "esp_err.h"
@@ -22,9 +23,13 @@
 #include "freertos/projdefs.h"
 #include "portmacro.h"
 
-class LORACore : public ICore
+class LORACore : public ICore, public CORELink
 {
 	public:
+
+		static constexpr bool runSlave = CONFIG_STR_SLAVE_LORA;
+		static constexpr bool runMaster = CONFIG_STR_MASTER_LORA;
+		static constexpr const char*	logTag = "LORACore";
 
 		enum Frame
 		{
