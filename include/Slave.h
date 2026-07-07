@@ -1,10 +1,10 @@
 #pragma once
 
 #include "Definitions.h"
-#include <atomic>
 
 #if CONFIG_STR_HAS_BRIDGE
 
+#include <atomic>
 #include <array>
 #include <functional>
 #include <variant>
@@ -14,6 +14,7 @@
 #include "Communicator.h"
 #include "CommunicatorHandler.h"
 #include "Message.h"
+#include "Master.h"
 
 #if CONFIG_STR_SLAVE_ESPNOW
 #include "ESPNowCommunicator.h"
@@ -26,32 +27,6 @@
 #if CONFIG_STR_SLAVE_LORA
 #include "LORACommunicator.h"
 #endif
-
-
-enum SlaveCTREnum {
-
-#if CONFIG_STR_SLAVE_ESPNOW
-	SLAVE_CTR_ESPNOW,
-#endif
-
-#if CONFIG_STR_SLAVE_UART0
-	SLAVE_CTR_UART0,
-#endif
-
-#if CONFIG_STR_SLAVE_UART1
-	SLAVE_CTR_UART1,
-#endif
-
-#if CONFIG_STR_SLAVE_UART2
-	SLAVE_CTR_UART2,
-#endif
-
-#if CONFIG_STR_SLAVE_LORA
-	SLAVE_CTR_LORA,
-#endif
-
-	SLAVE_CTR_MAX
-};
 
 using SlaveCTR = CTRVariant<
 	STRIP_FIRST_COMMA(
@@ -75,7 +50,34 @@ class Slave : public CTRHandler<SlaveCTR, SlaveCTREnum::SLAVE_CTR_MAX>
 {
     public:
 
-	Slave();
+	Slave()
+		:
+			CTRHandler<SlaveCTR, SlaveCTREnum::SLAVE_CTR_MAX>({
+					STRIP_FIRST_COMMA(
+							dummy
+
+#if CONFIG_STR_SLAVE_ESPNOW
+							,espNowCtrArray[registeredEspNowCtr++]
+#endif
+
+#if CONFIG_STR_SLAVE_UART0
+							,uartCtrArray[UartCTREnum::UART_CTR_UART0]
+#endif
+
+#if CONFIG_STR_SLAVE_UART1
+							,uartCtrArray[UartCTREnum::UART_CTR_UART1]
+#endif
+
+#if CONFIG_STR_SLAVE_UART2
+							,uartCtrArray[UartCTREnum::UART_CTR_UART2]
+#endif
+
+#if CONFIG_STR_SLAVE_LORA
+							,loraCtrArray[registeredLoRaCtr++]
+#endif
+						)
+
+			})	{}
 
     void    	SetID(uint8_t id) { fSlaveID = id; }
     uint8_t 	GetID() const { return fSlaveID; }
@@ -136,7 +138,21 @@ class Slave : public CTRHandler<SlaveCTR, SlaveCTREnum::SLAVE_CTR_MAX>
 		atomic_store(&fShouldReqestSlaveID, true);
 	}
 
-	inline void		HandleSlaveIDRequest();
+	void		HandleSlaveIDRequest() {
+		if (atomic_exchange(&fShouldReqestSlaveID, false))
+		{
+			Master::GetInstance().Write({
+								Message::Frame::Start,
+								0x00,
+								0x07,
+								0,
+								0,
+								Message::Type::SlaveIDRequest,
+								Message::Frame::End
+							});
+			fWaitingForID = true;
+		}
+	}
 
 	void Update() {
 		for (auto& ctr : fCTRArray)
@@ -184,11 +200,7 @@ using OptSlaveRef = std::optional<std::reference_wrapper<Slave>>;
 
 extern bool initEspNowBroadcasted;
 
-extern std::array<Slave, CONFIG_STR_NB_SLAVE> slaveArray;
-extern uint8_t nbInitialisedSlave;
-
-OptSlaveRef	GetSlaveForID(const uint8_t id);
-OptSlaveRef	GetSlaveForEMac(const std::array<uint8_t, 6>& eMac);
-OptSlaveRef	CreateSlave(std::array<uint8_t, 6>&& eMac, uint8_t id = 0);
+inline std::array<Slave, CONFIG_STR_NB_SLAVE> slaveArray;
+inline uint8_t nbInitialisedSlave = 0;
 
 #endif

@@ -8,8 +8,6 @@
 
 static const char* tag("BUFFER");
 
-MessageBuffer messageBuffer;
-
 bool CircularBuffer::Write(const uint8_t* buf, const uint16_t len)
 {
 	ESP_LOGD(tag, "CircularBuffer::Write()");

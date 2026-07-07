@@ -12,6 +12,8 @@
 #include "LORACore.h"
 #endif
 
+#include <functional>
+
 std::array<std::reference_wrapper<ICore>, CORE_MAX> coreArray {
 
 	STRIP_FIRST_COMMA(

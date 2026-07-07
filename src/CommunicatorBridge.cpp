@@ -5,8 +5,10 @@
 #include "Communicator.h"
 #include "STR.h"
 #include "Slave.h"
+#include "Master.h"
 #include "Message.h"
 #include "ESPNowCommunicator.h"
+
 #include <cstdint>
 #include <type_traits>
 #include <variant>

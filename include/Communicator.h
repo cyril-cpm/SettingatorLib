@@ -23,7 +23,7 @@ class ICTR
 		UNKNOWN = 0xFF
 	};
 
-uint16_t	GetLinkInfoSize(this auto&& self) {
+	uint16_t	GetLinkInfoSize(this auto&& self) {
 		return self.GetLinkInfoSizeImpl();
 	}
 

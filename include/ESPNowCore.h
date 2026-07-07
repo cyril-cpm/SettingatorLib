@@ -3,16 +3,26 @@
 #include "Definitions.h"
 
 #if STR_HAS_ESPNOW
-#include "esp_err.h"
-#include <esp_mac.h>
 #include "Buffer.h"
 #include "Core.h"
+
+#include "esp_err.h"
+#include <esp_mac.h>
 #include <esp_now.h>
+
+class ESPNowCTR;
 
 class ESPNowCore : public ICore
 {
 	public:
 	
+		static constexpr bool runSlave = CONFIG_STR_SLAVE_ESPNOW;
+		static constexpr bool runMaster = CONFIG_STR_MASTER_ESPNOW;
+		static constexpr const char*	logTag = "ESPNowCore";
+		static constexpr uint8_t slaveCtrIndex = SLAVE_CTR_ESPNOW;
+		static constexpr uint8_t masterCtrIndex = MASTER_CTR_ESPNOW;
+		using ctrType = ESPNowCTR;
+
 		static ESPNowCore& GetInstance()
 		{
 			static ESPNowCore instance;

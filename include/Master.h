@@ -24,32 +24,6 @@
 #include "LORACommunicator.h"
 #endif
 
-enum MasterCTREnum {
-
-#if CONFIG_STR_MASTER_ESPNOW
-	MASTER_CTR_ESPNOW,
-#endif
-
-#if CONFIG_STR_MASTER_UART0
-	MASTER_CTR_UART0,
-#endif
-
-#if CONFIG_STR_MASTER_UART1
-	MASTER_CTR_UART1,
-#endif
-
-#if CONFIG_STR_MASTER_UART2
-	MASTER_CTR_UART2,
-#endif
-
-#if CONFIG_STR_MASTER_LORA
-	MASTER_CTR_LORA,
-#endif
-
-	MASTER_CTR_MAX
-};
-
-
 using MasterCTR = CTRVariant<
 	STRIP_FIRST_COMMA(
 			dummy

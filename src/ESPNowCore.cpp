@@ -7,6 +7,7 @@
 #include "STR.h"
 #include "MiscDef.h"
 #include "Slave.h"
+#include "LinkUtils.h"
 
 #include <functional>
 #include <esp_wifi.h>
@@ -37,181 +38,202 @@ static bool isBroadcastMac(std::array<uint8_t, 6>& dstMac)
 
 void ESPNowCore::receiveCallback(const esp_now_recv_info* info, const uint8_t* data, int len)
 {
-	LOG("data received");
-	 if (info)
+	if (info)
 	 {
-		 std::array<uint8_t, 6> src_addrArr;
+		 std::array<uint8_t, 6> srcAddress;
 		if (info->src_addr)
-			std::copy(info->src_addr, info->src_addr + 6, src_addrArr.begin());
+			std::copy(info->src_addr, info->src_addr + 6, srcAddress.begin());
 
 		ESP_LOGD("ESPNowCore", "len: %d", len);
 		ESP_LOGD("ESPNowCore", "data: %d", *data);
 
-		if (len && data)
-		{
-			switch (*data)
+
+	TreatLinkMessage<ESPNowCore>(
+			ESPNowCore::GetInstance(), 
+			data,
+			len,
 			{
-#if CONFIG_STR_SLAVE_ESPNOW
-				case SLAVE_BROADCAST_PING:
-					if (len == 7)
-					{
-						ESP_LOGI(tag, "SLAVE_BROADCAST_PING");
-						OptSlaveRef slave = GetSlaveForEMac({data[1],
-															data[2],
-															data[3],
-															data[4],
-															data[5],
-															data[6]});
-
-						if (initEspNowBroadcasted && !slave)
-						{
-							slave = CreateSlave({data[1],
-												data[2],
-												data[3],
-												data[4],
-												data[5],
-												data[6]});
-						}
-
-						if (slave)
-						{
-							ESPNowCTR& ctr = slave->get().GetCTR<ESPNowCTR, SLAVE_CTR_ESPNOW>();
-
-							if (!ctr)
-							{
-								ctr.SetMac(src_addrArr);
-								ctr.PlanifyPingTimerCreation();
-							}
-
-							ctr.PlanifyBridgeToSlaveHandshake();
-
-							if (slave->get().GetID())
-								slave->get().PlanifySendInitRequest();
-						}
-					}
-					break;
-
-				case SLAVEID_TRANSMISSION_TO_BRIDGE:
-					if (len == 8)
-					{
-						ESP_LOGI("ESPNOWCORE", "SLAVEID_TRANSMISSION %d", data[7]);
-						OptSlaveRef slave = GetSlaveForEMac({data[1],
-															data[2],
-															data[3],
-															data[4],
-															data[5],
-															data[6]});
-
-						if (!slave)
-						{
-							slave = CreateSlave({data[1],
-										data[2],
-										data[3],
-										data[4],
-										data[5],
-										data[6]}, data[7]);
-						}
-						if (slave)
-						{
-							ESPNowCTR& ctr = slave->get().GetCTR<ESPNowCTR, SLAVE_CTR_ESPNOW>();
-
-							if (!ctr)
-							{
-								ctr.SetMac(src_addrArr);
-								ctr.PlanifyPingTimerCreation();
-							}
-
-							if (slave->get().GetID())
-								slave->get().PlanifySendInitRequest();
-						}
-					}
-					break;
-
-				case LINK_PONG:
-					if (len == 7)
-					{
-						ESP_LOGD("ESPNowCore", "Pong received");
-						OptESPNowCtrRef ctr = GetESPNowCommunicatorByMac(src_addrArr);
-
-						if (ctr)
-						{
-							ESP_LOGD("ESPNowCore", "ctr found");
-							if (info->rx_ctrl)
-							{
-								ESP_LOGD("ESPNowCore", "registering linkInfo");
-								ctr->get().SetLinkInfo(info->rx_ctrl->rssi,
-														info->rx_ctrl->noise_floor,
-														info->rx_ctrl->timestamp / 1000);
-							}
-
-							ctr->get().SetPeerLinkInfo((int8_t)data[1],
-														(int8_t)data[2],
-														(data[3] << 24) +
-														(data[4] << 16) +
-														(data[5] << 8) +
-														data[6]);
-						}
-
-					}
-					break;
-#endif
-
-#if CONFIG_STR_MASTER_ESPNOW
-				case BRIDGE_BROADCAST_PING:
-					{
-						ESPNowCTR& masterCtr = master.GetCTR<ESPNowCTR, MASTER_CTR_ESPNOW>();
-
-						if (masterCtr.GetMac() == src_addrArr)
-						{
-							LOG("BRIDGE_BROADCAST_PING from Master");
-							masterCtr.PlanifySlaveIDTransmission();
-						}
-					}
-					break;
-
-				case BRIDGE_TO_SLAVE_HANDSHAKE:
-					{
-						ESPNowCTR& ctr = master.GetCTR<ESPNowCTR, MASTER_CTR_ESPNOW>();
-
-						if (!ctr)
-							ctr.SetMac(src_addrArr);
-						ESP_LOGI("ESPNowCore", "BRIDGE_TO_SLAVE_HANDSHAKE");
-					}
-					break;
-
-				case LINK_PING:
-					{
-						ESPNowCTR& ctr = master.GetCTR<ESPNowCTR, MASTER_CTR_ESPNOW>();
-
-						ESP_LOGD("ESPNowCore", "PING received");
-
-						if (ctr)
-						{
-							ESP_LOGD("ESPNowCore", "master CTR found");
-							if (info->rx_ctrl)
-							{
-								ESP_LOGD("ESPNowCore", "Setting LinkInfo");
-								ctr.SetLinkInfo(info->rx_ctrl->rssi,
-														info->rx_ctrl->noise_floor,
-														info->rx_ctrl->timestamp / 1000);
-							}
-
-							ctr.PlanifyPongSending();
-						}
-					}
-					break;
-#endif
-
-				case 0xFF:
-					ESPNowCore::GetInstance().WriteToBuffer(data, len);
-
-					
-					break;
-			}
-
-		}
+				info->src_addr[0],
+				info->src_addr[1],
+				info->src_addr[2],
+				info->src_addr[3],
+				info->src_addr[4],
+				info->src_addr[5]
+			},
+			true,
+			(int8_t)info->rx_ctrl->rssi,
+			(int8_t)info->rx_ctrl->noise_floor,
+			info->rx_ctrl->timestamp / 1000
+		);
 	}
 }
+// {
+// 	LOG("data received");
+// 	 // 		if (len && data)
+// 		{
+// 			switch (*data)
+// 			{
+// #if CONFIG_STR_SLAVE_ESPNOW
+// 				case SLAVE_BROADCAST_PING:
+// 					if (len == 7)
+// 					{
+// 						ESP_LOGI(tag, "SLAVE_BROADCAST_PING");
+// 						OptSlaveRef slave = GetSlaveForEMac({data[1],
+// 															data[2],
+// 															data[3],
+// 															data[4],
+// 															data[5],
+// 															data[6]});
+//
+// 						if (initEspNowBroadcasted && !slave)
+// 						{
+// 							slave = CreateSlave({data[1],
+// 												data[2],
+// 												data[3],
+// 												data[4],
+// 												data[5],
+// 												data[6]});
+// 						}
+//
+// 						if (slave)
+// 						{
+// 							ESPNowCTR& ctr = slave->get().GetCTR<ESPNowCTR, SLAVE_CTR_ESPNOW>();
+//
+// 							if (!ctr)
+// 							{
+// 								ctr.SetMac(src_addrArr);
+// 								ctr.PlanifyPingTimerCreation();
+// 							}
+//
+// 							ctr.PlanifyBridgeToSlaveHandshake();
+//
+// 							if (slave->get().GetID())
+// 								slave->get().PlanifySendInitRequest();
+// 						}
+// 					}
+// 					break;
+//
+// 				case SLAVEID_TRANSMISSION_TO_BRIDGE:
+// 					if (len == 8)
+// 					{
+// 						ESP_LOGI("ESPNOWCORE", "SLAVEID_TRANSMISSION %d", data[7]);
+// 						OptSlaveRef slave = GetSlaveForEMac({data[1],
+// 															data[2],
+// 															data[3],
+// 															data[4],
+// 															data[5],
+// 															data[6]});
+//
+// 						if (!slave)
+// 						{
+// 							slave = CreateSlave({data[1],
+// 										data[2],
+// 										data[3],
+// 										data[4],
+// 										data[5],
+// 										data[6]}, data[7]);
+// 						}
+// 						if (slave)
+// 						{
+// 							ESPNowCTR& ctr = slave->get().GetCTR<ESPNowCTR, SLAVE_CTR_ESPNOW>();
+//
+// 							if (!ctr)
+// 							{
+// 								ctr.SetMac(src_addrArr);
+// 								ctr.PlanifyPingTimerCreation();
+// 							}
+//
+// 							if (slave->get().GetID())
+// 								slave->get().PlanifySendInitRequest();
+// 						}
+// 					}
+// 					break;
+//
+// 				case LINK_PONG:
+// 					if (len == 7)
+// 					{
+// 						ESP_LOGD("ESPNowCore", "Pong received");
+// 						OptESPNowCtrRef ctr = GetESPNowCommunicatorByMac(src_addrArr);
+//
+// 						if (ctr)
+// 						{
+// 							ESP_LOGD("ESPNowCore", "ctr found");
+// 							if (info->rx_ctrl)
+// 							{
+// 								ESP_LOGD("ESPNowCore", "registering linkInfo");
+// 								ctr->get().SetLinkInfo(info->rx_ctrl->rssi,
+// 														info->rx_ctrl->noise_floor,
+// 														info->rx_ctrl->timestamp / 1000);
+// 							}
+//
+// 							ctr->get().SetPeerLinkInfo((int8_t)data[1],
+// 														(int8_t)data[2],
+// 														(data[3] << 24) +
+// 														(data[4] << 16) +
+// 														(data[5] << 8) +
+// 														data[6]);
+// 						}
+//
+// 					}
+// 					break;
+// #endif
+//
+// #if CONFIG_STR_MASTER_ESPNOW
+// 				case BRIDGE_BROADCAST_PING:
+// 					{
+// 						ESPNowCTR& masterCtr = master.GetCTR<ESPNowCTR, MASTER_CTR_ESPNOW>();
+//
+// 						if (masterCtr.GetMac() == src_addrArr)
+// 						{
+// 							LOG("BRIDGE_BROADCAST_PING from Master");
+// 							masterCtr.PlanifySlaveIDTransmission();
+// 						}
+// 					}
+// 					break;
+//
+// 				case BRIDGE_TO_SLAVE_HANDSHAKE:
+// 					{
+// 						ESPNowCTR& ctr = master.GetCTR<ESPNowCTR, MASTER_CTR_ESPNOW>();
+//
+// 						if (!ctr)
+// 							ctr.SetMac(src_addrArr);
+// 						ESP_LOGI("ESPNowCore", "BRIDGE_TO_SLAVE_HANDSHAKE");
+// 					}
+// 					break;
+//
+// 				case LINK_PING:
+// 					{
+// 						ESPNowCTR& ctr = master.GetCTR<ESPNowCTR, MASTER_CTR_ESPNOW>();
+//
+// 						ESP_LOGD("ESPNowCore", "PING received");
+//
+// 						if (ctr)
+// 						{
+// 							ESP_LOGD("ESPNowCore", "master CTR found");
+// 							if (info->rx_ctrl)
+// 							{
+// 								ESP_LOGD("ESPNowCore", "Setting LinkInfo");
+// 								ctr.SetLinkInfo(info->rx_ctrl->rssi,
+// 														info->rx_ctrl->noise_floor,
+// 														info->rx_ctrl->timestamp / 1000);
+// 							}
+//
+// 							ctr.PlanifyPongSending();
+// 						}
+// 					}
+// 					break;
+// #endif
+//
+// 				case 0xFF:
+// 					ESPNowCore::GetInstance().WriteToBuffer(data, len);
+//
+//
+// 					break;
+// 			}
+//
+// 		}
+// 	}
+// }
 
 void ESPNowCore::Init()
 {

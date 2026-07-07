@@ -23,13 +23,23 @@
 #include "freertos/projdefs.h"
 #include "portmacro.h"
 
-class LORACore : public ICore, public CORELink
+class LORACTR;
+
+class LORACore : public ICore
 {
 	public:
 
 		static constexpr bool runSlave = CONFIG_STR_SLAVE_LORA;
 		static constexpr bool runMaster = CONFIG_STR_MASTER_LORA;
 		static constexpr const char*	logTag = "LORACore";
+		static constexpr uint8_t slaveCtrIndex = SLAVE_CTR_LORA;
+		static constexpr uint8_t masterCtrIndex = MASTER_CTR_LORA;
+		using ctrType = LORACTR;
+		
+		struct LinkInfo {
+			int8_t rssi;
+			int32_t timestamp;
+		};
 
 		enum Frame
 		{
@@ -249,17 +259,7 @@ class LORACore : public ICore, public CORELink
 				);
 		}
 
-		inline void	_TreatMessage();
-
-		void _Run() {
-			while (true)
-			{
-				ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
-				_ReadUart();
-				if (_FetchMessage())
-					_TreatMessage();
-			}
-		}
+		void _Run();
 
 		uart_port_t		fUartPort;
 		int				fRx;

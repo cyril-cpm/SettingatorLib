@@ -6,12 +6,28 @@
 
 #include "Communicator.h"
 #include "LORACore.h"
+#include "Link.h"
+
 #include <array>
 #include <cstdint>
 #include <initializer_list>
 #include <optional>
 
-class LORACTR : public ICTR
+
+
+using OptLORACtrRef = std::optional<std::reference_wrapper<LORACTR>>;
+
+class LORACTR 
+	: 
+		public ICTR, 
+		public CTRLink
+#if CONFIG_STR_MASTER_LORA
+		,public CTRMasterLink
+#endif
+
+#if CONFIG_STR_SLAVE_LORA
+		,public CTRSlaveLink
+#endif
 {
 public:
     LORACTR() : fCore(LORACore::GetInstance()) {}
@@ -25,6 +41,32 @@ public:
     int Write() const {
         return fCore.Write(fPeerAddress, fCore.GetChannel());
     }
+
+	bool	HasThisAddress(std::initializer_list<uint8_t> address) const {
+		if (address.size() != 2)
+		{
+			ESP_LOGE(
+					"LORACTR",
+					"SetAddressImpl: address size is %d instead of 2",
+					address.size()
+			);
+			return false;
+		}
+
+		uint16_t addr = (*address.begin() << 8) + *(address.end() - 1);
+		return addr == fPeerAddress;
+	}
+
+	void	SetAddressImpl(std::initializer_list<uint8_t> address) {
+		if (address.size() != 2)
+			ESP_LOGE(
+					"LORACTR",
+					"SetAddressImpl: address size is %d instead of 2",
+					address.size()
+			);
+		
+		fPeerAddress = (*address.begin() << 8) + *(address.end() - 1);
+	}
 
     void SetPeerAddress(uint16_t address) {
         fPeerAddress = address;
@@ -42,26 +84,15 @@ public:
         messageBuffer[index + 2] = static_cast<uint8_t>(fPeerAddress & 0xFF);
     }
 
+	static OptLORACtrRef	GetCTRByAddress(std::initializer_list<uint8_t> address);
+
 private:
     LORACore&   fCore;
     uint16_t    fPeerAddress = 0;
 };
 
-using OptLORACtrRef = std::optional<std::reference_wrapper<LORACTR>>;
 
 inline std::array<LORACTR, NB_LORA_CTR> loraCtrArray;
 inline uint8_t registeredLoRaCtr;
-
-inline OptLORACtrRef GetLORACommunicatorByAddress(uint16_t address)
-{
-    for (auto& ctr : loraCtrArray)
-    {
-        if (!ctr)
-            break;
-        if (ctr.GetPeerAddress() == address)
-            return ctr;
-    }
-    return std::nullopt;
-}
 
 #endif

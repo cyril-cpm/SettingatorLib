@@ -11,7 +11,7 @@
 #endif
 
 #if STR_HAS_UART
-#include "UARTCommunicator.h"
+// #include "UARTCommunicator.h"
 #endif
 
 template<typename T, uint8_t N>
