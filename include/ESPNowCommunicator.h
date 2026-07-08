@@ -114,6 +114,8 @@ class ESPNowCTR
 					address.size()
 			);
 		std::copy(address.begin(), address.end()-1, fMac.data());
+		fActivated = true;
+		fCore.AddPeer(fMac);
 	}
 
 	void	SetMac(std::array<uint8_t, 6>&& mac) {

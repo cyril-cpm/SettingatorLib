@@ -23,15 +23,15 @@ std::array<std::reference_wrapper<ICore>, CORE_MAX> coreArray {
 			,ESPNowCore::GetInstance()
 #endif
 
-#if STR_UART0
+#if STR_HAS_UART0
 			,UARTCore::GetUART0Instance()
 #endif
 
-#if STR_UART1
+#if STR_HAS_UART1
 			,UARTCore::GetUART1Instance()
 #endif
 
-#if STR_ART2
+#if STR_HAS_UART2
 			,UARTCore::GetUART2Instance()
 #endif
 

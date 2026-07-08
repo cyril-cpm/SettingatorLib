@@ -60,7 +60,7 @@ void ESPNowCore::receiveCallback(const esp_now_recv_info* info, const uint8_t* d
 				info->src_addr[4],
 				info->src_addr[5]
 			},
-			true,
+			initEspNowBroadcasted,
 			(int8_t)info->rx_ctrl->rssi,
 			(int8_t)info->rx_ctrl->noise_floor,
 			info->rx_ctrl->timestamp / 1000
@@ -267,6 +267,7 @@ void ESPNowCore::Init()
 	ESP_ERROR_CHECK(
 			esp_now_register_send_cb(
 				[](const esp_now_send_info_t* tx_info, esp_now_send_status_t status) {
+				// ESPNowCore::GetInstance().SemGive();
 					if (status != ESP_NOW_SEND_SUCCESS)
 						ESP_LOGE("ESPNowCore", "Sending data failed");
 

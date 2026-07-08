@@ -18,7 +18,7 @@ class UARTCore : public ICore
 {
 	public:
 
-#if STR_UART0
+#if STR_HAS_UART0
 		static UARTCore& GetUART0Instance()
 		{
 			static UARTCore instance(UART_NUM_0,
@@ -30,7 +30,7 @@ class UARTCore : public ICore
 		}
 #endif
 
-#if STR_UART1
+#if STR_HAS_UART1
 		static UARTCore& GetUART1Instance()
 		{
 			static UARTCore instance(UART_NUM_1,
@@ -42,7 +42,7 @@ class UARTCore : public ICore
 		}
 #endif
 
-#if STR_UART2
+#if STR_HAS_UART2
 		static UARTCore& GetUART2Instance()
 		{
 			static UARTCore instance(UART_NUM_2,

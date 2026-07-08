@@ -66,6 +66,7 @@ public:
 			);
 		
 		fPeerAddress = (*address.begin() << 8) + *(address.end() - 1);
+		fActivated = true;
 	}
 
     void SetPeerAddress(uint16_t address) {

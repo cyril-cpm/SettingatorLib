@@ -24,15 +24,15 @@ enum CoreEnum {
 	CORE_ESPNOW,
 #endif
 
-#if STR_UART0
+#if STR_HAS_UART0
 	CORE_UART0,
 #endif
 
-#if STR_UART1
+#if STR_HAS_UART1
 	CORE_UART1,
 #endif
 
-#if STR_UART2
+#if STR_HAS_UART2
 	CORE_UART2,
 #endif
 
@@ -77,12 +77,18 @@ class ICore
 
 		const uint8_t&	operator[](uint16_t index) const { return fBuf[index]; }
 	
-		void		SemGive() { xSemaphoreGive(fSem); }
+		void		SemGive() { 
+			BaseType_t h = pdFALSE;
+			xSemaphoreGiveFromISR(fSem, &h);
+			if (h)
+				portYIELD_FROM_ISR();
+		}
 		void		SemTake() { xSemaphoreTake(fSem, portMAX_DELAY); }
 	protected:
 
 		ICore() {
 			fSem = xSemaphoreCreateBinaryStatic(&fSemBuf);
+			xSemaphoreGive(fSem);
 		}
 
 		CircularBuffer fBuf;

@@ -19,8 +19,13 @@ class ESPNowCore : public ICore
 		static constexpr bool runSlave = CONFIG_STR_SLAVE_ESPNOW;
 		static constexpr bool runMaster = CONFIG_STR_MASTER_ESPNOW;
 		static constexpr const char*	logTag = "ESPNowCore";
-		static constexpr uint8_t slaveCtrIndex = SLAVE_CTR_ESPNOW;
+#if CONFIG_STR_MASTER_ESPNOW
 		static constexpr uint8_t masterCtrIndex = MASTER_CTR_ESPNOW;
+#endif
+#if CONFIG_STR_SLAVE_ESPNOW
+		static constexpr uint8_t slaveCtrIndex = SLAVE_CTR_ESPNOW;
+#endif
+
 		using ctrType = ESPNowCTR;
 
 		static ESPNowCore& GetInstance()
@@ -36,17 +41,20 @@ class ESPNowCore : public ICore
 			const std::array<uint8_t, 6>& dstMac
 		) {
 			
+			ESP_LOGD("ESPNowCore", "sending");
+			// SemTake();
 			ESP_ERROR_CHECK_WITHOUT_ABORT(
 				esp_now_send(dstMac.data(), message.begin(), message.size())
-			);;;
+			);
 			
+			ESP_LOGD("ESPNowCore", "done");
 			return 0;
 		}
 
 		int	Write(const std::array<uint8_t, 6>& dstMac) {
-			ESP_LOGI("ESPNowCore", "sending");
+			ESP_LOGD("ESPNowCore", "sending");
 			
-			SemTake();
+			// SemTake();
 			ESP_ERROR_CHECK_WITHOUT_ABORT(
 				esp_now_send(
 					dstMac.data(),
@@ -55,7 +63,8 @@ class ESPNowCore : public ICore
 				)
 			);
 
-			ESP_LOGI("ESPNowCore", "done");
+
+			ESP_LOGD("ESPNowCore", "done");
 			return 0;
 		}
 

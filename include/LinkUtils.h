@@ -24,61 +24,63 @@ void TreatLinkMessage(
 		uint32_t timestamp
 	)
 {
+
+#if CONFIG_STR_HAS_BRIDGE
 	if constexpr (CORETYPE::runSlave)
 	{
 		switch (data[0])
 		{
-			// case SLAVE_BROADCAST_PING:
-			// 	if (len == 7)
-			// 	{
-			// 		ESP_LOGD(CORETYPE::logTag, "SLAVE_BROADCAST_PING");
-			// 		OptSlaveRef slave = GetSlaveForEMac(
-			// 				{ data[1], data[2], data[3], data[4], data[5], data[6] }
-			// 			);
-			//
-			// 		if (initBroadcasted && !slave)
-			// 		{
-			// 			slave = CreateSlave(
-			// 					{
-			// 						data[1],
-			// 						data[2],
-			// 						data[3],
-			// 						data[4],
-			// 						data[5],
-			// 						data[6]
-			// 					}
-			// 				);
-			// 		}
-			//
-			// 		if (slave)
-			// 		{
-			// 			typename CORETYPE::ctrType& ctr = slave->get().GetCTR<
-			// 					typename CORETYPE::ctrType,
-			// 					CORETYPE::slaveCtrIndex
-			// 				>();
-			//
-			// 			if (!ctr)
-			// 			{
-			// 				ctr.SetAddress(srcAddress);
-			// 				ctr.PlanifyPingTimerCreation();
-			// 			}
-			// 			ctr.PlanifyBridgeToSlaveHandshake();
-			//
-			// 			if (slave->get().GetID())
-			// 				slave->get().PlanifySendInitRequest();
-			// 		}
-			// 	}
-			// 	break;
-
 			case SLAVE_BROADCAST_PING:
+				if (len == 7)
+				{
+					ESP_LOGD(CORETYPE::logTag, "SLAVE_BROADCAST_PING");
+					OptSlaveRef slave = GetSlaveForEMac(
+							{ data[1], data[2], data[3], data[4], data[5], data[6] }
+						);
+
+					if (initBroadcasted && !slave)
+					{
+						slave = CreateSlave(
+								{
+									data[1],
+									data[2],
+									data[3],
+									data[4],
+									data[5],
+									data[6]
+								}
+							);
+					}
+
+					if (slave)
+					{
+						typename CORETYPE::ctrType& ctr = slave->get().GetCTR<
+								typename CORETYPE::ctrType,
+								CORETYPE::slaveCtrIndex
+							>();
+
+						if (!ctr)
+						{
+							ctr.SetAddress(srcAddress);
+							ctr.PlanifyPingTimerCreation();
+						}
+						ctr.PlanifyBridgeToSlaveHandshake();
+
+						if (slave->get().GetID())
+							slave->get().PlanifySendInitRequest();
+					}
+				}
+				break;
+
+			// case SLAVE_BROADCAST_PING:
 			case SLAVEID_TRANSMISSION_TO_BRIDGE:
 				if (len == 8 || len == 7)
 				{
-					// ESP_LOGD(CORETYPE::logTag, "SLAVEID_TRANSMISSION %d ", data[7]);
-					ESP_LOGD(
-							CORETYPE::logTag,
-							"SLAVEID_TRANSMISSION || SLAVE_BROADCAST_PING"
-						); 
+					ESP_LOGD(CORETYPE::logTag, "SLAVEID_TRANSMISSION %d ", data[7]);
+					// ESP_LOGD(
+					// 		CORETYPE::logTag,
+					// 		"SLAVEID_TRANSMISSION || SLAVE_BROADCAST_PING"
+					// 	); 
 					
 					OptSlaveRef slave = GetSlaveForEMac(
 							{ data[1], data[2], data[3], data[4], data[5], data[6] }
@@ -154,6 +156,7 @@ void TreatLinkMessage(
 
 		}
 	}
+#endif
 
 	if constexpr (CORETYPE::runMaster)
 	{

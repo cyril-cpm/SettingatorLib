@@ -30,17 +30,28 @@ class CTRLink
 
 	public:
 
-	void			SetLinkInfo(int8_t rssi, int8_t noiseFloor, uint32_t timestamp) {
-		fLastMsgRssi = rssi;
-		fLastMsgNoiseFloor = noiseFloor;
-		fLastMsgTimestamp = timestamp;
-	}
+		void			SetLinkInfo(int8_t rssi, int8_t noiseFloor, uint32_t timestamp) {
+			fLastMsgRssi = rssi;
+			fLastMsgNoiseFloor = noiseFloor;
+			fLastMsgTimestamp = timestamp;
+		}
+
+		void			SetAddress(
+				this auto&& self,
+				std::initializer_list<uint8_t> address
+			) {
+			self.SetAddressImpl(address);
+		}
+
+
 	protected:
 
 		std::atomic_uint32_t	fLastMsgTimestamp = 0;
 		std::atomic_int8_t		fLastMsgRssi = 0;
 		std::atomic_int8_t		fLastMsgNoiseFloor = 0;
 };
+
+#if CONFIG_STR_HAS_SETTINGATOR
 
 class CTRMasterLink
 {
@@ -94,6 +105,10 @@ class CTRMasterLink
 		std::atomic_bool	fShouldSendPong = false;
 };
 
+#endif
+
+#if CONFIG_STR_HAS_BRIDGE
+
 class CTRSlaveLink
 {
 	public:
@@ -140,16 +155,10 @@ class CTRSlaveLink
 		void			HandlePingSending(this auto&& self) {
 			if (atomic_exchange(&self.fShouldSendPing, false))
 			{
+				ESP_LOGD("ESPNowCTR", "Ping Sending");
 				self.Write({ LINK_PING });
 				ESP_LOGD("ESPNowCTR", "Ping Sent");
 			}
-		}
-
-		void			SetAddress(
-				this auto&& self,
-				std::initializer_list<uint8_t> address
-			) {
-			self.SetAddressImpl(address);
 		}
 
 	void		SetPeerLinkInfo(int8_t rssi, int8_t noiseFloor, uint32_t deltastamp) {
@@ -172,4 +181,7 @@ class CTRSlaveLink
 
 
 };
+
+#endif
+
 #endif

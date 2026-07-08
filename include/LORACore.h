@@ -69,13 +69,48 @@ class LORACore : public ICore
 			) const {
 			if (_WriteHeader(addr, channel) == 0) 
 				return 0;
-			return uart_write_bytes(fUartPort, message.begin(), message.size());
-		}
+	
+			uint16_t size = message.size() + 6;
+			uint8_t begin[] = {
+						Frame::Start,
+						(uint8_t)(size >> 8),
+						(uint8_t)size,
+						(uint8_t)(fAddress >> 8),
+						(uint8_t)fAddress
+					};
+
+			uart_write_bytes(fUartPort, begin, 5);
+
+			uart_write_bytes(fUartPort, message.begin(), message.size());
+	
+			uint8_t end[] = { Frame::End };
+			uart_write_bytes(fUartPort, end, 1);
+
+			return size;
+	}
 
 		int Write(uint16_t addr, uint8_t channel) const {
 			if (_WriteHeader(addr, channel) == 0)
 				return 0;
-			return uart_write_bytes(fUartPort, messageBuffer.data(), messageBuffer.len());
+
+			uint16_t size = messageBuffer.len() + 6;
+
+			uint8_t begin[] = {
+						Frame::Start,
+						(uint8_t)(size >> 8),
+						(uint8_t)size,
+						(uint8_t)(fAddress >> 8),
+						(uint8_t)fAddress
+					};
+
+			uart_write_bytes(fUartPort, begin, 5);
+
+			uart_write_bytes(fUartPort, messageBuffer.data(), messageBuffer.len());
+
+			uint8_t end[] = { Frame::End };
+			uart_write_bytes(fUartPort, end, 1);
+
+			return size;
 		}
 
 		void Read() {}
@@ -137,6 +172,15 @@ class LORACore : public ICore
 			};
 			uart_write_bytes(fUartPort, cfg, sizeof(cfg));
 			ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+
+			ESP_ERROR_CHECK(uart_flush_input(fUartPort));
+
+			ESP_ERROR_CHECK(uart_set_baudrate(fUartPort, fBaudrate));
+
+			ESP_ERROR_CHECK(gpio_set_level(static_cast<gpio_num_t>(fM0Pin), 0));
+			ESP_ERROR_CHECK(gpio_set_level(static_cast<gpio_num_t>(fM1Pin), 0));
+			ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+
 		}
 
 	private:

@@ -1,5 +1,8 @@
-#ifndef _CUSTOM_TYPE_
-#define _CUSTOM_TYPE_
+#pragma once
+
+#include "Definitions.h"
+
+#if CONFIG_STR_HAS_SETTINGATOR
 
 #include "Settingator.h"
 #include "Setting.h"

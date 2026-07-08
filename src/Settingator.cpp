@@ -5,7 +5,6 @@
 
 #include "Settingator.h"
 #include "STR.h"
-
 #include "Communicator.h"
 #include "CommunicatorBridge.h"
 #include "Setting.h"
@@ -13,18 +12,19 @@
 #include "MiscDef.h"
 #include "ESPNowCommunicator.h"
 #include "Slave.h"
+#include "Led.h"
+#include "Master.h"
+
 #include <functional>
 #include <optional>
 #include <type_traits>
 #include <variant>
-//#include "CommandHandler.h"
 #include <cstring>
 #include <esp_log.h>
 #include "esp_err.h"
 #include "esp_task_wdt.h"
 #include "driver/gpio.h"
 #include "esp_timer.h"
-#include "Led.h"
 #include "sdkconfig.h"
 
 static const char* tag = "STR";
@@ -201,15 +201,15 @@ void Settingator::Update()
 
 	master.Update();
 
-#if CONFIG_STR_UART0
+#if STR_HAS_UART0
 	UARTCore::GetUART0Instance().Read();
 #endif
 
-#if CONFIG_STR_UART1
+#if STR_HAS_UART1
 	UARTCore::GetUART1Instance().Read();
 #endif
 
-#if CONFIG_STR_UART2
+#if STR_HAS_UART2
 	UARTCore::GetUART2Instance().Read();
 #endif
 
