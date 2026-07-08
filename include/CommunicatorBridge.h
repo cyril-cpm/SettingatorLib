@@ -22,8 +22,8 @@ class CTRBridge
 
 	void	begin();
 
-	void			StartEspNowInitBroadcasted();
-	void			StopEspNowInitBroadcasted();
+	void			StartLinkInitBroadcasted();
+	void			StopLinkInitBroadcasted();
 	void			Update();
 	void			HandleLinkInfo();
     void			ShouldSendLinkInfo(bool should = true);
@@ -31,7 +31,7 @@ class CTRBridge
 
 	private:
 
-	void			_addEspNowSlaveWithSSD(char* SSD, uint8_t slaveID);
+	void			_addLinkSlaveWithSSD(char* SSD, uint8_t slaveID);
 	void			_configDirectNotif(Message& msg);
 	void			_configDirectSettingUpdate(Message& msg);
 	void			_removeDirectMessageConfig(Message& msg, uint8_t messageType);

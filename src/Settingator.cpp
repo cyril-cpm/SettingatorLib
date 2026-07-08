@@ -88,10 +88,10 @@ static void IRAM_ATTR bridgeActivationInterruptHandler(void* arg)
 	gpio_intr_disable(BRIDGE_ACTIVATION_PIN);
 
 	esp_timer_start_once(debounceTimerBridgeActivation, DEBOUNCE_TIME_MS * 1000);
-	if (initEspNowBroadcasted)
-		STR.StopEspNowInitBroadcasted();
+	if (initLinkBroadcasted)
+		STR.StopLinkInitBroadcasted();
 	else
-		STR.StartEspNowInitBroadcasted();
+		STR.StartLinkInitBroadcasted();
 }
 #else
 #pragma message("No Bridge HID")
@@ -187,17 +187,17 @@ void Settingator::Update()
 	ESP_ERROR_CHECK(esp_task_wdt_reset());
 	vTaskDelay(1);
 
-	if (fShouldStartEspNowInitBroadcasted)
-	{
-		StartEspNowInitBroadcasted();
-		fShouldStartEspNowInitBroadcasted = false;
-	}
-
-	if (fShouldStopEspNowInitBroadcasted)
-	{
-		StopEspNowInitBroadcasted();
-		fShouldStopEspNowInitBroadcasted = false;
-	}
+	// if (fShouldStartLinkInitBroadcasted)
+	// {
+	// 	StartLinkInitBroadcasted();
+	// 	fShouldStartLinkInitBroadcasted = false;
+	// }
+	//
+	// if (fShouldStopLinkInitBroadcasted)
+	// {
+	// 	StopLinkInitBroadcasted();
+	// 	fShouldStopLinkInitBroadcasted = false;
+	// }
 
 	master.Update();
 
@@ -248,12 +248,12 @@ void Settingator::Update()
 // 					_treatSettingUpdateMessage(*msg);
 // 					break;
 //
-// 				case Message::Type::ConfigEspNowDirectNotif:
-// 					_configEspNowDirectNotif(*msg);
+// 				case Message::Type::ConfigLinkDirectNotif:
+// 					_configLinkDirectNotif(*msg);
 // 					break;
 //
-// 				case Message::Type::ConfigEspNowDirectSettingUpdate:
-// 					_configEspNowDirectSettingUpdate(*msg);
+// 				case Message::Type::ConfigLinkDirectSettingUpdate:
+// 					_configLinkDirectSettingUpdate(*msg);
 // 					break;
 //
 // 				case Message::Type::Notif:
@@ -292,16 +292,16 @@ void Settingator::Update()
 // 	vTaskDelay(1);
 // #endif
 //
-// 	if (fShouldStartEspNowInitBroadcasted)
+// 	if (fShouldStartLinkInitBroadcasted)
 // 	{
-// 		StartEspNowInitBroadcasted();
-// 		fShouldStartEspNowInitBroadcasted = false;
+// 		StartLinkInitBroadcasted();
+// 		fShouldStartLinkInitBroadcasted = false;
 // 	}
 //
-// 	if (fShouldStopEspNowInitBroadcasted)
+// 	if (fShouldStopLinkInitBroadcasted)
 // 	{
-// 		StopEspNowInitBroadcasted();
-// 		fShouldStopEspNowInitBroadcasted = false;
+// 		StopLinkInitBroadcasted();
+// 		fShouldStopLinkInitBroadcasted = false;
 // 	}
 //
 // 	if (fShouldESPNowBroadcastPing)
@@ -436,16 +436,16 @@ void Settingator::SavePreferences()
 {
 }
 
-void Settingator::StartEspNowInitBroadcasted()
+void Settingator::StartLinkInitBroadcasted()
 {
 	if (xPortInIsrContext())
 	{
-		fShouldStartEspNowInitBroadcasted = true;
+		fShouldStartLinkInitBroadcasted = true;
 	}
 	else
 	{
 #if CONFIG_STR_HAS_BRIDGE
-		CTRBridge::GetInstance().StartEspNowInitBroadcasted();
+		CTRBridge::GetInstance().StartLinkInitBroadcasted();
 #if defined(STR_BRIDGE_HID)
 			SetNetLed(0, 0, 255);
 #endif
@@ -453,16 +453,16 @@ void Settingator::StartEspNowInitBroadcasted()
 	}
 }
 
-void Settingator::StopEspNowInitBroadcasted()
+void Settingator::StopLinkInitBroadcasted()
 {
 	if (xPortInIsrContext())
 	{
-		fShouldStopEspNowInitBroadcasted = true;
+		fShouldStopLinkInitBroadcasted = true;
 	}
 	else
 	{
 #if CONFIG_STR_HAS_BRIDGE
-		CTRBridge::GetInstance().StopEspNowInitBroadcasted();
+		CTRBridge::GetInstance().StopLinkInitBroadcasted();
 #if defined(STR_BRIDGE_HID)
 			SetNetLed(0, 255, 0);
 #endif
@@ -597,7 +597,7 @@ void Settingator::_treatNotifMessage(const ICore& core)
 	}
 }
 
-void Settingator::_configEspNowDirectNotif(Message& msg)
+void Settingator::_configLinkDirectNotif(Message& msg)
 {
 	// std::visit([&msg](auto&& ctr) {
 	//
@@ -606,12 +606,12 @@ void Settingator::_configEspNowDirectNotif(Message& msg)
 	// 		if constexpr (!std::is_same_v<T, std::monostate>)
 	// 		{
 	// 			uint8_t* buffer = msg.GetBufPtr();
-	// 			ctr.ConfigEspNowDirectNotif(&buffer[6], msg[16], msg[5]);
+	// 			ctr.ConfigLinkDirectNotif(&buffer[6], msg[16], msg[5]);
 	// 		}
 	// 	}, masterCTR);
 }
 
-void Settingator::_configEspNowDirectSettingUpdate(Message& msg)
+void Settingator::_configLinkDirectSettingUpdate(Message& msg)
 {
 	// std::visit([&msg](auto&& ctr) {
 	//
@@ -620,7 +620,7 @@ void Settingator::_configEspNowDirectSettingUpdate(Message& msg)
 	// 		if constexpr (!std::is_same_v<T, std::monostate>)
 	// 		{
 	// 			uint8_t* buffer = msg.GetBufPtr();
-	// 			ctr.ConfigEspNowDirectSettingUpdate(&buffer[6], buffer[12], buffer[13], buffer[5]);
+	// 			ctr.ConfigLinkDirectSettingUpdate(&buffer[6], buffer[12], buffer[13], buffer[5]);
 	// 		}
 	// 	}, masterCTR);
 }

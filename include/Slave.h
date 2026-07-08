@@ -198,8 +198,6 @@ class Slave : public CTRHandler<SlaveCTR, SlaveCTREnum::SLAVE_CTR_MAX>
 
 using OptSlaveRef = std::optional<std::reference_wrapper<Slave>>;
 
-extern bool initEspNowBroadcasted;
-
 inline std::array<Slave, CONFIG_STR_NB_SLAVE> slaveArray;
 inline uint8_t nbInitialisedSlave = 0;
 

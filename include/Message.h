@@ -12,8 +12,8 @@ public:
 		SettingUpdate = 0x11,
 		SettingInit = 0x13,
 		Notif = 0x14,
-		ConfigEspNowDirectNotif = 0x15,
-		ConfigEspNowDirectSettingUpdate = 0x16,
+		// ConfigLinkDirectNotif = 0x15,
+		// ConfigLinkDirectSettingUpdate = 0x16,
 		RemoveDirectNotifConfig = 0x17,
 		RemoveDirectSettingUpdateConfig = 0x18,
 		BroadcastedPing = 0x19,
@@ -21,17 +21,17 @@ public:
 
 		/// Bridge
 		BridgeBase = 0x50,
-		EspNowInitWithSSD = 0x54,
-		EspNowConfigDirectNotif = 0x55,
-		EspNowConfigDirectSettingUpdate = 0x56,
-		EspNowRemoveDirectNotifConfig = 0x57,
-		EspNowRemoveDirectSettingUpdateConfig = 0x58,
-		EspNowStartInitBroadcastedSlave = 0x59,
-		EspNowStopInitBroadcastedSlave = 0x5A,
+		// LinkInitWithSSD = 0x54,
+		// LinkConfigDirectNotif = 0x55,
+		// LinkConfigDirectSettingUpdate = 0x56,
+		// LinkRemoveDirectNotifConfig = 0x57,
+		// LinkRemoveDirectSettingUpdateConfig = 0x58,
+		LinkStartInitBroadcastedSlave = 0x59,
+		LinkStopInitBroadcastedSlave = 0x5A,
 		BridgeReinitSlaves = 0x5B,
 		SlaveIDRequest = 0x5C,
-		EspNowPing = 0x5D,
-		EspNowPong = 0x5E,
+		// LinkPing = 0x5D,
+		// LinkPong = 0x5E,
 		LinkInfo = 0x5F
 	};
 

@@ -74,30 +74,30 @@ void CTRBridge::Update()
 			{
 				switch (core.GetMessageType())
 				{
-				case Message::Type::EspNowStartInitBroadcastedSlave:
-					LOG("START ESPNOW StartEspNowInitBroadcasted");
-					StartEspNowInitBroadcasted();
+				case Message::Type::LinkStartInitBroadcastedSlave:
+					LOG("START ESPNOW StartLinkInitBroadcasted");
+					StartLinkInitBroadcasted();
 					break;
 
-				case Message::Type::EspNowStopInitBroadcastedSlave:
-					StopEspNowInitBroadcasted();
+				case Message::Type::LinkStopInitBroadcastedSlave:
+					StopLinkInitBroadcasted();
 					break;
 
-				case Message::Type::EspNowConfigDirectNotif:
-					// _configDirectNotif(*msg);
-					break;
+				// case Message::Type::LinkConfigDirectNotif:
+				// 	// _configDirectNotif(*msg);
+				// 	break;
 
-				case Message::Type::EspNowConfigDirectSettingUpdate:
-					// _configDirectSettingUpdate(*msg);
-					break;
+				// case Message::Type::LinkConfigDirectSettingUpdate:
+				// 	// _configDirectSettingUpdate(*msg);
+				// 	break;
 
-				case Message::Type::EspNowRemoveDirectNotifConfig:
-					// _removeDirectMessageConfig(*msg, Message::Type::RemoveDirectNotifConfig);
-					break;
+				// case Message::Type::LinkRemoveDirectNotifConfig:
+				// 	// _removeDirectMessageConfig(*msg, Message::Type::RemoveDirectNotifConfig);
+				// 	break;
 
-				case Message::Type::EspNowRemoveDirectSettingUpdateConfig:
-					// _removeDirectMessageConfig(*msg, Message::Type::RemoveDirectSettingUpdateConfig);
-					break;
+				// case Message::Type::LinkRemoveDirectSettingUpdateConfig:
+				// 	// _removeDirectMessageConfig(*msg, Message::Type::RemoveDirectSettingUpdateConfig);
+				// 	break;
 
 				case Message::Type::BridgeReinitSlaves:
 					_reinitSlaves();
@@ -142,13 +142,10 @@ void CTRBridge::Update()
 			} // srcID == 0
 			else
 			{
-				if (core.GetMessageType() != Message::Type::EspNowPong)
-				{
-					LOG("transmitting message to master");
-					// LOG_BUFFER_HEX(msg->GetBufPtr(), msg->GetLength());
-					core.CopyMessageToGlobalBuffer();
-					master.Write();
-				}
+				LOG("transmitting message to master");
+				// LOG_BUFFER_HEX(msg->GetBufPtr(), msg->GetLength());
+				core.CopyMessageToGlobalBuffer();
+				master.Write();
 			}
 			core.ThrowMessage();
 		}
@@ -212,7 +209,7 @@ void CTRBridge::Update()
 // 						default:
 // 						break;
 // 						}
-// 					if (msg->GetType() != Message::Type::EspNowPong)
+// 					if (msg->GetType() != Message::Type::LinkPong)
 // 					{
 // 						LOG("transmitting message to maste");
 // 						// LOG_BUFFER_HEX(msg->GetBufPtr(), msg->GetLength());
@@ -262,18 +259,18 @@ void CTRBridge::Update()
 // #endif
 // }
 
-void CTRBridge::StartEspNowInitBroadcasted()
+void CTRBridge::StartLinkInitBroadcasted()
 {
 #if STR_HAS_ESPNOW
-	LOG("StartEspNowInitBroadcasted");
+	LOG("StartLinkInitBroadcasted");
 	ESPNowCore::GetInstance();
-	initEspNowBroadcasted = true;
+	initLinkBroadcasted = true;
 #endif
 }
 
-void CTRBridge::StopEspNowInitBroadcasted()
+void CTRBridge::StopLinkInitBroadcasted()
 {
-	initEspNowBroadcasted = false;
+	initLinkBroadcasted = false;
 }
 
 void CTRBridge::_configDirectNotif(Message& msg)
@@ -293,7 +290,7 @@ void CTRBridge::_configDirectNotif(Message& msg)
 	configBuffer[1] = 0;
 	configBuffer[2] = configBufferLength;
 	configBuffer[3] = srcSlaveID;
-	configBuffer[4] = Message::Type::ConfigEspNowDirectNotif;
+	configBuffer[4] = Message::Type::ConfigLinkDirectNotif;
 	configBuffer[5] = dstSalveID;
 
 	uint8_t* dstMac = _getSlaveMac(dstSalveID);
@@ -332,7 +329,7 @@ void CTRBridge::_configDirectSettingUpdate(Message& msg)
 	configBuffer[1] = 0;
 	configBuffer[2] = configBufferLength;
 	configBuffer[3] = srcSlaveID;
-	configBuffer[4] = Message::Type::ConfigEspNowDirectSettingUpdate;
+	configBuffer[4] = Message::Type::ConfigLinkDirectSettingUpdate;
 	configBuffer[5] = dstSalveID;
 
 	uint8_t* dstMac = _getSlaveMac(dstSalveID);

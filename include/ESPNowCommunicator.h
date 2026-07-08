@@ -113,7 +113,7 @@ class ESPNowCTR
 					"SetAddressImpl: address size is %d instead of 6",
 					address.size()
 			);
-		std::copy(address.begin(), address.end()-1, fMac.data());
+		std::copy(address.begin(), address.end(), fMac.data());
 		fActivated = true;
 		fCore.AddPeer(fMac);
 	}

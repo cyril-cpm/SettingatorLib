@@ -42,7 +42,15 @@ class ESPNowCore : public ICore
 		) {
 			
 			ESP_LOGD("ESPNowCore", "sending");
-			// SemTake();
+	
+			ESP_LOG_BUFFER_HEX_LEVEL(
+					"ESPNowCore",
+					dstMac.data(),
+					dstMac.size(),
+					ESP_LOG_DEBUG
+				);
+
+			SemTake();
 			ESP_ERROR_CHECK_WITHOUT_ABORT(
 				esp_now_send(dstMac.data(), message.begin(), message.size())
 			);
@@ -53,8 +61,16 @@ class ESPNowCore : public ICore
 
 		int	Write(const std::array<uint8_t, 6>& dstMac) {
 			ESP_LOGD("ESPNowCore", "sending");
+
+			ESP_LOG_BUFFER_HEX_LEVEL(
+					"ESPNowCore",
+					dstMac.data(),
+					dstMac.size(),
+					ESP_LOG_DEBUG
+				);
+
 			
-			// SemTake();
+			SemTake();
 			ESP_ERROR_CHECK_WITHOUT_ABORT(
 				esp_now_send(
 					dstMac.data(),

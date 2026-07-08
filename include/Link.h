@@ -182,6 +182,8 @@ class CTRSlaveLink
 
 };
 
+inline bool initLinkBroadcasted = false;
+
 #endif
 
 #endif

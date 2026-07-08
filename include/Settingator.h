@@ -63,8 +63,8 @@ class Settingator
     void SendDirectNotif(uint8_t notifByte);
     void SendDirectSettingUpdate(uint8_t settingRef, uint8_t* value = nullptr, uint8_t valueLen = 0);
     void AddNotifCallback(void(*callback)(), uint8_t notifByte);
-    void StartEspNowInitBroadcasted();
-    void StopEspNowInitBroadcasted();
+    void StartLinkInitBroadcasted();
+    void StopLinkInitBroadcasted();
 
 #if defined(STR_BRIDGE_HID)
     void InitNetworkHID();
@@ -92,8 +92,8 @@ class Settingator
     void        _treatSettingUpdateMessage(const ICore& core);
     void        _treatNotifMessage(const ICore& core);
 
-    void        _configEspNowDirectNotif(Message& msg);
-    void        _configEspNowDirectSettingUpdate(Message& msg);
+    void        _configLinkDirectNotif(Message& msg);
+    void        _configLinkDirectSettingUpdate(Message& msg);
 
     void        _removeDirectNotifConfig(Message& msg);
     void        _removeDirectSettingUpdateConfig(Message& msg);
@@ -113,8 +113,8 @@ class Settingator
     Strip		fInfoLEDStrip;
 #endif
 
-    bool        fShouldStartEspNowInitBroadcasted = false;
-    bool        fShouldStopEspNowInitBroadcasted = false;
+    bool        fShouldStartLinkInitBroadcasted = false;
+    bool        fShouldStopLinkInitBroadcasted = false;
     bool        fShouldESPNowBroadcastPing = false;
 };
 

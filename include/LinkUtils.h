@@ -18,7 +18,6 @@ void TreatLinkMessage(
 		const uint8_t* data,
 		uint16_t len,
 		std::initializer_list<uint8_t> srcAddress,
-		bool initBroadcasted,
 		int8_t rssi,
 		int8_t floor,
 		uint32_t timestamp
@@ -38,7 +37,7 @@ void TreatLinkMessage(
 							{ data[1], data[2], data[3], data[4], data[5], data[6] }
 						);
 
-					if (initBroadcasted && !slave)
+					if (initLinkBroadcasted && !slave)
 					{
 						slave = CreateSlave(
 								{

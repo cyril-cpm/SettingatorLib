@@ -17,7 +17,6 @@ static const char* tag = "STR";
 #if STR_HAS_UART || STR_HAS_LORA
 void	ReadUart(uart_port_t uartPort, CircularBuffer& buf)
 {
-	ESP_LOGD("ReadUart", "Bah alors ?");
 	size_t size;
 
 	ESP_ERROR_CHECK(uart_get_buffered_data_len(uartPort, &size));
