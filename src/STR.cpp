@@ -1,7 +1,9 @@
 #include "STR.h"
 #include "Slave.h"
+#include "UARTUtils.h"
 #include "esp_log_buffer.h"
 #include "freertos/idf_additions.h"
+#include "driver/uart.h"
 
 #if STR_HAS_ESPNOW
 #include "ESPNowCore.h"

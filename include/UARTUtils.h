@@ -2,7 +2,7 @@
 
 #include "Definitions.h"
 
-#if STR_HAS_UART || STR_HA_LORA
+#if STR_HAS_UART || STR_HAS_LORA
 
 #include "hal/uart_types.h"
 

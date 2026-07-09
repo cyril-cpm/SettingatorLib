@@ -61,6 +61,10 @@ void CTRBridge::begin()
 	ESPNowCore::GetInstance().BroadcastBridgePing();
 #endif
 
+#if CONFIG_STR_SLAVE_LORA
+	LORACore::GetInstance().BroadcastBridgePing();
+#endif
+
 }
 
 void CTRBridge::Update()

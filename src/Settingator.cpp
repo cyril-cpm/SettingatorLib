@@ -483,6 +483,10 @@ void Settingator::begin()
 	ESPNowCore::GetInstance().BroadcastSlavePing();
 #endif
 
+#if CONFIG_STR_MASTER_LORA
+	LORACore::GetInstance().BroadcastSlavePing();
+#endif
+
 #if CONFIG_STR_HAS_BRIDGE
 	CTRBridge::GetInstance().begin();
 #endif
