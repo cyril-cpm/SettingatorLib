@@ -173,6 +173,7 @@ class Slave : public CTRHandler<SlaveCTR, SlaveCTREnum::SLAVE_CTR_MAX>
 			0,
 			Message::Frame::End
 		});
+		ESP_LOGD("SLAVE", "INIT REQUEST SENT");
 	}
 
 	void		Activate() { fActivated = true; }

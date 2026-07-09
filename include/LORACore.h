@@ -208,10 +208,13 @@ class LORACore : public ICore
 			uint8_t cfg[] = {
 				0xC0,
 				0x00,
-				0x03,
+				0x06,
 				static_cast<uint8_t>(fAddress >> 8),
 				static_cast<uint8_t>(fAddress & 0xFF),
-				0xFF
+				0xFF,
+				0b00000000,
+				fChannel,
+				0b11000000
 			};
 			uart_write_bytes(fUartPort, cfg, sizeof(cfg));
 			ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
@@ -371,14 +374,14 @@ class LORACore : public ICore
 			ESP_ERROR_CHECK(gpio_set_level(static_cast<gpio_num_t>(fM0Pin), 0));
 			ESP_ERROR_CHECK(gpio_set_level(static_cast<gpio_num_t>(fM1Pin), 0));
 
-			ConfigModule();
-
-			if (!gpio_get_level((gpio_num_t)fAuxPin))
-			{
+			// if (!gpio_get_level((gpio_num_t)fAuxPin))
+			// {
 				ESP_LOGD("LORACore", "waiting for AUX");
-				ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+				ulTaskNotifyTake(pdTRUE, pdMS_TO_TICKS(20));
 				ESP_LOGD("LORACore", "AUX triggered");
-			}
+			// }
+
+			// ConfigModule();
 
 			if (mainTaskHandle)
 				xTaskNotifyGive(mainTaskHandle);

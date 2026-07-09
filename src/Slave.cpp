@@ -9,8 +9,6 @@
 #include "sdkconfig.h"
 #include <variant>
 
-bool initEspNowBroadcasted = false;
-
 static const char* tag = "SLAVE";
 
 uint16_t Slave::GetLinkInfoSize() const

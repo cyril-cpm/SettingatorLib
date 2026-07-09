@@ -265,9 +265,8 @@ void CTRBridge::Update()
 
 void CTRBridge::StartLinkInitBroadcasted()
 {
-#if STR_HAS_ESPNOW
+#if STR_HAS_ESPNOW || STR_HAS_LORA
 	LOG("StartLinkInitBroadcasted");
-	ESPNowCore::GetInstance();
 	initLinkBroadcasted = true;
 #endif
 }

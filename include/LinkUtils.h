@@ -23,6 +23,9 @@ void TreatLinkMessage(
 		uint32_t timestamp
 	)
 {
+	ESP_LOGD(CORETYPE::logTag, "TreatLinkMessage");
+	ESP_LOGD(CORETYPE::logTag, "len: %d", len);
+	ESP_LOG_BUFFER_HEX_LEVEL(CORETYPE::logTag, data, len, ESP_LOG_DEBUG);
 
 #if CONFIG_STR_HAS_BRIDGE
 	if constexpr (CORETYPE::runSlave)
