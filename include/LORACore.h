@@ -317,14 +317,16 @@ class LORACore : public ICore
 				);
 
 			ESP_ERROR_CHECK(uart_param_config(fUartPort, &uart_conf));
+
+			ESP_ERROR_CHECK(uart_set_rx_timeout(fUartPort, 10));
 			
 			ESP_ERROR_CHECK(
 					uart_driver_install(
 							fUartPort,
 							CONFIG_STR_CIRCULAR_BUFFER_SIZE,
 							CONFIG_STR_MESSAGE_BUFFER_SIZE,
-							0,
-							nullptr,
+							10,
+							&fUartQueue,
 							0
 						)
 				);
@@ -404,6 +406,7 @@ class LORACore : public ICore
 		void _Run();
 
 		uart_port_t		fUartPort;
+		QueueHandle_t	fUartQueue;
 		int				fRx;
 		int				fTx;
 		int				fBaudrate;

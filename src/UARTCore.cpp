@@ -27,6 +27,8 @@ void UARTCore::Init()
 
 	ESP_ERROR_CHECK(uart_param_config(fUartPort, &uartConfig));
 
+	ESP_ERROR_CHECK(uart_set_rx_timeout(fUartPort, 10));
+
 	ESP_ERROR_CHECK(uart_driver_install(fUartPort,
 				CONFIG_STR_CIRCULAR_BUFFER_SIZE,
 				CONFIG_STR_MESSAGE_BUFFER_SIZE,
