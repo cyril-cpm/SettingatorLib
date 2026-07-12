@@ -11,9 +11,6 @@ void LORACore::_Run()
 	uart_event_t event;
 	while (true)
 	{
-		// ESP_LOGD("LORACore", "Waiting Notification");
-		// ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
-
 		if(xQueueReceive(fUartQueue, (void*)&event, (TickType_t)portMAX_DELAY))
 		{
 			_ReadUart();

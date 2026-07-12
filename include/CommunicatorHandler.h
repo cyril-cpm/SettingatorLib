@@ -46,6 +46,8 @@ class CTRHandler
 
 			if (ctrToUse)
 				ctrToUse.Write();
+			else
+				ESP_LOGD("ComHandler", "ctrToUse %d not activated", fCTRToUse);
 		}
 
 		void		Write(std::initializer_list<uint8_t> message) const {
@@ -53,6 +55,8 @@ class CTRHandler
 
 			if (ctrToUse)
 				ctrToUse.Write(message);
+			else
+				ESP_LOGD("ComHandler", "ctrToUse %d not activated", fCTRToUse);
 		}
 
 		void		Update() {

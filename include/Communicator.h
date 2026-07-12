@@ -15,22 +15,6 @@ class ICTR
 {
 	public:
 
-	enum LinkType
-	{
-		ESP_NOW = 0x00,
-		UART = 0x01,
-		LORA = 0x02,
-		UNKNOWN = 0xFF
-	};
-
-	uint16_t	GetLinkInfoSize(this auto&& self) {
-		return self.GetLinkInfoSizeImpl();
-	}
-
-	void		WriteLinkInfoToBuffer(this auto&& self, uint16_t index) {
-		self.WriteLinkInfoToBufferImpl(index);
-	}
-
 	constexpr explicit operator bool() const { return fActivated; }
 
 	protected:

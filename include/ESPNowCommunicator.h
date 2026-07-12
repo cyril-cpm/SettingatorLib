@@ -1,8 +1,6 @@
 #pragma once
 
 #include "Definitions.h"
-#include "freertos/idf_additions.h"
-#include "freertos/projdefs.h"
 
 #if STR_HAS_ESPNOW
 #include "Communicator.h"
@@ -18,6 +16,8 @@
 #include <array>
 #include <initializer_list>
 #include <optional>
+#include "freertos/idf_additions.h"
+#include "freertos/projdefs.h"
 
 #if CONFIG_STR_MASTER_ESPNOW
 #include "Settingator.h"
@@ -42,44 +42,23 @@ class ESPNowCTR
 {
     public:
 
+#if CONFIG_STR_SLAVE_ESPNOW
+	static constexpr LinkType linkType = LinkType::ESP_NOW;
+#endif
+
 	ESPNowCTR() : fCore(ESPNowCore::GetInstance()) {}
 
     void        Update() {
 #if CONFIG_STR_SLAVE_ESPNOW
-		HandleBridgeToSlaveHandshake();
-		HandlePingTimerCreation();
-		HandlePingSending();
+		CTRSlaCTRSlaveLink::Update();
 #endif
 
 #if CONFIG_STR_MASTER_ESPNOW
-		HandleSlaveIDTransmission();
-		HandlePongSending();
+		CTRMasterLink::Update();
 #endif
 	}
 
 	static ESPNowCTR*	GetCTRForMac(const std::array<uint8_t, 6>& mac);
-
-#if CONFIG_STR_SLAVE_ESPNOW
-	uint16_t	GetLinkInfoSizeImpl() const { return 19; };
-
-	void		WriteLinkInfoToBufferImpl(uint16_t index) const {
-		messageBuffer[index] = ICTR::LinkType::ESP_NOW;
-
-		memcpy(messageBuffer.data() + index + 1, fMac.data(), 6);
-
-		messageBuffer[index + 7] = fLastMsgRssi;
-		messageBuffer[index + 8] = fLastMsgNoiseFloor;
-
-		uint32_t deltaMs = pdTICKS_TO_MS(xTaskGetTickCount()) - fLastMsgTimestamp;
-
-		memcpy(messageBuffer.data() + index + 9, (uint8_t*)&deltaMs, 4);
-
-		messageBuffer[index + 13] = fPeerLastMsgRssi;
-		messageBuffer[index + 14] = fPeerLastMsgNoiseFloor;
-
-		memcpy(messageBuffer.data() + index + 15, (uint8_t*)&(fPeerLastMsgDeltastamp), 4);
-	}
-#endif
 
 	int		Write(std::initializer_list<uint8_t> message) const {
 		return fCore.Write(message, fMac);

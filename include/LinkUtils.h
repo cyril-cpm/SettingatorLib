@@ -56,6 +56,7 @@ void TreatLinkMessage(
 
 					if (slave)
 					{
+						ESP_LOGD(CORETYPE::logTag, "Slave acquired or created");
 						typename CORETYPE::ctrType& ctr = slave->get().GetCTR<
 								typename CORETYPE::ctrType,
 								CORETYPE::slaveCtrIndex
@@ -63,14 +64,30 @@ void TreatLinkMessage(
 
 						if (!ctr)
 						{
+							ESP_LOGD(CORETYPE::logTag, "Activating CTR");
 							ctr.SetAddress(srcAddress);
 							ctr.PlanifyPingTimerCreation();
 						}
-						ctr.PlanifyBridgeToSlaveHandshake();
+						else
+							ESP_LOGD(CORETYPE::logTag, "CTR already activated");
 
+						ctr.PlanifyBridgeToSlaveHandshake();
+		
 						if (slave->get().GetID())
+						{
+							ESP_LOGD(
+									CORETYPE::logTag,
+									"Slave has id %d",
+									slave->get().GetID()
+							);
+
 							slave->get().PlanifySendInitRequest();
+						}
+						else
+							ESP_LOGD(CORETYPE::logTag, "Slave has no ID");
 					}
+					else
+						ESP_LOGD(CORETYPE::logTag, "Slave not acquired nor created");
 				}
 				break;
 

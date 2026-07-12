@@ -12,7 +12,7 @@
 #include <cstdint>
 #include <initializer_list>
 #include <optional>
-
+#include "esp_types.h"
 
 
 using OptLORACtrRef = std::optional<std::reference_wrapper<LORACTR>>;
@@ -30,9 +30,12 @@ class LORACTR
 #endif
 {
 public:
-    LORACTR() : fCore(LORACore::GetInstance()) {}
 
-    void Update() {}
+#if CONFIG_STR_SLAVE_LORA
+	static constexpr LinkoType linkType = LinkType::LORA;
+#endif
+
+    LORACTR() : fCore(LORACore::GetInstance()) {}
 
     int Write(std::initializer_list<uint8_t> message) const {
         return fCore.Write(fPeerAddress, fCore.GetChannel(), message);
@@ -76,14 +79,15 @@ public:
 
     uint16_t GetPeerAddress() const { return fPeerAddress; }
 
-    // TODO: ajouter LORA dans ICTR::LinkType pour remplacer UNKNOWN
-    uint16_t GetLinkInfoSizeImpl() const { return 3; }
+	void	Update() {
+#if STR_SLAVE_HAS_LORA
+		CTRSlaveLink::Update();
+#endif
 
-    void WriteLinkInfoToBufferImpl(uint16_t index) const {
-        messageBuffer[index]     = static_cast<uint8_t>(ICTR::LinkType::UNKNOWN);
-        messageBuffer[index + 1] = static_cast<uint8_t>(fPeerAddress >> 8);
-        messageBuffer[index + 2] = static_cast<uint8_t>(fPeerAddress & 0xFF);
-    }
+#if STR_MASTER_HAS_LORA
+		CTRMasterLink::Update();
+#endif
+	}
 
 	static OptLORACtrRef	GetCTRByAddress(std::initializer_list<uint8_t> address);
 
@@ -94,6 +98,6 @@ private:
 
 
 inline std::array<LORACTR, NB_LORA_CTR> loraCtrArray;
-inline uint8_t registeredLoRaCtr;
+inline uint8_t registeredLoRaCtr = 0;
 
 #endif

@@ -18,7 +18,7 @@ uint16_t Slave::GetLinkInfoSize() const
 	if (ctrToUse)
 	{
 		return std::visit([](auto&& ctr) -> uint16_t {
-				return ctr.get().GetLinkInfoSize() + 2;
+				return ctr.get().GetLinkInfoSize() + 8;
 			}, ctrToUse);
 	}
 
@@ -34,9 +34,11 @@ void Slave::WriteLinkInfoToBuffer(uint16_t index) const
 		messageBuffer[index] = GetLinkInfoSize();
 		messageBuffer[index + 1] = fSlaveID;
 
+		memcpy(&messageBuffer[index + 2], fEMac.data(), 6);
+
 		std::visit([index](auto&& ctr) {
 
-				ctr.get().WriteLinkInfoToBuffer(index + 2);
+				ctr.get().WriteLinkInfoToBuffer(index + 8);
 			
 			}, ctrToUse);
 	}

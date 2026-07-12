@@ -27,6 +27,7 @@
 class CTRLink
 {
 	friend class CTRMasterLink;
+	friend class CTRSlaveLink;
 
 	public:
 
@@ -99,6 +100,11 @@ class CTRMasterLink
 			}
 		}
 
+		void		Update(this auto&& self) {
+			self.HandleSlaveIDTransmission();
+			self.HandlePongSending();
+		}
+
 	protected:
 
 		std::atomic_bool	fShouldTransmitSlaveID = false;
@@ -112,6 +118,15 @@ class CTRMasterLink
 class CTRSlaveLink
 {
 	public:
+
+		enum LinkType
+		{
+			ESP_NOW = 0x00,
+			UART = 0x01,
+			LORA = 0x02,
+			UNKNOWN = 0xFF
+		};
+
 
 		void			PlanifyBridgeToSlaveHandshake() {
 			atomic_store(&fShouldHandshake, true);
@@ -161,11 +176,46 @@ class CTRSlaveLink
 			}
 		}
 
-	void		SetPeerLinkInfo(int8_t rssi, int8_t noiseFloor, uint32_t deltastamp) {
-		fPeerLastMsgRssi = rssi;
-		fPeerLastMsgNoiseFloor = noiseFloor;
-		fPeerLastMsgDeltastamp = deltastamp;
-	}
+		void			Update(this auto&& self) {
+			self.HandleBridgeToSlaveHandshake();
+			self.HandlePingTimerCreation();
+			self.HandlePingSending();
+
+		}
+
+		void	SetPeerLinkInfo(int8_t rssi, int8_t noiseFloor, uint32_t deltastamp) {
+			fPeerLastMsgRssi = rssi;
+			fPeerLastMsgNoiseFloor = noiseFloor;
+			fPeerLastMsgDeltastamp = deltastamp;
+		}
+
+		uint16_t	GetLinkInfoSize(this auto&& self) {
+			return 13;
+		}
+
+		void		WriteLinkInfoToBuffer(this auto&& self, uint16_t index) {
+
+			messageBuffer[index]     = static_cast<uint8_t>(self.linkType);
+
+			messageBuffer[index + 1] = self.fLastMsgRssi;
+			messageBuffer[index + 2] = self.fLastMsgNoiseFloor;
+
+			uint32_t deltaMs = 
+					pdTICKS_TO_MS(xTaskGetTickCount())
+					- self.fLastMsgTimestamp;
+
+			memcpy(messageBuffer.data() + index + 3, (uint8_t*)&deltaMs, 4);
+
+			messageBuffer[index + 7] = self.fPeerLastMsgRssi;
+			messageBuffer[index + 8] = self.fPeerLastMsgNoiseFloor;
+
+			memcpy(
+					messageBuffer.data() + index + 9,
+					(uint8_t*)&(self.fPeerLastMsgDeltastamp),
+					4
+				);
+
+		}
 
 	protected:
 
