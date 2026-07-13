@@ -32,7 +32,7 @@ class LORACTR
 public:
 
 #if CONFIG_STR_SLAVE_LORA
-	static constexpr LinkoType linkType = LinkType::LORA;
+	static constexpr LinkType linkType = LinkType::LORA;
 #endif
 
     LORACTR() : fCore(LORACore::GetInstance()) {}

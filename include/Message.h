@@ -12,7 +12,7 @@ public:
 		SettingUpdate = 0x11,
 		SettingInit = 0x13,
 		Notif = 0x14,
-		// ConfigLinkDirectNotif = 0x15,
+		SwitchLinkType = 0x15,
 		// ConfigLinkDirectSettingUpdate = 0x16,
 		RemoveDirectNotifConfig = 0x17,
 		RemoveDirectSettingUpdateConfig = 0x18,

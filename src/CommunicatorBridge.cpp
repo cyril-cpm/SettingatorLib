@@ -1,7 +1,8 @@
-#include "CommunicatorBridge.h"
+#include "Definitions.h"
 
 #if CONFIG_STR_HAS_BRIDGE
 
+#include "CommunicatorBridge.h"
 #include "Communicator.h"
 #include "STR.h"
 #include "Slave.h"
@@ -87,22 +88,6 @@ void CTRBridge::Update()
 					StopLinkInitBroadcasted();
 					break;
 
-				// case Message::Type::LinkConfigDirectNotif:
-				// 	// _configDirectNotif(*msg);
-				// 	break;
-
-				// case Message::Type::LinkConfigDirectSettingUpdate:
-				// 	// _configDirectSettingUpdate(*msg);
-				// 	break;
-
-				// case Message::Type::LinkRemoveDirectNotifConfig:
-				// 	// _removeDirectMessageConfig(*msg, Message::Type::RemoveDirectNotifConfig);
-				// 	break;
-
-				// case Message::Type::LinkRemoveDirectSettingUpdateConfig:
-				// 	// _removeDirectMessageConfig(*msg, Message::Type::RemoveDirectSettingUpdateConfig);
-				// 	break;
-
 				case Message::Type::BridgeReinitSlaves:
 					_reinitSlaves();
 					break;
@@ -110,23 +95,67 @@ void CTRBridge::Update()
 				default:
 					if (core.GetMessageType() < Message::Type::BridgeBase)
 					{
-						if (core.GetMessageType() == Message::Type::InitRequest)
+						switch (core.GetMessageType())
 						{
-							LOG("InitRequest");
-							
-							for (auto& slave : slaveArray)
-							{
-								if (!slave)
-									break;
-
-								if (slave.IsWaitingForID())
+							case Message::Type::InitRequest:
+								LOG("InitRequest");
+								
+								for (auto& slave : slaveArray)
 								{
-									LOG("Setting id %d to slave", core.GetDstSlaveID());
-									slave.SetID(core.GetDstSlaveID());
-									slave.SetWaitingForID(false);
-									break;
+									if (!slave)
+										break;
+
+									if (slave.IsWaitingForID())
+									{
+										LOG(
+												"Setting id %d to slave",
+												core.GetDstSlaveID()
+											);
+										slave.SetID(core.GetDstSlaveID());
+										slave.SetWaitingForID(false);
+										break;
+									}
 								}
-							}
+								break;
+
+							case Message::Type::SwitchLinkType:
+								for (auto& slave : slaveArray)
+								{
+									if (!slave)
+										break;
+
+									if (slave.GetID() == core.GetDstSlaveID())
+									{
+										switch (core[6])
+										{
+#if STR_SLAVE_HAS_UART
+											case CTRSlaveLink::LinkType::UART:
+												slave.SetCTRToUse(SLAVE_CTR_UART0);
+												break;
+#endif
+
+#if STR_SLAVE_HAS_ESPNOW
+											case CTRSlaveLink::LinkType::ESP_NOW:
+												slave.SetCTRToUse(SLAVE_CTR_ESPNOW);
+												break;
+#endif
+
+#if STR_SLAVE_HAS_LORA
+											case CTRSlaveLink::LinkType::LORA:
+												slave.SetCTRToUse(SLAVE_CTR_LORA);
+												break;
+#endif
+											default:
+												ESP_LOGI(tag, "Wrong link type");
+												break;
+										}
+										break;
+									}
+								}
+								break;
+
+							default:
+								break;
 						}
 
 						const auto& slave = GetSlaveForID(core.GetDstSlaveID());
@@ -176,10 +205,6 @@ void CTRBridge::Update()
 #if STR_HAS_UART2
 	UARTCore::GetUART2Instance().Read();
 #endif
-
-// #if STR_HAS_LORA
-// 	LORACore::GetInstance().Read();
-// #endif
 
 	ESP_ERROR_CHECK(esp_task_wdt_reset());
 	vTaskDelay(1);

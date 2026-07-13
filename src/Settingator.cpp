@@ -166,6 +166,32 @@ void Settingator::Update()
 							_treatSettingUpdateMessage(core);
 							break;
 
+						case Message::Type::SwitchLinkType:
+							switch (core[6])
+							{
+#if STR_SLAVE_HAS_UART
+								case CTRSlaveLink::LinkType::UART:
+									master.SetCTRToUse(MASTER_CTR_UART0);
+									break;
+#endif
+
+#if STR_SLAVE_HAS_ESPNOW
+								case CTRSlaveLink::LinkType::ESP_NOW:
+									master.SetCTRToUse(MASTER_CTR_ESPNOW);
+									break;
+#endif
+
+#if STR_SLAVE_HAS_LORA
+								case CTRSlaveLink::LinkType::LORA:
+									master.SetCTRToUse(MASTER_CTR_LORA);
+									break;
+#endif
+								default:
+									ESP_LOGI(tag, "Wrong link type");
+									break;
+							}
+							break;
+
 						// Direct Msg/Notif and notif addressed to Slave
 
 						default:

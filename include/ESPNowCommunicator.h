@@ -50,7 +50,7 @@ class ESPNowCTR
 
     void        Update() {
 #if CONFIG_STR_SLAVE_ESPNOW
-		CTRSlaCTRSlaveLink::Update();
+		CTRSlaveLink::Update();
 #endif
 
 #if CONFIG_STR_MASTER_ESPNOW
