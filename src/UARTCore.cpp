@@ -20,6 +20,11 @@ void UARTCore::Init()
 		.stop_bits = UART_STOP_BITS_1,
 		.flow_ctrl = UART_HW_FLOWCTRL_DISABLE,
 		.rx_flow_ctrl_thresh = 0,
+		.source_clk = UART_SCLK_DEFAULT,
+		.flags = {
+			.allow_pd = 0,
+			.backup_before_sleep = 0,
+		},
 	};
 
 	ESP_ERROR_CHECK(uart_set_pin(fUartPort, fTx, fRx,

@@ -18,7 +18,8 @@ static const rmt_tx_channel_config_t ws2812bTxChannelConfig = {
     .flags = {
         .invert_out = false,
         .with_dma = false,
-        .allow_pd = false
+        .allow_pd = false,
+		.init_level = 0
     },
 };
 
@@ -44,7 +45,8 @@ static const rmt_bytes_encoder_config_t ws2812bEncoder = {
 static const rmt_transmit_config_t tx_cfg = {
     .loop_count = 0,
     .flags = {
-        .eot_level = 0
+        .eot_level = 0,
+		.queue_nonblocking = 0,
     }
 };
 
