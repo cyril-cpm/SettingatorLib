@@ -80,7 +80,7 @@ class ESPNowCTR
 		}
 
 		std::array<uint8_t, 6> addr;
-		std::copy(address.begin(), address.end()-1, addr.data());
+		std::copy(address.begin(), address.end(), addr.data());
 
 		return addr == fMac;
 	}
