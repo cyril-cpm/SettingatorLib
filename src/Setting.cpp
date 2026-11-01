@@ -10,29 +10,15 @@
 Setting::Setting(Type type, void* dataPtr, size_t dataSize, const char* name, std::function<void()> callback, setting_ref ref)
 : fType(type), fDataPtr((uint8_t*)dataPtr), fDataSize(dataSize),  fRef(ref), fCallback(callback)
 {
-#if SERIAL_DEBUG
-    /*Serial.println("New Setting:");
-    Serial.print("\ttype\t\t: ");
-    Serial.println(type, DEC);
-    Serial.print("\tdataSize\t: ");
-    Serial.println(dataSize, DEC);
-    Serial.print("\tdata\t\t: ");
-    printBuffer(fDataPtr, dataSize);
-    Serial.println("");
-    Serial.print("\tref\t\t: ");
-    Serial.println(ref);
-    Serial.print("\tname\t\t: ");
-    Serial.println(name);*/
-#endif
 	uint8_t nameLen = strlen(name);
 
 	for (; fNameLength < 16 && fNameLength < nameLen; fNameLength++)
 		fName[fNameLength] = name[fNameLength];
 }
 
-bool Setting::update(uint8_t* newValuePtr, size_t newValueSize)
+bool Setting::update(const uint8_t* newValuePtr, size_t newValueSize)
 {
-    if (newValueSize > fDataSize && newValuePtr != nullptr)
+    if (newValueSize > fDataSize || newValuePtr != nullptr)
         return false;
 
     memcpy(fDataPtr, newValuePtr, newValueSize);

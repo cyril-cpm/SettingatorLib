@@ -12,108 +12,114 @@ extern Settingator& STR;
 template <typename T>
 class STR_Type
 {
-    public:
+	public:
 
-        STR_Type(T value, const char* name = nullptr) : fValue(value)
-        {
-            Setting::Type   type;
-            void*           dataPtr     = &fValue;
-            int             dataSize    = sizeof(fValue);
-        
-            if constexpr (std::is_same_v<T, uint8_t> || std::is_same_v<T, uint8_t&>)
-                type = Setting::Type::UInt8;
-            else if constexpr (std::is_same_v<T, uint16_t> || std::is_same_v<T, uint16_t&>)
-                type = Setting::Type::UInt16;
-            else if constexpr (std::is_same_v<T, uint32_t> || std::is_same_v<T, uint32_t&>)
-                type = Setting::Type::UInt32;
-            else if constexpr (std::is_same_v<T, int8_t> || std::is_same_v<T, int8_t&>)
-                type = Setting::Type::Int8;
-            else if constexpr (std::is_same_v<T, int16_t> || std::is_same_v<T, int16_t&>)
-                type = Setting::Type::Int16;
-            else if constexpr (std::is_same_v<T, int32_t> || std::is_same_v<T, int32_t&>)
-                type = Setting::Type::Int32;
-            else if constexpr (std::is_same_v<T, float> || std::is_same_v<T, float&>)
-                type = Setting::Type::Float;
-            else if constexpr (std::is_same_v<T, bool> || std::is_same_v<T, bool&>)
-                type = Setting::Type::Bool;
-        
-            fRef = STR.AddSetting(type, dataPtr, dataSize,  name, nullptr);
-        }
+		STR_Type(const char* name) {
 
-        void SetCallback(void (*callback)())
-        {
-            const auto& setting = STR.GetSettingByRef(fRef);
-            
-            if (setting)
-                setting->get().setCallback(callback);
-        }
+			Setting::Type	type;
 
-        void Update()
-        {
-            if (fAutoUpdate)
-                STR.SendUpdateMessage(fRef);
-        }
+			if constexpr (std::is_same_v<T, uint8_t> || std::is_same_v<T, uint8_t&>)
+				type = Setting::Type::UInt8;
+			else if constexpr (std::is_same_v<T, uint16_t> || std::is_same_v<T, uint16_t&>)
+				type = Setting::Type::UInt16;
+			else if constexpr (std::is_same_v<T, uint32_t> || std::is_same_v<T, uint32_t&>)
+				type = Setting::Type::UInt32;
+			else if constexpr (std::is_same_v<T, int8_t> || std::is_same_v<T, int8_t&>)
+				type = Setting::Type::Int8;
+			else if constexpr (std::is_same_v<T, int16_t> || std::is_same_v<T, int16_t&>)
+				type = Setting::Type::Int16;
+			else if constexpr (std::is_same_v<T, int32_t> || std::is_same_v<T, int32_t&>)
+				type = Setting::Type::Int32;
+			else if constexpr (std::is_same_v<T, float> || std::is_same_v<T, float&>)
+				type = Setting::Type::Float;
+			else if constexpr (std::is_same_v<T, bool> || std::is_same_v<T, bool&>)
+				type = Setting::Type::Bool;
+			else if constexpr (std::is_same_v<T, std::array<uint8_t, 256>>)
+				type = Setting::Type::Buffer;
+			
+			fRef = STR.AddSetting(type, &fValue, sizeof(fValue));
+		
+		}
 
-        void SetAutoUpdate(bool value)
-        {
-            fAutoUpdate = value;
-        }
+		STR_Type(T value, const char* name = nullptr) : STR_Type(name)
+		{
+			fValue = value;
+		}
 
-        operator T()
-        {
-            return fValue;
-        }
+		void SetCallback(void (*callback)())
+		{
+			const auto& setting = STR.GetSettingByRef(fRef);
+			
+			if (setting)
+				setting->get().setCallback(callback);
+		}
 
-        void    operator=(T value)
-        {
-            fValue = value;
-            Update();
-        }
+		void Update()
+		{
+			if (fAutoUpdate)
+				STR.SendUpdateMessage(fRef);
+		}
 
-        void    operator+=(T value)
-        {
-            fValue += value;
-            Update();
-        }
+		void SetAutoUpdate(bool value)
+		{
+			fAutoUpdate = value;
+		}
 
-        void    operator-=(T value)
-        {
-            fValue -= value;
-            Update();
-        }
+		operator T&()
+		{
+			return fValue;
+		}
 
-        T       operator++()
-        {
-            return ++fValue;
-            Update();
-        }
+		void	operator=(T value)
+		{
+			fValue = value;
+			Update();
+		}
 
-        T       operator--()
-        {
-            return --fValue;
-            Update();
-        }
+		void	operator+=(T value)
+		{
+			fValue += value;
+			Update();
+		}
 
-        T       operator++(int)
-        {
-            return fValue++;
-            Update();
-        }
+		void	operator-=(T value)
+		{
+			fValue -= value;
+			Update();
+		}
 
-        T       operator--(int)
-        {
-            return fValue--;
-            Update();
-        }
+		T		operator++()
+		{
+			return ++fValue;
+			Update();
+		}
 
-    protected:
-        bool    fAutoUpdate = false;
-        setting_ref fRef = 0;
+		T		operator--()
+		{
+			return --fValue;
+			Update();
+		}
 
-        T           fValue;
+		T		operator++(int)
+		{
+			return fValue++;
+			Update();
+		}
 
-    private:
-        STR_Type();
+		T		operator--(int)
+		{
+			return fValue--;
+			Update();
+		}
+
+	protected:
+		bool	fAutoUpdate = false;
+		setting_ref fRef = 0;
+
+		T			fValue;
+
+	private:
+		STR_Type();
 };
 
 

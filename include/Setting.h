@@ -29,6 +29,7 @@ public:
         Int8 = 0x26,
         Int16 = 0x27,
 
+		Buffer = 0x40,
         // TESTING PURPOSE ONLY
         CustomFloat = 0xFE
     };
@@ -38,7 +39,7 @@ public:
     /*
     - Update the setting value
     */
-    bool update(uint8_t* newValuePtr, size_t newValueSize);
+    bool update(const uint8_t* newValuePtr, size_t newValueSize);
 
     /*
     - Build the init buffer describing the setting to be sent to the remote controller

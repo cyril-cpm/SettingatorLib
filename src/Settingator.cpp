@@ -589,26 +589,11 @@ void Settingator::_treatSettingUpdateMessage(const ICore& core)
 	
 		const auto& settingOptRef = GetSettingByRef(ref);
 	
-		if (!settingOptRef)
-		{
-			//Serial.println("Setting Not found");
-			//Serial.println(ref);
-		}
-
 		if (settingOptRef)
 		{
 			Setting& setting = settingOptRef->get();
 
-			if (valueLen == setting.getDataSize())
-			{
-				//Serial.println("Attempt to memcpy");
-				memcpy((void*)setting.getDataPtr(), value, valueLen);
-				//Serial.println("Done");
-			}
-			else
-			{
-				//Serial.println("Value Len is 0")
-			}
+			setting.update(value, valueLen);
 
 			setting.callback();
 		}
