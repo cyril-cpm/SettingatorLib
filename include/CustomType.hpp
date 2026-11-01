@@ -17,6 +17,7 @@ class STR_Type
 		STR_Type(const char* name) {
 
 			Setting::Type	type;
+			size_t valueSize = sizeof(fValue);
 
 			if constexpr (std::is_same_v<T, uint8_t> || std::is_same_v<T, uint8_t&>)
 				type = Setting::Type::UInt8;
@@ -35,9 +36,12 @@ class STR_Type
 			else if constexpr (std::is_same_v<T, bool> || std::is_same_v<T, bool&>)
 				type = Setting::Type::Bool;
 			else if constexpr (std::is_same_v<T, std::array<uint8_t, 256>>)
+			{
+				valueSize = 0;
 				type = Setting::Type::Buffer;
+			}
 			
-			fRef = STR.AddSetting(type, &fValue, sizeof(fValue));
+			fRef = STR.AddSetting(type, &fValue, valueSize);
 		
 		}
 
